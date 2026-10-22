@@ -32,3 +32,8 @@ test("tools/list and tools/call work over the JSON-RPC handler", () => {
   const bad = handle({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "build_story_link", arguments: { story: { events: [] } } } });
   assert.strictEqual(bad.result.isError, true);
 });
+
+test("full dates (YYYY-MM-DD) from the date picker validate and run", () => {
+  const s = { end: "2010-12-01", events: [{ type: "start", date: "2002-01-15", fundKey: "i:14012" }, { type: "monthly", from: "2002-01-15", to: "2008-12-31", amount: 1000 }] };
+  assert.deepStrictEqual(validate(s).errors, []);
+});
