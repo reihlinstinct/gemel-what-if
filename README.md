@@ -65,3 +65,13 @@ One issue and one PR per change; see [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 MIT. Data: public-sector open data from data.gov.il.
+
+## MCP (story builder)
+
+`mcp/server.js` is a zero-dependency stdio MCP server. It only builds and validates story JSON and returns a link
+(`#story=...` fragment, never sent to a server) to the site. Nothing is stored, no network access.
+Tools: `search_tracks`, `validate_story`, `build_story_link`, `compute_story`.
+
+```
+{"mcpServers": {"gemel-what-if": {"command": "node", "args": ["/path/to/gemel-what-if/mcp/server.js"]}}}
+```
