@@ -15,6 +15,7 @@
     "{\"type\":\"transfer\"|\"product\"|\"track\",\"date\",\"fundName\",\"exitCostPct\"(optional),\"feeAdjPct\"(optional)},",
     "{\"type\":\"fees\",\"date\",\"depositPct\"(optional),\"savingsPct\"(optional, yearly)}.",
     "transfer = move to another fund, product = move to another product (e.g. managers insurance to gemel), track = change investment track.",
+    "To compare two scenarios, describe them with scope: events shared by both have no scope (or \"both\"); what really happened differs with \"actual\", the alternative (\"what if\") with \"whatif\". If the alternative starts from another fund, give a second start event with scope \"whatif\" and mark the first start \"actual\".",
     "Any event may have \"scope\":\"actual\" (what really happened), \"whatif\" (the alternative to compare) or \"both\" (default).",
     "Use fundName exactly as the person wrote it (company and track, e.g. \"Clal managers insurance\"); never invent ids. Amounts are in shekels.",
     "Dates are YYYY-MM-DD; if the day is unknown use the 1st. Do not invent facts: leave out what the text does not say.",

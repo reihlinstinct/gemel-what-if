@@ -67,3 +67,21 @@ a{color:#0b4fb3}
 .collapsible details[open]>summary::before{transform:rotate(-90deg)}
 .collapsible details[open]>summary{margin-bottom:.8rem}
 @media (max-width:600px){.card .scope-l{flex:1 1 100%;white-space:nowrap}.card .scope-l select{flex:1}}
+
+.badge{font-size:.8rem;font-weight:700;border-radius:999px;padding:.1rem .6rem}
+.badge:empty{display:none}
+.card[data-scope=actual]{border-inline-start-color:#566074}
+.card[data-scope=actual] .badge{background:#e4e8f1;color:#2b3550}
+.card[data-scope=whatif]{border-inline-start-color:#d9822b;background:#fffaf2}
+.card[data-scope=whatif] .badge{background:#ffe3c2;color:#6b3a00}
+
+.fork-line{text-align:center;font-weight:700;color:#6b3a00;border-top:2px dashed #d9822b;padding-top:.5rem;margin-top:1rem}
+.fork-cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.col h3{margin:.4rem 0;padding:.3rem .7rem;border-radius:8px;text-align:center}
+.col-actual h3{background:#e4e8f1;color:#2b3550}
+.col-whatif h3{background:#ffe3c2;color:#6b3a00}
+.card .split{min-height:36px;padding:.2rem .8rem;font-size:.9rem}
+.fork-cols .card .scope-l{display:none}
+@media (max-width:760px){.fork-cols{grid-template-columns:1fr}}
+.fork-cols .card .split{display:none}
+.card .scope-l{display:none!important}

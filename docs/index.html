@@ -54,8 +54,18 @@
   </section>
   <section id="timeline-section">
     <h2>ציר הזמן</h2>
+    <p class="hint">בנו את הסיפור מלמעלה למטה. כדי להשוות, לחצו "⑂ פצל" (בסוף הציר או על אירוע מסוים): מנקודת הפיצול יוצגו שני צדדים, "בפועל" ו"מה אם", כל אחד עם האירועים שלו. התוצאה משווה בין שני הצדדים.</p>
+    <div class="actions"><button type="button" id="fork-btn">⑂ פצל את הציר (תרחיש מקביל)</button><button type="button" id="unfork-btn" hidden>בטל פיצול</button><button type="button" id="load-example">טען דוגמה</button></div>
+    <p id="parallel-status" role="status" class="status"></p>
     <label class="f end"><span>סיום החישוב</span><input type="date" id="end"></label>
     <div id="timeline"></div>
+    <div id="fork" class="fork" hidden>
+      <div class="fork-line">⑂ מכאן הציר מתפצל</div>
+      <div class="fork-cols">
+        <div class="col col-actual"><h3>בפועל</h3><div id="col-actual"></div><button type="button" id="add-actual" class="plus" aria-label="הוסף אירוע לבפועל">+</button></div>
+        <div class="col col-whatif"><h3>מה אם</h3><div id="col-whatif"></div><button type="button" id="add-whatif" class="plus" aria-label="הוסף אירוע למה אם">+</button></div>
+      </div>
+    </div>
     <button type="button" id="add-event" class="plus" aria-label="הוסף אירוע">+</button>
   </section>
   <section class="collapsible">
