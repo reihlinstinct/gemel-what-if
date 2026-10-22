@@ -43,7 +43,7 @@ user inputs and the result is an estimate only.
 
 A story is an ordered timeline: an opening event (start / opening of a fund, with the first track and an optional
 opening amount), then any number of events added with the "+" button: one-off deposit, monthly deposits, withdrawal,
-fund transfer, product change, track change. Each event can apply to both scenarios, actual only or what-if only,
+fund transfer, product change, track change, and optional management fees (off by default: % of each deposit and yearly % of accumulated savings, from a chosen date; include them as a "fees" event). Each event can apply to both scenarios, actual only or what-if only,
 so the page compares the two and shows total profit over the whole timeline (final value + withdrawals - deposits).
 A story can be loaded from a link of the form `index.html#story=<base64url JSON>`; the fragment never leaves the browser.
 

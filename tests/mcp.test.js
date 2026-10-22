@@ -37,3 +37,10 @@ test("full dates (YYYY-MM-DD) from the date picker validate and run", () => {
   const s = { end: "2010-12-01", events: [{ type: "start", date: "2005-06-15", fundKey: "i:259012" }, { type: "monthly", from: "2005-06-15", to: "2011-06-30", amount: 750 }] };
   assert.deepStrictEqual(validate(s).errors, []);
 });
+
+test("fees event validates and lowers the computed result", () => {
+  const withFees = { end: story.end, events: story.events.concat([{ type: "fees", date: "2002-01", depositPct: 1, savingsPct: 1 }]) };
+  assert.deepStrictEqual(validate(withFees).errors, []);
+  const run = (s) => JSON.parse(handle({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "compute_story", arguments: { story: s } } }).result.content[0].text);
+  assert.ok(run(withFees).whatIf.finalValue < run(story).whatIf.finalValue);
+});
