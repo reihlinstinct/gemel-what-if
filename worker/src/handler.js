@@ -14,7 +14,7 @@ const HOURLY_LIMIT = 10;
 const SYSTEM = [
   prompt.buildPrompt("").replace(/\n\nStory:\n$/, ""),
   "You have tools: search_tracks (find the real fundKey for a fund or track name), validate_story, build_story_link.",
-  "Workflow: call search_tracks for each fund the person names, then use the returned fundKey in the events (g:... gemel, i:... insurance), call validate_story, fix errors, then answer with ONLY the final JSON object.",
+  "Workflow: call search_tracks once per fund the person names, with a SHORT query: the company name in Hebrew (e.g. כלל, מיטב, מגדל) plus one track word at most. Use the returned fundKey in the events (g:... gemel, i:... insurance); if search finds nothing keep fundName. Use at most 4 tool calls, then answer with ONLY the final JSON object (no validate loop needed; the server validates).",
   'Example output: {"end":"2026-09-01","events":[{"type":"start","date":"2005-06-01","fundKey":"i:259012"},{"type":"monthly","from":"2005-06-01","to":"2011-06-01","amount":750},{"type":"product","date":"2015-03-01","fundKey":"g:761","scope":"actual"}]}',
 ].join("\n");
 
@@ -41,14 +41,22 @@ export function createHandler({ data, ai, model = "@cf/meta/llama-3.3-70b-instru
       parameters: mcp.TOOLS[name].inputSchema,
     }));
 
+  // Workers AI wants OpenAI-style tool_calls (id/type/function) when we echo them back, and tool_call_id on results.
+  const normalize = (calls) =>
+    calls.map((c, i) => {
+      const name = c.name || (c.function && c.function.name);
+      let args = c.arguments !== undefined ? c.arguments : c.function && c.function.arguments;
+      if (typeof args === "string") { try { args = JSON.parse(args); } catch { args = {}; } }
+      return { id: c.id || "call_" + i, name, args: args || {} };
+    });
+
   async function runTools(calls, messages) {
     for (const c of calls) {
-      let args = c.arguments;
-      if (typeof args === "string") { try { args = JSON.parse(args); } catch { args = {}; } }
+      const args = c.args;
       const tool = mcp.TOOLS[c.name];
       let out;
       try { out = tool ? tool.run(args || {}) : { error: "unknown tool" }; } catch (e) { out = { error: String(e.message) }; }
-      messages.push({ role: "tool", name: c.name, content: JSON.stringify(out).slice(0, 6000) });
+      messages.push({ role: "tool", tool_call_id: c.id, name: c.name, content: JSON.stringify(out).slice(0, 6000) });
     }
   }
 
@@ -56,10 +64,14 @@ export function createHandler({ data, ai, model = "@cf/meta/llama-3.3-70b-instru
     const messages = [{ role: "system", content: SYSTEM }, { role: "user", content: text }];
     let retries = 0;
     for (let step = 0; step < MAX_STEPS; step++) {
-      const res = await ai.run(model, { messages, tools: toolDefs(), max_tokens: 1200 });
+      const raw = await ai.run(model, Object.assign({ messages, max_tokens: 1200 }, step < 4 ? { tools: toolDefs() } : {}));
+      // Newer Workers AI models answer in OpenAI chat-completion shape, older ones as {response, tool_calls}.
+      const m = raw.choices && raw.choices[0] ? raw.choices[0].message || {} : { content: raw.response, tool_calls: raw.tool_calls };
+      const res = { response: m.content || "", tool_calls: m.tool_calls || [] };
       if (res.tool_calls && res.tool_calls.length) {
-        messages.push({ role: "assistant", content: res.response || "", tool_calls: res.tool_calls });
-        await runTools(res.tool_calls, messages);
+        const calls = normalize(res.tool_calls);
+        messages.push({ role: "assistant", content: res.response || "", tool_calls: calls.map((c) => ({ id: c.id, type: "function", function: { name: c.name, arguments: JSON.stringify(c.args) } })) });
+        await runTools(calls, messages);
         continue;
       }
       let story;
