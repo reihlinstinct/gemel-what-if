@@ -1,0 +1,5 @@
+stories/
+*.story.json
+story.json
+node_modules/
+__pycache__/

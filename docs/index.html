@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מה היה קורה אילו - קופות גמל ופנסיה</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>מה היה קורה אילו?</h1>
+  <p>תארו סיפור השקעה (הפקדות, תאריכים, מסלולים) וראו מה היה קורה אילו הייתם עוברים מסלול בזמן אחר. החישוב מתבצע בדפדפן בלבד, שום נתון לא נשלח לשום מקום.</p>
+  <p class="warn">לא ייעוץ פיננסי. תשואות עבר אינן מעידות על העתיד. החישוב מבוסס על התשואות החודשיות שדווחו לרשות שוק ההון (גמל-נט) ועל הנחות מפושטות (הפקדה בתחילת חודש, בלי מס, בלי עמלות נוספות מעבר למה שכבר מגולם בתשואה).</p>
+</header>
+<main>
+  <section>
+    <h2>1. התקופה וההפקדות</h2>
+    <label>התחלה <input type="month" id="start" value="2002-01"></label>
+    <label>סיום <input type="month" id="end"></label>
+    <div id="deposits"></div>
+    <button type="button" id="add-monthly">+ הפקדה חודשית קבועה</button>
+    <button type="button" id="add-lump">+ הפקדה חד-פעמית</button>
+  </section>
+  <section>
+    <h2>2. מה קרה בפועל</h2>
+    <div class="fundpick" data-id="actual-start"></div>
+    <div id="actual-switches"></div>
+    <button type="button" id="add-actual">+ מעבר מסלול</button>
+  </section>
+  <section>
+    <h2>3. מה היה קורה אילו</h2>
+    <label><input type="checkbox" id="same-start" checked> אותו מסלול התחלתי כמו בפועל</label>
+    <div class="fundpick" data-id="alt-start" hidden></div>
+    <div id="alt-switches"></div>
+    <button type="button" id="add-alt">+ מעבר מסלול</button>
+  </section>
+  <section>
+    <button type="button" id="run" class="primary">חשב</button>
+    <div id="error" role="alert"></div>
+    <div id="result"></div>
+  </section>
+  <section>
+    <h2>שמירה וטעינה</h2>
+    <p>הסיפור נשמר לקובץ אצלכם (לא באתר). אפשר לטעון אותו שוב מאוחר יותר.</p>
+    <button type="button" id="export">שמור סיפור לקובץ</button>
+    <input type="file" id="import" accept="application/json">
+  </section>
+</main>
+<footer>מקור הנתונים: <a href="https://data.gov.il/dataset/gemelnet">גמל-נט, רשות שוק ההון (data.gov.il)</a>. <span id="data-info"></span></footer>
+<script src="whatif.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
