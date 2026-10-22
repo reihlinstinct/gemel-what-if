@@ -40,6 +40,14 @@
     <button type="button" id="add-alt">+ מעבר מסלול</button>
   </section>
   <section>
+    <h2>4. הערכת קצבה (אופציונלי)</h2>
+    <p>להערכת קצבה חודשית בפרישה: הזינו מקדם מובטח מהפוליסה (הון נדרש לכל 1 ₪ קצבה, למשל 190) ומקדם שוק משוער להשוואה. בלי מקדמים לא תוצג הערכה.</p>
+    <label>מקדם מובטח <input type="number" id="coef-guar" min="0" step="0.1"></label>
+    <label>מקדם שוק <input type="number" id="coef-market" min="0" step="0.1"></label>
+    <label>חודשים מסוף הנתונים עד הפרישה <input type="number" id="months-ret" min="0" step="1"></label>
+    <label>תשואה שנתית משוערת עד הפרישה (%) <input type="number" id="ret-rate" step="0.1"></label>
+  </section>
+  <section>
     <button type="button" id="run" class="primary">חשב</button>
     <div id="error" role="alert"></div>
     <div id="result"></div>
@@ -51,7 +59,7 @@
     <input type="file" id="import" accept="application/json">
   </section>
 </main>
-<footer>מקור הנתונים: <a href="https://data.gov.il/dataset/gemelnet">גמל-נט, רשות שוק ההון (data.gov.il)</a>. <span id="data-info"></span></footer>
+<footer>מקור הנתונים: <a href="https://data.gov.il/dataset/gemelnet">גמל-נט</a> ו<a href="https://data.gov.il/dataset/insurance">ביטוח-נט</a>, רשות שוק ההון (data.gov.il). <span id="data-info"></span></footer>
 <script src="whatif.js"></script>
 <script src="app.js"></script>
 </body>
