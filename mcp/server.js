@@ -11,7 +11,7 @@ const W = require("../docs/whatif.js");
 const DATA = JSON.parse(fs.readFileSync(path.join(__dirname, "../docs/data/funds.json"), "utf8"));
 const FUNDS = W.indexFunds(DATA);
 const DEFAULT_BASE = "https://reihlinstinct.github.io/gemel-what-if/";
-const TYPES = ["start", "deposit", "monthly", "withdraw", "transfer", "product", "track"];
+const TYPES = ["start", "deposit", "monthly", "withdraw", "transfer", "product", "track", "fees"];
 const SWITCHES = ["transfer", "product", "track"];
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?$/;
 
@@ -19,7 +19,7 @@ const STORY_SCHEMA = {
   type: "object",
   description:
     "Timeline story. events: one {type:'start', date:'YYYY-MM', fundKey, amount?} first, then deposit {date, amount}, " +
-    "monthly {from, to?, amount}, withdraw {date, amount}, transfer|product|track {date, fundKey, exitCostPct?, feeAdjPct?}. " +
+    "monthly {from, to?, amount}, withdraw {date, amount}, transfer|product|track {date, fundKey, exitCostPct?, feeAdjPct?}, fees {date, depositPct?, savingsPct?} (optional management fees, off by default; savingsPct is yearly). " +
     "Any event may carry scope: both|actual|whatif. fundKey comes from search_tracks (g:<id> gemel, i:<id> insurance). " +
     "Optional annuity {guaranteed, market, months, rate} (strings).",
   properties: { end: { type: "string" }, events: { type: "array", items: { type: "object" } }, annuity: { type: "object" } },

@@ -14,6 +14,7 @@
     transfer: "מעבר קופה",
     product: "שינוי מוצר",
     track: "שינוי מסלול",
+    fees: "דמי ניהול (אופציונלי)",
   };
   const SWITCHES = ["transfer", "product", "track"];
 
@@ -58,6 +59,7 @@
   function fieldsFor(type) {
     if (type === "start") return 'פתיחה ב-<input type="date" class="date"> סכום פתיחה (אופציונלי) <input type="number" class="amount" min="0"> ₪<div class="fundpick"></div>';
     if (type === "deposit" || type === "withdraw") return 'ב-<input type="date" class="date"> סכום <input type="number" class="amount" min="0"> ₪';
+    if (type === "fees") return 'מתאריך <input type="date" class="date"> דמי ניהול מהפקדה <input type="number" class="depfee" min="0" step="0.01" placeholder="0"> % ודמי ניהול שנתיים מהצבירה <input type="number" class="savfee" min="0" step="0.01" placeholder="0"> %';
     if (type === "monthly") return 'מ-<input type="date" class="from"> עד <input type="date" class="to"> סכום חודשי <input type="number" class="amount" min="0"> ₪';
     return 'ב-<input type="date" class="date"><div class="fundpick"></div>עלות חד-פעמית <input type="number" class="exit" min="0" step="0.1" placeholder="0"> % ושינוי דמי ניהול שנתיים <input type="number" class="feeadj" step="0.1" placeholder="0"> נק\' אחוז';
   }
@@ -95,7 +97,7 @@
     const pad = (x) => (typeof x === "string" && /^\d{4}-\d{2}$/.test(x) ? x + "-01" : x);
     const set = (sel, val) => { const el = $(sel, card); if (el && val !== undefined && val !== null) el.value = pad(val); };
     set(".date", v.date); set(".from", v.from); set(".to", v.to); set(".amount", v.amount);
-    set(".exit", v.exitCostPct || ""); set(".feeadj", v.feeAdjPct || "");
+    set(".depfee", v.depositPct || ""); set(".savfee", v.savingsPct || ""); set(".exit", v.exitCostPct || ""); set(".feeadj", v.feeAdjPct || "");
     const fp = $(".fundpick", card);
     if (fp && v.fundKey) fp.setFund(v.fundKey);
   }
@@ -110,6 +112,7 @@
     if (type === "start" || type === "deposit" || type === "withdraw") e.amount = num(".amount");
     if (type === "start" || SWITCHES.includes(type)) e.fundKey = $(".fundpick", card).dataset.fund || "";
     if (SWITCHES.includes(type)) { e.exitCostPct = num(".exit"); e.feeAdjPct = num(".feeadj"); }
+    if (type === "fees") { e.depositPct = num(".depfee"); e.savingsPct = num(".savfee"); }
     return e;
   }
 
