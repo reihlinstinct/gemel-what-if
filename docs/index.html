@@ -18,7 +18,7 @@
 <meta property="og:locale" content="he_IL">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://reihlinstinct.github.io/gemel-what-if/og.png">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://gemel-what-if.reihlinstinct.workers.dev; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -42,9 +42,10 @@
   </section>
   <section id="ai-section">
     <h2>תיאור חופשי עם AI (אופציונלי)</h2>
-    <p class="warn">פרטיות: הכפתור "העתק פרומפט" רק מעתיק טקסט בדפדפן. אתם מדביקים אותו בעצמכם בצ'אט AI לבחירתכם, ומדביקים כאן את התשובה. האתר לא שולח כלום. אל תכתבו שמות, מספרי זהות או מספרי פוליסה. התוצאה היא הערכה בלבד ולא ייעוץ.</p>
+    <p class="warn">פרטיות: הכפתור "בנה עם AI" שולח את הטקסט לשרת (Cloudflare Workers AI, מכסה חינמית יומית, בלי שמירה) כדי להפוך אותו לאירועים. אל תכתבו שמות או מספרי זהות. הכפתור "העתק פרומפט" רק מעתיק טקסט בדפדפן. אתם מדביקים אותו בעצמכם בצ'אט AI לבחירתכם, ומדביקים כאן את התשובה. האתר לא שולח כלום. אל תכתבו שמות, מספרי זהות או מספרי פוליסה. התוצאה היא הערכה בלבד ולא ייעוץ.</p>
     <label for="story-text">תארו את הסיפור במילים שלכם</label>
     <textarea id="story-text" rows="5" placeholder="למשל: ב-2002 פתחתי ביטוח מנהלים בכלל, הפקדתי 1,000 בחודש עד 2008, ב-2012 עבר למיטב..."></textarea>
+    <button type="button" id="build-ai">בנה עם AI</button>
     <button type="button" id="copy-prompt">העתק פרומפט</button>
     <label for="ai-reply">הדביקו כאן את תשובת ה-AI (JSON)</label>
     <textarea id="ai-reply" rows="5" dir="ltr"></textarea>

@@ -154,3 +154,9 @@ test("management fees are off by default and reduce the result when set", () => 
   assert.ok(f.final < 2400 * 0.99 && f.gain < 0);
   assert.strictEqual(f.paid, 2400);
 });
+
+test("searchFunds understands English company aliases and falls back to the best partial match", () => {
+  const data = { funds: [{ id: "1", key: "g:1", name: "מיטב השתלמות כללי", corp: "מיטב", cls: "", end: 202609 }, { id: "2", key: "i:2", name: "כלל-קרן", corp: "כלל חברה לביטוח", cls: "", end: 202609 }] };
+  assert.strictEqual(W.searchFunds(data, "Meitav", 5)[0].key, "g:1");
+  assert.strictEqual(W.searchFunds(data, "Clal managers insurance", 5)[0].key, "i:2");
+});
