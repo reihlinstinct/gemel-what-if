@@ -49,3 +49,13 @@ test("AI endpoint: origin check, size limit, rate limit", async () => {
   for (let i = 0; i < 11; i++) last = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "1.1.1.1" }));
   assert.strictEqual(last.status, 429);
 });
+
+test("AI endpoint understands OpenAI chat-completion shaped replies", async () => {
+  const replies = [
+    { choices: [{ message: { content: null, tool_calls: [{ id: "c1", type: "function", function: { name: "search_tracks", arguments: "{\"query\":\"כלל\"}" } }] } }] },
+    { choices: [{ message: { content: JSON.stringify(GOOD) } }] },
+  ];
+  const ai = { run: async () => replies.shift() };
+  const res = await createHandler({ data, ai })(post("/api/story", { text: "x" }, { origin: ORIGIN }));
+  assert.strictEqual(res.status, 200);
+});
