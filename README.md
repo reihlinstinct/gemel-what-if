@@ -83,3 +83,12 @@ Tools: `search_tracks`, `validate_story`, `build_story_link`, `compute_story`.
 ## Free-text story (no server)
 
 The "תיאור חופשי עם AI" section builds a prompt from the person's text. They paste it into any AI chat, then paste the JSON reply back. `docs/prompt.js` extracts the JSON and maps `fundName` to a track by search (shown for review). Nothing is sent by the site.
+
+## Worker (remote MCP and AI text box)
+
+`worker/` is a Cloudflare Worker (free plan, no storage, no logging of requests):
+
+- `POST /mcp`: stateless remote MCP (JSON-RPC over HTTP) with the same four tools as the local server. Use it as a custom connector in an MCP client once deployed.
+- `POST /api/story`: free text -> Workers AI model with tool calling (`search_tracks`, `validate_story`, `build_story_link`), the answer is validated, and validation errors are fed back up to 2 times. Only the site origin may call it; text is limited to 2,000 characters; 10 requests per hour per IP (best effort, per isolate). Workers AI's free allocation is 10,000 neurons/day, requests fail past it and nothing is billed without a paid plan.
+
+Text sent to the AI endpoint leaves the browser and is processed by Cloudflare Workers AI. Do not include names or ID numbers.
