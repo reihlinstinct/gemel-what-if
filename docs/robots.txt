@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://reihlinstinct.github.io/gemel-what-if/sitemap.xml

@@ -22,3 +22,12 @@ footer{font-size:.85rem;color:#555;margin:2rem 0}
 .card.start{border-color:#1b5fd1}
 button.plus{display:block;margin:.5rem auto;width:3rem;height:3rem;font-size:2rem;line-height:1;border-radius:50%;border:2px solid #333;background:#fff}
 .card .row{margin:.3rem 0}
+
+/* Phones: larger touch targets, full-width fields, 16px text to avoid iOS zoom */
+@media (max-width: 600px) {
+  input, select, button { font-size: 16px; min-height: 44px; box-sizing: border-box; }
+  .card input:not([type="checkbox"]), .card select { width: 100%; margin: 4px 0; }
+  .card input[type="date"] { display: block; }
+  .plus { width: 56px; height: 56px; }
+  body { padding-inline: 8px; }
+}
