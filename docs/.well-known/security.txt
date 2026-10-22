@@ -1,0 +1,5 @@
+Contact: https://github.com/reihlinstinct/gemel-what-if/security/advisories/new
+Expires: 2027-10-22T00:00:00Z
+Preferred-Languages: en, he
+Policy: https://github.com/reihlinstinct/gemel-what-if/blob/main/SECURITY.md
+Canonical: https://reihlinstinct.github.io/gemel-what-if/.well-known/security.txt
