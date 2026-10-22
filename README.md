@@ -75,3 +75,7 @@ Tools: `search_tracks`, `validate_story`, `build_story_link`, `compute_story`.
 ```
 {"mcpServers": {"gemel-what-if": {"command": "node", "args": ["/path/to/gemel-what-if/mcp/server.js"]}}}
 ```
+
+## Checks
+
+`npm test` runs the unit tests, `npm run e2e` opens the page in headless Chrome with a story in the URL fragment and checks the result and meta tags. CI also runs CodeQL and dependency review. Note on fees: reported yields may already be net of some fees, so a fees event can double count; fee values are user inputs.
