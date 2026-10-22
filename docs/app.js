@@ -22,14 +22,19 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   /** Fund picker: search box + select; the chosen key is kept in el.dataset.fund. */
   function fundPicker(el, label) {
     el.innerHTML = "";
+    el.classList.add("fundpick");
     const lab = document.createElement("span");
-    lab.textContent = label + " ";
+    lab.className = "lbl";
+    lab.textContent = label;
     const input = document.createElement("input");
     input.type = "search";
+    input.setAttribute("aria-label", "חיפוש מסלול");
     input.placeholder = "חיפוש: שם מסלול, חברה או מספר קופה";
     const select = document.createElement("select");
-    const chosen = document.createElement("span");
+    select.setAttribute("aria-label", "בחירת מסלול");
+    const chosen = document.createElement("div");
     chosen.className = "chosen";
+    chosen.setAttribute("role", "status");
     el.append(lab, input, select, chosen);
     const show = () => {
       select.innerHTML = "";
@@ -43,7 +48,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const choose = () => {
       el.dataset.fund = select.value || "";
       const f = funds.get(select.value);
-      chosen.textContent = f ? " ✓ " + f.name : "";
+      chosen.textContent = f ? "✓ נבחר: " + f.name : "";
     };
     input.addEventListener("input", () => { show(); choose(); });
     select.addEventListener("change", choose);
@@ -57,12 +62,17 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     };
   }
 
+  const fld = (label, html, cls) => '<label class="f' + (cls ? " " + cls : "") + '"><span>' + label + "</span>" + html + "</label>";
+  const dateIn = (c) => '<input type="date" class="' + c + '">';
+  const num = (c, extra) => '<input type="number" inputmode="decimal" class="' + c + '" ' + (extra || "") + ">";
+
   function fieldsFor(type) {
-    if (type === "start") return 'פתיחה ב-<input type="date" class="date"> סכום פתיחה (אופציונלי) <input type="number" class="amount" min="0"> ₪<div class="fundpick"></div>';
-    if (type === "deposit" || type === "withdraw") return 'ב-<input type="date" class="date"> סכום <input type="number" class="amount" min="0"> ₪';
-    if (type === "fees") return 'מתאריך <input type="date" class="date"> דמי ניהול מהפקדה <input type="number" class="depfee" min="0" step="0.01" placeholder="0"> % ודמי ניהול שנתיים מהצבירה <input type="number" class="savfee" min="0" step="0.01" placeholder="0"> %';
-    if (type === "monthly") return 'מ-<input type="date" class="from"> עד <input type="date" class="to"> סכום חודשי <input type="number" class="amount" min="0"> ₪';
-    return 'ב-<input type="date" class="date"><div class="fundpick"></div>עלות חד-פעמית <input type="number" class="exit" min="0" step="0.1" placeholder="0"> % ושינוי דמי ניהול שנתיים <input type="number" class="feeadj" step="0.1" placeholder="0"> נק\' אחוז';
+    const grid = (x) => '<div class="grid">' + x + "</div>";
+    if (type === "start") return grid(fld("תאריך פתיחה", dateIn("date")) + fld("סכום פתיחה (אופציונלי, ₪)", num("amount", 'min="0"'))) + '<div class="fundpick"></div>';
+    if (type === "deposit" || type === "withdraw") return grid(fld("תאריך", dateIn("date")) + fld("סכום (₪)", num("amount", 'min="0"')));
+    if (type === "fees") return grid(fld("מתאריך", dateIn("date")) + fld("דמי ניהול מהפקדה (%)", num("depfee", 'min="0" step="0.01" placeholder="0"')) + fld("דמי ניהול שנתיים מהצבירה (%)", num("savfee", 'min="0" step="0.01" placeholder="0"')));
+    if (type === "monthly") return grid(fld("מתאריך", dateIn("from")) + fld("עד תאריך (ריק = עד הסוף)", dateIn("to")) + fld("סכום חודשי (₪)", num("amount", 'min="0"')));
+    return grid(fld("תאריך", dateIn("date")) + fld("עלות חד-פעמית (%)", num("exit", 'min="0" step="0.1" placeholder="0"')) + fld("שינוי דמי ניהול שנתיים (נק' אחוז)", num("feeadj", 'step="0.1" placeholder="0"'))) + '<div class="fundpick"></div>';
   }
 
   function addCard(type, values) {
@@ -74,7 +84,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       head = "<h3>אירוע התחלה: פתיחת קופה</h3>";
     } else {
       const options = Object.keys(TYPES).map((k) => '<option value="' + k + '"' + (k === type ? " selected" : "") + ">" + TYPES[k] + "</option>").join("");
-      head = '<h3><select class="type">' + options + '</select> <label>חל על <select class="scope"><option value="both">שני התרחישים</option><option value="actual">בפועל בלבד</option><option value="whatif">אילו בלבד</option></select></label> <button type="button" class="rm">הסר</button></h3>';
+      head = '<h3><select class="type" aria-label="סוג אירוע">' + options + '</select> <label class="scope-l">חל על <select class="scope" aria-label="חל על"><option value="both">שני התרחישים</option><option value="actual">בפועל בלבד</option><option value="whatif">אילו בלבד</option></select></label> <button type="button" class="rm">הסר</button></h3>';
     }
     card.innerHTML = head + '<div class="body"></div>';
     $("#timeline").append(card);
