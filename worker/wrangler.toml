@@ -1,0 +1,7 @@
+name = "gemel-what-if"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Workers AI binding (free allocation: 10,000 neurons/day; requests fail past it, nothing is billed without a paid plan).
+[ai]
+binding = "AI"
