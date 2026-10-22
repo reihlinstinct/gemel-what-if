@@ -59,3 +59,28 @@ test("AI endpoint understands OpenAI chat-completion shaped replies", async () =
   const res = await createHandler({ data, ai })(post("/api/story", { text: "x" }, { origin: ORIGIN }));
   assert.strictEqual(res.status, 200);
 });
+
+test("Gemini path: function call, final JSON, daily cap, fallback to Workers AI", async () => {
+  const store = new Map();
+  const caps = { get: async (k) => store.get(k), put: async (k, v) => store.set(k, v) };
+  const seq = [
+    { candidates: [{ content: { parts: [{ functionCall: { name: "search_tracks", args: { query: "כלל" } } }] } }] },
+    { candidates: [{ content: { parts: [{ text: JSON.stringify(GOOD) }] } }] },
+  ];
+  let geminiCalls = 0;
+  const fetchImpl = async () => { geminiCalls++; const b = seq.shift(); return b ? new Response(JSON.stringify(b)) : new Response("x", { status: 500 }); };
+  const ai = { run: async () => ({ response: JSON.stringify(GOOD) }) };
+  const h = createHandler({ data, ai, gemini: "k", caps, fetchImpl });
+  const r1 = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "2.2.2.2" }));
+  assert.strictEqual(r1.status, 200);
+  assert.strictEqual(geminiCalls, 2);
+  // Gemini failing (500) falls back to Workers AI
+  const r2 = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "3.3.3.3" }));
+  assert.strictEqual(r2.status, 200);
+  // cap reached: Gemini is not called at all
+  store.set("gemini:" + new Date().toISOString().slice(0, 10), "100");
+  const before = geminiCalls;
+  const r3 = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "4.4.4.4" }));
+  assert.strictEqual(r3.status, 200);
+  assert.strictEqual(geminiCalls, before);
+});

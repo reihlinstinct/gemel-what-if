@@ -9,7 +9,7 @@ const PAGES_ORIGIN = "https://reihlinstinct.github.io";
 const MAX_TEXT = 2000;
 const MAX_STEPS = 8;
 const MAX_RETRIES = 2;
-const HOURLY_LIMIT = 10;
+const HOURLY_LIMIT = 5;
 
 const SYSTEM = [
   prompt.buildPrompt("").replace(/\n\nStory:\n$/, ""),
@@ -18,7 +18,10 @@ const SYSTEM = [
   'Example output: {"end":"2026-09-01","events":[{"type":"start","date":"2005-06-01","fundKey":"i:259012"},{"type":"monthly","from":"2005-06-01","to":"2011-06-01","amount":750},{"type":"product","date":"2015-03-01","fundKey":"g:761","scope":"actual"}]}',
 ].join("\n");
 
-export function createHandler({ data, ai, model = "@cf/meta/llama-3.3-70b-instruct-fp8-fast", now = () => Date.now() }) {
+const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_DAILY_CAP = 100;
+
+export function createHandler({ data, ai, gemini = null, caps = null, fetchImpl = fetch, model = "@cf/meta/llama-3.3-70b-instruct-fp8-fast", now = () => Date.now() }) {
   const mcp = createCore(data);
   const hits = new Map();
 
@@ -60,7 +63,73 @@ export function createHandler({ data, ai, model = "@cf/meta/llama-3.3-70b-instru
     }
   }
 
+  // Global daily cap for the (possibly billed) Gemini key, kept in KV. Returns true if a call may be made.
+  async function takeGeminiBudget() {
+    if (!gemini || !caps) return false;
+    const key = "gemini:" + new Date(now()).toISOString().slice(0, 10);
+    const used = Number(await caps.get(key)) || 0;
+    if (used >= GEMINI_DAILY_CAP) return false;
+    await caps.put(key, String(used + 1), { expirationTtl: 172800 });
+    return true;
+  }
+
+  const geminiTools = [{ functionDeclarations: [{ name: "search_tracks", description: mcp.TOOLS.search_tracks.description, parameters: { type: "OBJECT", properties: { query: { type: "STRING" }, limit: { type: "NUMBER" } }, required: ["query"] } }] }];
+
+  async function geminiCall(contents, withTools) {
+    const body = { systemInstruction: { parts: [{ text: SYSTEM }] }, contents, generationConfig: { maxOutputTokens: 1500, temperature: 0.2 } };
+    if (withTools) body.tools = geminiTools;
+    const r = await fetchImpl("https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent", { method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": gemini }, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error("gemini " + r.status);
+    const j = await r.json();
+    const cand = j.candidates && j.candidates[0];
+    return (cand && cand.content && cand.content.parts) || [];
+  }
+
+  // Same contract as the Workers AI loop: returns {response, tool_calls} per step.
+  async function geminiStep(contents, withTools) {
+    const parts = await geminiCall(contents, withTools);
+    contents.push({ role: "model", parts: parts.length ? parts : [{ text: "" }] });
+    const calls = parts.filter((p) => p.functionCall).map((p, i) => ({ id: "g" + i, name: p.functionCall.name, args: p.functionCall.args || {} }));
+    return { text: parts.filter((p) => p.text).map((p) => p.text).join(""), calls };
+  }
+
+  async function storyViaGemini(text) {
+    const contents = [{ role: "user", parts: [{ text }] }];
+    let retries = 0;
+    for (let step = 0; step < MAX_STEPS; step++) {
+      const { text: out, calls } = await geminiStep(contents, step < 4);
+      if (calls.length) {
+        const parts = calls.map((c) => {
+          const tool = mcp.TOOLS[c.name];
+          let res;
+          try { res = tool ? tool.run(c.args) : { error: "unknown tool" }; } catch (e) { res = { error: String(e.message) }; }
+          return { functionResponse: { name: c.name, response: { result: JSON.stringify(res).slice(0, 6000) } } };
+        });
+        contents.push({ role: "user", parts });
+        continue;
+      }
+      let story;
+      try { story = prompt.resolveFunds(prompt.extractJson(out), (n) => whatif.searchFunds(data, n, 3)); } catch (e) {
+        if (retries++ >= MAX_RETRIES) throw new Error("המודל לא החזיר JSON תקין");
+        contents.push({ role: "user", parts: [{ text: "Invalid JSON: " + e.message + ". Reply with ONLY the JSON object." }] });
+        continue;
+      }
+      const v = mcp.validate(story.story);
+      if (!v.errors.length) return { story: story.story, resolved: story.resolved, warnings: v.warnings };
+      if (retries++ >= MAX_RETRIES) throw new Error("הסיפור לא עבר אימות: " + v.errors.slice(0, 3).join("; "));
+      contents.push({ role: "user", parts: [{ text: "Validation errors: " + v.errors.join("; ") + ". Fix them and reply with ONLY the corrected JSON object." }] });
+    }
+    throw new Error("המודל לא הגיע לתשובה סופית");
+  }
+
   async function storyFromText(text) {
+    if (await takeGeminiBudget().catch(() => false)) {
+      try { return await storyViaGemini(text); } catch { /* fall back to Workers AI */ }
+    }
+    return storyViaWorkersAi(text);
+  }
+
+  async function storyViaWorkersAi(text) {
     const messages = [{ role: "system", content: SYSTEM }, { role: "user", content: text }];
     let retries = 0;
     for (let step = 0; step < MAX_STEPS; step++) {
