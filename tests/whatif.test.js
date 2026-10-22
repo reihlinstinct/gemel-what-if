@@ -119,3 +119,27 @@ test("projectBalance compounds yearly rate monthly-fractionally", () => {
   assert.ok(Math.abs(W.projectBalance(100, 12, 5) - 105) < 1e-9);
   assert.strictEqual(W.projectBalance(100, 0, 5), 100);
 });
+
+test("timeline: start, monthly deposits, withdrawal and a scoped transfer", () => {
+  const tl = {
+    end: "2002-04",
+    events: [
+      { type: "start", date: "2002-01", fundKey: 1, amount: 1000 },
+      { type: "withdraw", date: "2002-02", amount: 100 },
+      { type: "transfer", date: "2002-03", fundKey: 2, scope: "actual" },
+    ],
+  };
+  const r = W.runTimeline(tl, funds, 200204);
+  assert.strictEqual(r.actual.paid, 1000);
+  assert.strictEqual(r.actual.withdrawn, 100);
+  // profit counts withdrawn money as returned
+  assert.ok(Math.abs(r.actual.gain - (r.actual.final + 100 - 1000)) < 1e-9);
+  assert.strictEqual(r.phasesActual.length, 2);
+  assert.strictEqual(r.phasesWhatIf.length, 1);
+  assert.notStrictEqual(r.actual.final, r.whatIf.final);
+});
+
+test("timeline requires a start event and a deposit", () => {
+  assert.throws(() => W.timelineToStory({ events: [] }, "actual"));
+  assert.throws(() => W.timelineToStory({ events: [{ type: "start", date: "2002-01", fundKey: 1 }] }, "actual"));
+});

@@ -18,29 +18,14 @@
   </details>
 </header>
 <main>
-  <section>
-    <h2>1. התקופה וההפקדות</h2>
-    <label>התחלה <input type="month" id="start" value="2002-01"></label>
-    <label>סיום <input type="month" id="end"></label>
-    <div id="deposits"></div>
-    <button type="button" id="add-monthly">+ הפקדה חודשית קבועה</button>
-    <button type="button" id="add-lump">+ הפקדה חד-פעמית</button>
+  <section id="timeline-section">
+    <h2>ציר הזמן</h2>
+    <label>סיום החישוב <input type="month" id="end"></label>
+    <div id="timeline"></div>
+    <button type="button" id="add-event" class="plus" aria-label="הוסף אירוע">+</button>
   </section>
   <section>
-    <h2>2. מה קרה בפועל</h2>
-    <div class="fundpick" data-id="actual-start"></div>
-    <div id="actual-switches"></div>
-    <button type="button" id="add-actual">+ מעבר מסלול</button>
-  </section>
-  <section>
-    <h2>3. מה היה קורה אילו</h2>
-    <label><input type="checkbox" id="same-start" checked> אותו מסלול התחלתי כמו בפועל</label>
-    <div class="fundpick" data-id="alt-start" hidden></div>
-    <div id="alt-switches"></div>
-    <button type="button" id="add-alt">+ מעבר מסלול</button>
-  </section>
-  <section>
-    <h2>4. הערכת קצבה (אופציונלי)</h2>
+    <h2>הערכת קצבה (אופציונלי)</h2>
     <p>להערכת קצבה חודשית בפרישה: הזינו מקדם מובטח מהפוליסה (הון נדרש לכל 1 ₪ קצבה, למשל 190) ומקדם שוק משוער להשוואה. בלי מקדמים לא תוצג הערכה.</p>
     <label>מקדם מובטח <input type="number" id="coef-guar" min="0" step="0.1"></label>
     <label>מקדם שוק <input type="number" id="coef-market" min="0" step="0.1"></label>
@@ -48,13 +33,13 @@
     <label>תשואה שנתית משוערת עד הפרישה (%) <input type="number" id="ret-rate" step="0.1"></label>
   </section>
   <section>
-    <button type="button" id="run" class="primary">חשב</button>
+    <button type="button" id="run" class="primary">חשב רווח כולל</button>
     <div id="error" role="alert"></div>
     <div id="result"></div>
   </section>
   <section>
     <h2>שמירה וטעינה</h2>
-    <p>הסיפור נשמר לקובץ אצלכם (לא באתר). אפשר לטעון אותו שוב מאוחר יותר.</p>
+    <p>הסיפור נשמר לקובץ אצלכם (לא באתר). אפשר לטעון אותו שוב מאוחר יותר, או לפתוח קישור שמכיל את הסיפור אחרי הסימן # (החלק הזה לא נשלח לשרת).</p>
     <button type="button" id="export">שמור סיפור לקובץ</button>
     <input type="file" id="import" accept="application/json">
   </section>

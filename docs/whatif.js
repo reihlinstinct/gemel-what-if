@@ -75,6 +75,7 @@
     const warnings = { missingMonths: 0, unknownFunds: [] };
     let balance = 0;
     let paid = 0;
+    let withdrawn = 0;
     const flows = [];
     let previous = null;
     for (let i = startIndex; i <= endIndex; i++) {
@@ -87,7 +88,8 @@
       previous = phase;
       const dep = deposits.get(i) || 0;
       balance += dep;
-      paid += dep;
+      if (dep >= 0) paid += dep;
+      else withdrawn -= dep;
       if (dep) flows.push([i - startIndex, dep]);
       let y;
       if (!fund) {
@@ -98,7 +100,7 @@
       if (y === undefined) warnings.missingMonths++;
       // feeAdjPct is an extra yearly fee (percentage points, may be negative) spread over months.
       balance *= 1 + ((y || 0) - phase.feeAdjPct / 12) / 100;
-      series.push({ month: toLabel(i), fundId: phase.fundId, balance, paid });
+      series.push({ month: toLabel(i), fundId: phase.fundId, balance, paid, withdrawn });
     }
     const months = endIndex - startIndex + 1;
     return {
@@ -106,9 +108,61 @@
       finalFundId: phase_last(phases, endIndex).fundId,
       final: balance,
       paid,
-      gain: balance - paid,
+      withdrawn,
+      gain: balance + withdrawn - paid,
       annualized: annualizedReturn(flows, balance, months),
       warnings,
+    };
+  }
+
+  var SWITCH_TYPES = ["transfer", "product", "track"];
+
+  /**
+   * Turn an ordered timeline into a story for simulate().
+   * timeline = { end?, events: [
+   *   {type:"start", date, fundKey, amount?},
+   *   {type:"deposit", date, amount},
+   *   {type:"monthly", from, to?, amount},
+   *   {type:"withdraw", date, amount},
+   *   {type:"transfer"|"product"|"track", date, fundKey, exitCostPct?, feeAdjPct?}
+   * ] }
+   * Every event may carry scope: "both" (default), "actual" or "whatif".
+   */
+  function timelineToStory(timeline, scope) {
+    const events = (timeline.events || []).filter((e) => !e.scope || e.scope === "both" || e.scope === scope);
+    const start = events.find((e) => e.type === "start");
+    if (!start) throw new Error("Missing start event");
+    const deposits = [];
+    const switches = [];
+    if (start.amount > 0) deposits.push({ date: start.date, amount: Number(start.amount) });
+    for (const e of events) {
+      if (e.type === "deposit") deposits.push({ date: e.date, amount: Number(e.amount) });
+      else if (e.type === "withdraw") deposits.push({ date: e.date, amount: -Number(e.amount) });
+      else if (e.type === "monthly") deposits.push({ from: e.from, to: e.to || undefined, monthly: Number(e.amount) });
+      else if (SWITCH_TYPES.includes(e.type)) {
+        switches.push({ date: e.date, to: e.fundKey, exitCostPct: e.exitCostPct, feeAdjPct: e.feeAdjPct });
+      }
+    }
+    if (!deposits.length) throw new Error("No deposits");
+    return {
+      start: start.date,
+      end: timeline.end || undefined,
+      deposits,
+      phases: phasesFromSwitches(start.date, start.fundKey, switches),
+    };
+  }
+
+  /** Run the whole timeline twice (actual / what-if scopes) and compare total profit. */
+  function runTimeline(timeline, funds, latest) {
+    const actual = simulate(timelineToStory(timeline, "actual"), funds, latest);
+    const whatIf = simulate(timelineToStory(timeline, "whatif"), funds, latest);
+    return {
+      actual,
+      whatIf,
+      diff: whatIf.final - actual.final,
+      diffPercent: actual.final ? (whatIf.final / actual.final - 1) * 100 : null,
+      phasesActual: timelineToStory(timeline, "actual").phases,
+      phasesWhatIf: timelineToStory(timeline, "whatif").phases,
     };
   }
 
@@ -231,5 +285,5 @@
     return hits.slice(0, limit || 30);
   }
 
-  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, projectBalance, annuityEstimate, productChangeNotes };
+  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline };
 });
