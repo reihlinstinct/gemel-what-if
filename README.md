@@ -79,3 +79,7 @@ Tools: `search_tracks`, `validate_story`, `build_story_link`, `compute_story`.
 ## Checks
 
 `npm test` runs the unit tests, `npm run e2e` opens the page in headless Chrome with a story in the URL fragment and checks the result and meta tags. CI also runs CodeQL and dependency review. Note on fees: reported yields may already be net of some fees, so a fees event can double count; fee values are user inputs.
+
+## Free-text story (no server)
+
+The "תיאור חופשי עם AI" section builds a prompt from the person's text. They paste it into any AI chat, then paste the JSON reply back. `docs/prompt.js` extracts the JSON and maps `fundName` to a track by search (shown for review). Nothing is sent by the site.
