@@ -9,9 +9,10 @@ switched track at a different time. Everything runs in the browser; nothing you 
 
 ## Data
 
-Monthly yields come from the Capital Market Authority's open data, [Gemel-Net on data.gov.il](https://data.gov.il/dataset/gemelnet)
-(1999 to today). `scripts/fetch_data.py` downloads the three resources and writes `docs/data/funds.json`
-(one dense monthly-yield series per fund id). Data is public and aggregated; no personal data is stored in this repo.
+Monthly yields come from the Capital Market Authority's open data: [Gemel-Net](https://data.gov.il/dataset/gemelnet)
+(provident funds, hishtalmut, pension-type gemel) and [Insurance-Net](https://data.gov.il/dataset/insurance)
+(insurance-policy tracks, classes 1990-1991, 1992-2003 and from 2004), 1999 to today. `scripts/fetch_data.py` downloads both datasets and writes `docs/data/funds.json`
+(one dense monthly-yield series per track, keyed `g:<id>` for gemel and `i:<id>` for insurance). Data is public and aggregated; no personal data is stored in this repo.
 
 ```
 python3 scripts/fetch_data.py   # refresh the data
@@ -26,7 +27,17 @@ python3 scripts/fetch_data.py   # refresh the data
 - Reported yields are used as is. Taxes, deposit fees and policy-specific terms are not modelled.
 - "Annual return" is the money-weighted (IRR-style) rate over all deposits.
 
-Insurance policies (such as managers' insurance) are only covered when a matching track appears in Gemel-Net.
+## Product change (niyud) and annuity estimate
+
+A switch event can move money between products, for example from an insurance-policy track to a gemel track,
+with two optional inputs: a one-time cost (percent of the balance) and a yearly fee change (percentage points).
+When a switch crosses products the page lists what is not modelled (guaranteed annuity coefficient, insurance
+coverage, contractual fees, taxes).
+
+The optional annuity module estimates a monthly annuity as `balance / coefficient`, where the coefficient is the
+capital needed per 1 NIS of monthly annuity. Money in an insurance track gets the guaranteed coefficient you enter
+(from the policy documents, unverified); other money gets the market coefficient you enter. Both coefficients are
+user inputs and the result is an estimate only.
 
 ## Use
 
