@@ -40,6 +40,17 @@
     <div id="timeline"></div>
     <button type="button" id="add-event" class="plus" aria-label="הוסף אירוע">+</button>
   </section>
+  <section id="ai-section">
+    <h2>תיאור חופשי עם AI (אופציונלי)</h2>
+    <p class="warn">פרטיות: הכפתור "העתק פרומפט" רק מעתיק טקסט בדפדפן. אתם מדביקים אותו בעצמכם בצ'אט AI לבחירתכם, ומדביקים כאן את התשובה. האתר לא שולח כלום. אל תכתבו שמות, מספרי זהות או מספרי פוליסה. התוצאה היא הערכה בלבד ולא ייעוץ.</p>
+    <label for="story-text">תארו את הסיפור במילים שלכם</label>
+    <textarea id="story-text" rows="5" placeholder="למשל: ב-2005 פתחתי ביטוח מנהלים בהראל, הפקדתי 750 בחודש עד 2011, ב-2015 עבר לגמל של פסגות..."></textarea>
+    <button type="button" id="copy-prompt">העתק פרומפט</button>
+    <label for="ai-reply">הדביקו כאן את תשובת ה-AI (JSON)</label>
+    <textarea id="ai-reply" rows="5" dir="ltr"></textarea>
+    <button type="button" id="load-reply">טען לציר הזמן</button>
+    <p id="ai-status" role="status"></p>
+  </section>
   <section>
     <h2>הערכת קצבה (אופציונלי)</h2>
     <p>להערכת קצבה חודשית בפרישה: הזינו מקדם מובטח מהפוליסה (הון נדרש לכל 1 ₪ קצבה, למשל 190) ומקדם שוק משוער להשוואה. בלי מקדמים לא תוצג הערכה.</p>
@@ -62,6 +73,7 @@
 </main>
 <footer>מקור הנתונים: <a href="https://data.gov.il/dataset/gemelnet">גמל-נט</a> ו<a href="https://data.gov.il/dataset/insurance">ביטוח-נט</a>, רשות שוק ההון (data.gov.il). <span id="data-info"></span> <a href="https://github.com/reihlinstinct/gemel-what-if">קוד המקור</a>.</footer>
 <script src="whatif.js"></script>
+<script src="prompt.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
