@@ -223,6 +223,21 @@
     if (!loaded) addCard("start");
     $("#add-event").onclick = () => addCard("deposit");
     $("#run").onclick = run;
+    $("#copy-prompt").onclick = () => {
+      const text = StoryPrompt.buildPrompt($("#story-text").value);
+      const done = () => { $("#ai-status").textContent = "הפרומפט הועתק. הדביקו אותו בצ'אט AI, והדביקו כאן את התשובה."; };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => { $("#ai-reply").value = text; $("#ai-status").textContent = "ההעתקה נחסמה. הפרומפט הוצב בתיבה למטה, העתיקו אותו ידנית."; });
+      else { $("#ai-reply").value = text; $("#ai-status").textContent = "הפרומפט הוצב בתיבה למטה, העתיקו אותו ידנית."; }
+    };
+    $("#load-reply").onclick = () => {
+      try {
+        const r = StoryPrompt.resolveFunds(StoryPrompt.extractJson($("#ai-reply").value), (name) => W.searchFunds(data, name, 3));
+        loadTimeline(r.story);
+        const lines = r.resolved.map((x) => "\"" + x.asked + "\" -> " + x.got);
+        $("#ai-status").textContent = "נטען. בדקו שהמסלולים נכונים: " + (lines.join("; ") || "-") + (r.missing.length ? ". לא נמצאו: " + r.missing.join(", ") : "");
+        $("#error").textContent = "";
+      } catch (e) { $("#ai-status").textContent = "לא הצלחתי לטעון: " + e.message; }
+    };
     $("#export").onclick = () => { try { exportStory(); } catch (e) { $("#error").textContent = e.message; } };
     $("#import").onchange = (e) => e.target.files[0] && e.target.files[0].text().then((t) => loadTimeline(JSON.parse(t))).catch((x) => { $("#error").textContent = "קובץ לא תקין: " + x.message; });
   });
