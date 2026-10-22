@@ -37,14 +37,16 @@ server.listen(0, async () => {
   fs.writeFileSync(harness, `<!doctype html><meta charset=utf-8><div id=o></div><iframe id=f width=900 height=1200></iframe><script>
 const f=document.getElementById('f');f.src='${base}index.html#story=${fragment}';
 f.onload=()=>setTimeout(()=>{const d=f.contentDocument,q=s=>d.querySelector(s);d.querySelector('#ai-reply').value='ok {"events":[{"type":"start","date":"2002-01-01","fundName":"כלל קרן"},{"type":"monthly","from":"2002-01-01","to":"2002-12-01","amount":500}]} thanks';d.querySelector('#load-reply').click();const aiCards=d.querySelectorAll('.card').length;const aiStatus=d.querySelector('#ai-status').textContent;d.querySelector('#story-text').value='x';q('#run').click();
-document.getElementById('o').textContent='RESULT:'+q('#error').textContent+'|'+aiCards+'|'+aiStatus.slice(0,5)+'|'+q('#result').innerText.replace(/\\s+/g,' ');},1500);</script>`);
+const unnamed=[...d.querySelectorAll('input,select,textarea')].filter(e=>!(e.closest('label')||e.getAttribute('aria-label')||(e.id&&d.querySelector('label[for="'+e.id+'"]')))).length;document.getElementById('o').textContent='RESULT:'+unnamed+'#'+q('#error').textContent+'|'+aiCards+'|'+aiStatus.slice(0,5)+'|'+q('#result').innerText.replace(/\\s+/g,' ');},1500);</script>`);
   try {
     const chrome = process.env.CHROME || "google-chrome";
     const dom = await run(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--virtual-time-budget=10000", "--dump-dom", base + "__e2e.html"]);
     const m = /RESULT:([^<]*)/.exec(dom);
     check(m, "page produced a result");
     if (m) {
-      const [err, cards, aiStatus, text] = m[1].split("|");
+      const [unnamed, rest] = m[1].split("#");
+      const [err, cards, aiStatus, text] = rest.split("|");
+      check(unnamed === "0", "every form control has an accessible name (" + unnamed + " without)");
       check(err === "", "no error shown");
       check(cards === "2", "pasted AI reply replaced the timeline (2 cards)");
       check(aiStatus === "נטען.", "AI reply resolved the fund name");
