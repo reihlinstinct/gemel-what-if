@@ -13,7 +13,7 @@ const FUNDS = W.indexFunds(DATA);
 const DEFAULT_BASE = "https://reihlinstinct.github.io/gemel-what-if/";
 const TYPES = ["start", "deposit", "monthly", "withdraw", "transfer", "product", "track"];
 const SWITCHES = ["transfer", "product", "track"];
-const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
+const MONTH = /^\d{4}-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?$/;
 
 const STORY_SCHEMA = {
   type: "object",
