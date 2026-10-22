@@ -285,15 +285,27 @@
   }
 
   /** Text search over fund id/name/corporation. */
+  var ALIASES = { clal: "כלל", meitav: "מיטב", migdal: "מגדל", harel: "הראל", phoenix: "הפניקס", menora: "מנורה", altshuler: "אלטשולר", analyst: "אנליסט", psagot: "פסגות", ayalon: "איילון", more: "מור", infinity: "אינפיניטי", ibi: "איי.בי.אי" };
+  var GENERIC = ["ביטוח", "מנהלים", "קרן", "קופת", "גמל", "השתלמות", "פוליסה", "מסלול", "insurance", "managers", "gemel", "fund", "track"];
+
   function searchFunds(data, query, limit) {
     const q = String(query).trim().toLowerCase();
     if (!q) return [];
-    const parts = q.split(/\s+/);
-    const hits = data.funds.filter((f) => {
-      const hay = (f.id + " " + (f.key || "") + " " + f.name + " " + (f.corp || "") + " " + (f.cls || "")).toLowerCase();
-      return parts.every((p) => hay.includes(p));
-    });
-    hits.sort((a, b) => (b.end - a.end) || ((b.assets || 0) - (a.assets || 0)));
+    const parts = q.split(/\s+/).map((p) => ALIASES[p] || p);
+    const hayOf = (f) => (f.id + " " + (f.key || "") + " " + f.name + " " + (f.corp || "") + " " + (f.cls || "")).toLowerCase();
+    const order = (a, b) => (b.end - a.end) || ((b.assets || 0) - (a.assets || 0));
+    let hits = data.funds.filter((f) => { const hay = hayOf(f); return parts.every((p) => hay.includes(p)); });
+    if (!hits.length) {
+      // relaxed: rank by how many query words match, ignoring generic words when there are specific ones
+      const specific = parts.filter((p) => !GENERIC.includes(p));
+      const use = specific.length ? specific : parts;
+      const scored = data.funds
+        .map((f) => { const hay = hayOf(f); const words = hay.split(/[^\p{L}\p{N}]+/u); return { f, n: use.reduce((t, p) => t + (words.includes(p) ? 2 : hay.includes(p) ? 1 : 0), 0) }; })
+        .filter((x) => x.n > 0);
+      const best = scored.reduce((m, x) => Math.max(m, x.n), 0);
+      hits = scored.filter((x) => x.n === best).map((x) => x.f);
+    }
+    hits.sort(order);
     return hits.slice(0, limit || 30);
   }
 

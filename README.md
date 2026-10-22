@@ -92,3 +92,5 @@ The "תיאור חופשי עם AI" section builds a prompt from the person's te
 - `POST /api/story`: free text -> Workers AI model with tool calling (`search_tracks`, `validate_story`, `build_story_link`), the answer is validated, and validation errors are fed back up to 2 times. Only the site origin may call it; text is limited to 2,000 characters; 10 requests per hour per IP (best effort, per isolate). Workers AI's free allocation is 10,000 neurons/day, requests fail past it and nothing is billed without a paid plan.
 
 Text sent to the AI endpoint leaves the browser and is processed by Cloudflare Workers AI. Do not include names or ID numbers.
+
+Live Worker: https://gemel-what-if.reihlinstinct.workers.dev (remote MCP connector URL: `https://gemel-what-if.reihlinstinct.workers.dev/mcp`). The site's "בנה עם AI" button calls `/api/story`.

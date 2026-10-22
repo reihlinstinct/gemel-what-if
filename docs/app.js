@@ -1,3 +1,4 @@
+const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
 (function () {
   "use strict";
   const W = window.WhatIf;
@@ -223,6 +224,21 @@
     if (!loaded) addCard("start");
     $("#add-event").onclick = () => addCard("deposit");
     $("#run").onclick = run;
+    $("#build-ai").onclick = async () => {
+      const text = $("#story-text").value.trim();
+      if (!text) { $("#ai-status").textContent = "כתבו קודם את הסיפור"; return; }
+      $("#ai-status").textContent = "בונה...";
+      $("#build-ai").disabled = true;
+      try {
+        const res = await fetch(WORKER_URL + "/api/story", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text }) });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || "שגיאה " + res.status);
+        loadTimeline(body.story);
+        $("#ai-status").textContent = "נטען לציר הזמן. בדקו כל אירוע ומסלול לפני החישוב (ה-AI עלול לטעות)." + ((body.warnings || []).length ? " הערות: " + body.warnings.join("; ") : "");
+        $("#error").textContent = "";
+      } catch (e) { $("#ai-status").textContent = "לא הצלחתי: " + e.message + ". אפשר להשתמש ב'העתק פרומפט'."; }
+      $("#build-ai").disabled = false;
+    };
     $("#copy-prompt").onclick = () => {
       const text = StoryPrompt.buildPrompt($("#story-text").value);
       const done = () => { $("#ai-status").textContent = "הפרומפט הועתק. הדביקו אותו בצ'אט AI, והדביקו כאן את התשובה."; };
