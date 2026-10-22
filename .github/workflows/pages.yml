@@ -1,8 +1,6 @@
 name: Pages
+# Manual only: Pages is unavailable while the repository is private.
 on:
-  push:
-    branches: [main]
-    paths: [docs/**]
   workflow_dispatch:
 permissions:
   contents: read
