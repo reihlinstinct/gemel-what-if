@@ -71,6 +71,11 @@
       throw new Error("A phase must cover the start month");
     }
     const deposits = depositSchedule(story, endIndex);
+    // Optional management fees (off unless the story has fee events): fee on each deposit (percent of
+    // the deposit) and yearly fee on accumulated savings (percent, applied monthly as 1/12).
+    const feeSteps = (story.fees || [])
+      .map((f) => ({ from: toIndex(f.from), deposit: Number(f.depositPct) || 0, savings: Number(f.savingsPct) || 0 }))
+      .sort((a, b) => a.from - b.from);
     const series = [];
     const warnings = { missingMonths: 0, unknownFunds: [] };
     let balance = 0;
@@ -87,7 +92,9 @@
       }
       previous = phase;
       const dep = deposits.get(i) || 0;
-      balance += dep;
+      let fee = { deposit: 0, savings: 0 };
+      for (const f of feeSteps) if (f.from <= i) fee = f;
+      balance += dep > 0 ? dep * (1 - fee.deposit / 100) : dep;
       if (dep >= 0) paid += dep;
       else withdrawn -= dep;
       if (dep) flows.push([i - startIndex, dep]);
@@ -100,6 +107,7 @@
       if (y === undefined) warnings.missingMonths++;
       // feeAdjPct is an extra yearly fee (percentage points, may be negative) spread over months.
       balance *= 1 + ((y || 0) - phase.feeAdjPct / 12) / 100;
+      balance *= 1 - fee.savings / 12 / 100;
       series.push({ month: toLabel(i), fundId: phase.fundId, balance, paid, withdrawn });
     }
     const months = endIndex - startIndex + 1;
@@ -124,6 +132,7 @@
    *   {type:"deposit", date, amount},
    *   {type:"monthly", from, to?, amount},
    *   {type:"withdraw", date, amount},
+   *   {type:"fees", date, depositPct?, savingsPct?}   // optional management fees from that date
    *   {type:"transfer"|"product"|"track", date, fundKey, exitCostPct?, feeAdjPct?}
    * ] }
    * Every event may carry scope: "both" (default), "actual" or "whatif".
@@ -134,11 +143,13 @@
     if (!start) throw new Error("Missing start event");
     const deposits = [];
     const switches = [];
+    const fees = [];
     if (start.amount > 0) deposits.push({ date: start.date, amount: Number(start.amount) });
     for (const e of events) {
       if (e.type === "deposit") deposits.push({ date: e.date, amount: Number(e.amount) });
       else if (e.type === "withdraw") deposits.push({ date: e.date, amount: -Number(e.amount) });
       else if (e.type === "monthly") deposits.push({ from: e.from, to: e.to || undefined, monthly: Number(e.amount) });
+      else if (e.type === "fees") fees.push({ from: e.date, depositPct: e.depositPct, savingsPct: e.savingsPct });
       else if (SWITCH_TYPES.includes(e.type)) {
         switches.push({ date: e.date, to: e.fundKey, exitCostPct: e.exitCostPct, feeAdjPct: e.feeAdjPct });
       }
@@ -149,6 +160,7 @@
       end: timeline.end || undefined,
       deposits,
       phases: phasesFromSwitches(start.date, start.fundKey, switches),
+      fees,
     };
   }
 

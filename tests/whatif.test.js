@@ -143,3 +143,14 @@ test("timeline requires a start event and a deposit", () => {
   assert.throws(() => W.timelineToStory({ events: [] }, "actual"));
   assert.throws(() => W.timelineToStory({ events: [{ type: "start", date: "2002-01", fundKey: 1 }] }, "actual"));
 });
+
+test("management fees are off by default and reduce the result when set", () => {
+  const funds = new Map([["f", { id: "f", start: "2020-01", y: new Array(24).fill(0) }]]);
+  const base = { end: "2021-12", events: [{ type: "start", date: "2020-01", fundKey: "f" }, { type: "monthly", from: "2020-01", amount: 100 }] };
+  const none = W.runTimeline(base, W.indexFunds ? funds : funds, "2021-12").actual;
+  assert.strictEqual(none.final, 2400);
+  const withFees = { end: base.end, events: base.events.concat([{ type: "fees", date: "2020-01", depositPct: 1, savingsPct: 1 }]) };
+  const f = W.runTimeline(withFees, funds, "2021-12").actual;
+  assert.ok(f.final < 2400 * 0.99 && f.gain < 0);
+  assert.strictEqual(f.paid, 2400);
+});
