@@ -56,10 +56,10 @@
   }
 
   function fieldsFor(type) {
-    if (type === "start") return 'פתיחה ב-<input type="month" class="date"> סכום פתיחה (אופציונלי) <input type="number" class="amount" min="0"> ₪<div class="fundpick"></div>';
-    if (type === "deposit" || type === "withdraw") return 'ב-<input type="month" class="date"> סכום <input type="number" class="amount" min="0"> ₪';
-    if (type === "monthly") return 'מ-<input type="month" class="from"> עד <input type="month" class="to"> סכום חודשי <input type="number" class="amount" min="0"> ₪';
-    return 'ב-<input type="month" class="date"><div class="fundpick"></div>עלות חד-פעמית <input type="number" class="exit" min="0" step="0.1" placeholder="0"> % ושינוי דמי ניהול שנתיים <input type="number" class="feeadj" step="0.1" placeholder="0"> נק\' אחוז';
+    if (type === "start") return 'פתיחה ב-<input type="date" class="date"> סכום פתיחה (אופציונלי) <input type="number" class="amount" min="0"> ₪<div class="fundpick"></div>';
+    if (type === "deposit" || type === "withdraw") return 'ב-<input type="date" class="date"> סכום <input type="number" class="amount" min="0"> ₪';
+    if (type === "monthly") return 'מ-<input type="date" class="from"> עד <input type="date" class="to"> סכום חודשי <input type="number" class="amount" min="0"> ₪';
+    return 'ב-<input type="date" class="date"><div class="fundpick"></div>עלות חד-פעמית <input type="number" class="exit" min="0" step="0.1" placeholder="0"> % ושינוי דמי ניהול שנתיים <input type="number" class="feeadj" step="0.1" placeholder="0"> נק\' אחוז';
   }
 
   function addCard(type, values) {
@@ -92,7 +92,8 @@
   }
 
   function fill(card, v) {
-    const set = (sel, val) => { const el = $(sel, card); if (el && val !== undefined && val !== null) el.value = val; };
+    const pad = (x) => (typeof x === "string" && /^\d{4}-\d{2}$/.test(x) ? x + "-01" : x);
+    const set = (sel, val) => { const el = $(sel, card); if (el && val !== undefined && val !== null) el.value = pad(val); };
     set(".date", v.date); set(".from", v.from); set(".to", v.to); set(".amount", v.amount);
     set(".exit", v.exitCostPct || ""); set(".feeadj", v.feeAdjPct || "");
     const fp = $(".fundpick", card);
@@ -179,7 +180,7 @@
 
   function loadTimeline(tl) {
     $("#timeline").innerHTML = "";
-    $("#end").value = tl.end || "";
+    $("#end").value = /^\d{4}-\d{2}$/.test(tl.end || "") ? tl.end + "-01" : tl.end || "";
     for (const e of tl.events) addCard(e.type, e);
     const a = tl.annuity || {};
     $("#coef-guar").value = a.guaranteed || "";
@@ -207,7 +208,7 @@
   fetch("data/funds.json").then((r) => r.json()).then((d) => {
     data = d;
     funds = W.indexFunds(d);
-    $("#end").value = W.toLabel(W.toIndex(d.latest));
+    $("#end").value = W.toLabel(W.toIndex(d.latest)) + "-01";
     $("#data-info").textContent = "נתונים עד " + W.toLabel(W.toIndex(d.latest)) + ", " + d.funds.length + " מסלולים.";
     let loaded = false;
     try {
