@@ -75,19 +75,62 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     return grid(fld("תאריך", dateIn("date")) + fld("עלות חד-פעמית (%)", num("exit", 'min="0" step="0.1" placeholder="0"')) + fld("שינוי דמי ניהול שנתיים (נק' אחוז)", num("feeadj", 'step="0.1" placeholder="0"'))) + '<div class="fundpick"></div>';
   }
 
+  function place(card, scope) {
+    const target = scope === "actual" ? "#col-actual" : scope === "whatif" ? "#col-whatif" : "#timeline";
+    if (target !== "#timeline") $("#fork").hidden = false;
+    $(target).append(card);
+    syncFork();
+  }
+  function syncFork() {
+    const forked = !$("#fork").hidden;
+    $("#fork-btn").hidden = forked;
+    $("#add-event").hidden = forked;
+    $("#unfork-btn").hidden = !forked;
+    for (const c of document.querySelectorAll("#timeline .card:not(.start) .split")) c.hidden = forked;
+  }
+  function allCards() {
+    return [...document.querySelectorAll("#timeline .card, #col-actual .card, #col-whatif .card")];
+  }
+  function forkFrom(card) {
+    const shared = [...document.querySelectorAll("#timeline .card")];
+    const from = card ? shared.indexOf(card) : shared.length;
+    const moved = shared.slice(from);
+    for (const c of moved) {
+      const ev = readEvent(c);
+      c.remove();
+      addCard(ev.type, Object.assign({}, ev, { scope: "actual" }));
+      addCard(ev.type, Object.assign({}, ev, { scope: "whatif" }));
+    }
+    $("#fork").hidden = false;
+    syncFork();
+    $("#parallel-status").textContent = "הציר פוצל. מימין בפועל ומשמאל מה אם: שנו את הצד של \"מה אם\" (מסלול, תאריך מעבר) ולחצו חשב.";
+  }
+  function unfork() {
+    for (const c of [...document.querySelectorAll("#col-whatif .card")]) c.remove();
+    for (const c of [...document.querySelectorAll("#col-actual .card")]) {
+      const ev = readEvent(c);
+      c.remove();
+      addCard(ev.type, Object.assign({}, ev, { scope: "both" }));
+    }
+    $("#fork").hidden = true;
+    syncFork();
+    $("#parallel-status").textContent = "הפיצול בוטל. נשמר הצד של \"בפועל\".";
+  }
+
   function addCard(type, values) {
     const card = document.createElement("div");
     card.className = "card" + (type === "start" ? " start" : "");
     card.dataset.type = type;
     let head;
     if (type === "start") {
-      head = "<h3>אירוע התחלה: פתיחת קופה</h3>";
+      head = '<h3>אירוע התחלה: פתיחת קופה <span class="badge"></span> <label class="scope-l scope-start" hidden>חל על <select class="scope" aria-label="חל על"><option value="both">משותף: בפועל ומה אם</option><option value="actual">בפועל בלבד</option><option value="whatif">מה אם בלבד</option></select></label></h3>';
     } else {
       const options = Object.keys(TYPES).map((k) => '<option value="' + k + '"' + (k === type ? " selected" : "") + ">" + TYPES[k] + "</option>").join("");
-      head = '<h3><select class="type" aria-label="סוג אירוע">' + options + '</select> <label class="scope-l">חל על <select class="scope" aria-label="חל על"><option value="both">שני התרחישים</option><option value="actual">בפועל בלבד</option><option value="whatif">אילו בלבד</option></select></label> <button type="button" class="rm">הסר</button></h3>';
+      head = '<h3><select class="type" aria-label="סוג אירוע">' + options + '</select> <span class="badge"></span> <label class="scope-l">חל על <select class="scope" aria-label="חל על"><option value="both">משותף: בפועל ומה אם</option><option value="actual">בפועל בלבד</option><option value="whatif">מה אם בלבד</option></select></label> <button type="button" class="split">⑂ פצל מכאן</button> <button type="button" class="rm">הסר</button></h3>';
     }
     card.innerHTML = head + '<div class="body"></div>';
-    $("#timeline").append(card);
+    const wantScope = (values && values.scope) || "both";
+    place(card, wantScope);
     const render = (t, v) => {
       card.dataset.type = t;
       $(".body", card).innerHTML = fieldsFor(t);
@@ -96,10 +139,21 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       if (v) fill(card, v);
     };
     render(type, values);
+    const sc = $(".scope", card);
+    const BADGES = { both: "", actual: "בפועל", whatif: "מה אם" };
+    const paint = () => {
+      card.dataset.scope = sc.value;
+      if (card.parentNode && card.parentNode.id !== ({ both: "timeline", actual: "col-actual", whatif: "col-whatif" })[sc.value]) place(card, sc.value);
+      $(".badge", card).textContent = BADGES[sc.value];
+      if (type === "start" && sc.value !== "both") $(".scope-start", card).hidden = false;
+    };
+    if (values && values.scope) sc.value = values.scope;
+    sc.addEventListener("change", paint);
+    paint();
     if (type !== "start") {
       $(".type", card).addEventListener("change", (e) => render(e.target.value, null));
       $(".rm", card).addEventListener("click", () => card.remove());
-      if (values && values.scope) $(".scope", card).value = values.scope;
+      $(".split", card).addEventListener("click", () => forkFrom(card));
     }
     return card;
   }
@@ -117,7 +171,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const type = card.dataset.type;
     const num = (s) => Number($(s, card).value) || 0;
     const e = { type };
-    if (type !== "start") e.scope = $(".scope", card).value;
+    e.scope = $(".scope", card).value;
     if (type === "monthly") { e.from = $(".from", card).value; e.to = $(".to", card).value || undefined; e.amount = num(".amount"); }
     else { e.date = $(".date", card).value; }
     if (type === "start" || type === "deposit" || type === "withdraw") e.amount = num(".amount");
@@ -128,7 +182,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   }
 
   function readTimeline() {
-    const events = [...document.querySelectorAll("#timeline .card")].map(readEvent);
+    const events = [...document.querySelectorAll("#timeline .card, #col-actual .card, #col-whatif .card")].map(readEvent);
     for (const e of events) {
       if (e.type === "monthly" ? !e.from || !e.amount : !e.date) throw new Error("חסר תאריך באחד האירועים");
       if ((e.type === "start" || SWITCHES.includes(e.type)) && !e.fundKey) throw new Error("בחרו מסלול באירוע " + TYPES[e.type] || "ההתחלה");
@@ -152,7 +206,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const max = Math.max(...a.series.concat(b.series).map((p) => p.balance), 1);
     const n = a.series.length;
     const pts = (s) => s.map((p, i) => (pad + (i / Math.max(n - 1, 1)) * (w - 2 * pad)).toFixed(1) + "," + (h - pad - (p.balance / max) * (h - 2 * pad)).toFixed(1)).join(" ");
-    return '<svg viewBox="0 0 ' + w + " " + h + '" role="img" aria-label="גרף יתרה"><polyline fill="none" stroke="#777" stroke-width="2" points="' + pts(a.series) + '"/><polyline fill="none" stroke="#1b5fd1" stroke-width="2" points="' + pts(b.series) + '"/></svg><p><span style="color:#777">━ בפועל</span> &nbsp; <span style="color:#1b5fd1">━ אילו</span></p>';
+    return '<svg viewBox="0 0 ' + w + " " + h + '" role="img" aria-label="גרף יתרה"><polyline fill="none" stroke="#777" stroke-width="2" points="' + pts(a.series) + '"/><polyline fill="none" stroke="#1b5fd1" stroke-width="2" points="' + pts(b.series) + '"/></svg><p><span style="color:#777">━ בפועל</span> &nbsp; <span style="color:#1b5fd1">━ מה אם</span></p>';
   }
 
   function run() {
@@ -168,7 +222,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       const notes = W.productChangeNotes(c.phasesActual, funds).concat(W.productChangeNotes(c.phasesWhatIf, funds));
       const label = (a) => (a.basis === "guaranteed" ? "מקדם מובטח" : "מקדם שוק");
       const annuityHtml = aA && aB
-        ? "<h3>הערכת קצבה חודשית (הערכה בלבד)</h3><table><tr><th></th><th>בפועל</th><th>אילו</th></tr>" +
+        ? "<h3>הערכת קצבה חודשית (הערכה בלבד)</h3><table><tr><th></th><th>בפועל</th><th>מה אם</th></tr>" +
           "<tr><td>יתרה בפרישה</td><td>" + fmt(aA.balance) + " ₪</td><td>" + fmt(aB.balance) + " ₪</td></tr>" +
           "<tr><td>מקדם (הון ל-1 ₪ קצבה)</td><td>" + aA.coefficient + " (" + label(aA) + ")</td><td>" + aB.coefficient + " (" + label(aB) + ")</td></tr>" +
           "<tr><td>קצבה חודשית משוערת</td><td>" + fmt(aA.monthly) + " ₪</td><td>" + fmt(aB.monthly) + " ₪</td></tr></table>" +
@@ -178,7 +232,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
         ? '<div class="warn"><b>מה לא מחושב במעבר בין מוצרים:</b><ul><li>מקדם קצבה מובטח בפוליסה עלול ללכת לאיבוד</li><li>כיסויים ביטוחיים (נכות, שארים) שנגרעים או משתנים</li><li>דמי ניהול חוזיים: אפשר להזין אותם בעלות חד-פעמית ושינוי דמי ניהול</li><li>מסים וזכויות ייחודיות שבפוליסה</li></ul></div>'
         : "";
       $("#result").innerHTML =
-        "<table><tr><th></th><th>בפועל</th><th>אילו</th></tr>" +
+        "<table><tr><th></th><th>בפועל</th><th>מה אם</th></tr>" +
         "<tr><td>סך הפקדות</td><td>" + fmt(c.actual.paid) + " ₪</td><td>" + fmt(c.whatIf.paid) + " ₪</td></tr>" +
         "<tr><td>סך משיכות</td><td>" + fmt(c.actual.withdrawn) + " ₪</td><td>" + fmt(c.whatIf.withdrawn) + " ₪</td></tr>" +
         "<tr><td>שווי סופי</td><td>" + fmt(c.actual.final) + " ₪</td><td>" + fmt(c.whatIf.final) + " ₪</td></tr>" +
@@ -192,8 +246,18 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     }
   }
 
+  const EXAMPLE = {
+    end: "2020-12-01",
+    events: [
+      { type: "start", date: "2002-01-01", fundKey: "i:14012", scope: "both" },
+      { type: "monthly", from: "2002-01-01", to: "2008-12-01", amount: 1000, scope: "both" },
+      { type: "product", date: "2012-01-01", fundKey: "g:880", scope: "whatif" },
+    ],
+  };
+
   function loadTimeline(tl) {
-    $("#timeline").innerHTML = "";
+    for (const id of ["#timeline", "#col-actual", "#col-whatif"]) $(id).innerHTML = "";
+    $("#fork").hidden = true;
     $("#end").value = /^\d{4}-\d{2}$/.test(tl.end || "") ? tl.end + "-01" : tl.end || "";
     for (const e of tl.events) addCard(e.type, e);
     const a = tl.annuity || {};
@@ -233,6 +297,14 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     }
     if (!loaded) addCard("start");
     $("#add-event").onclick = () => addCard("deposit");
+    $("#fork-btn").onclick = () => forkFrom(null);
+    $("#unfork-btn").onclick = unfork;
+    $("#add-actual").onclick = () => addCard("deposit", { scope: "actual" });
+    $("#add-whatif").onclick = () => addCard("deposit", { scope: "whatif" });
+    $("#load-example").onclick = () => {
+      loadTimeline(EXAMPLE);
+      $("#parallel-status").textContent = "נטענה דוגמה: הציר מתפצל: בפועל הכסף נשאר בביטוח, ובמה אם עובר לגמל ב-2012. לחצו חשב.";
+    };
     $("#run").onclick = run;
     $("#build-ai").onclick = async () => {
       const text = $("#story-text").value.trim();
