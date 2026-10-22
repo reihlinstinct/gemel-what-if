@@ -78,7 +78,7 @@ Tools: `search_tracks`, `validate_story`, `build_story_link`, `compute_story`.
 
 ## Checks
 
-`npm test` runs the unit tests, `npm run e2e` opens the page in headless Chrome with a story in the URL fragment and checks the result and meta tags. CI also runs CodeQL and dependency review. Note on fees: reported yields may already be net of some fees, so a fees event can double count; fee values are user inputs.
+`npm test` runs the unit tests, `npm run e2e` opens the page in headless Chrome with a story in the URL fragment and checks the result and meta tags. CI also runs CodeQL and dependency review, the e2e test checks that every form control has an accessible name, and a weekly workflow (`npm run links`) checks external links. Note on fees: reported yields may already be net of some fees, so a fees event can double count; fee values are user inputs.
 
 ## Free-text story (no server)
 
