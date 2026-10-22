@@ -1,0 +1,60 @@
+#!/usr/bin/env node
+// End-to-end smoke test: serves docs/ locally, opens the page in headless Chrome with a story in the
+// URL fragment, clicks run, and checks the result, the SEO/meta tags and the static files.
+"use strict";
+const http = require("node:http");
+const fs = require("node:fs");
+const path = require("node:path");
+const { execFile } = require("node:child_process");
+const run = (cmd, args) => new Promise((ok, no) => execFile(cmd, args, { encoding: "utf8", maxBuffer: 1 << 26, timeout: 60000 }, (e, out) => (e ? no(e) : ok(out))));
+
+const root = path.join(__dirname, "../docs");
+const story = {
+  end: "2010-12",
+  events: [
+    { type: "start", date: "2002-01", fundKey: "i:14012" },
+    { type: "monthly", from: "2002-01", to: "2008-12", amount: 1000 },
+  ],
+};
+const fragment = Buffer.from(JSON.stringify(story)).toString("base64url");
+const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".txt": "text/plain", ".xml": "application/xml" };
+
+const server = http.createServer((req, res) => {
+  const file = path.join(root, decodeURIComponent(req.url.split("?")[0].split("#")[0]).replace(/\/$/, "/index.html"));
+  if (!file.startsWith(root) || !fs.existsSync(file)) { res.writeHead(404); return res.end(); }
+  res.writeHead(200, { "content-type": types[path.extname(file)] || "application/octet-stream" });
+  res.end(fs.readFileSync(file));
+});
+
+function check(cond, msg) {
+  if (!cond) { console.error("FAIL: " + msg); process.exitCode = 1; } else console.log("ok: " + msg);
+}
+
+server.listen(0, async () => {
+  const port = server.address().port;
+  const base = "http://localhost:" + port + "/";
+  const harness = path.join(root, "__e2e.html");
+  fs.writeFileSync(harness, `<!doctype html><meta charset=utf-8><div id=o></div><iframe id=f width=900 height=1200></iframe><script>
+const f=document.getElementById('f');f.src='${base}index.html#story=${fragment}';
+f.onload=()=>setTimeout(()=>{const d=f.contentDocument,q=s=>d.querySelector(s);q('#run').click();
+document.getElementById('o').textContent='RESULT:'+q('#error').textContent+'|'+d.querySelectorAll('.card').length+'|'+q('#result').innerText.replace(/\\s+/g,' ');},1500);</script>`);
+  try {
+    const chrome = process.env.CHROME || "google-chrome";
+    const dom = await run(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--virtual-time-budget=10000", "--dump-dom", base + "__e2e.html"]);
+    const m = /RESULT:([^<]*)/.exec(dom);
+    check(m, "page produced a result");
+    if (m) {
+      const [err, cards, text] = m[1].split("|");
+      check(err === "", "no error shown");
+      check(cards === "2", "story loaded from the URL fragment (2 cards)");
+      check(/84,000/.test(text) && /רווח כולל/.test(text), "result shows deposits and total profit");
+    }
+  } finally {
+    fs.unlinkSync(harness);
+    const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+    check(/<html lang="he" dir="rtl">/.test(html), "html lang/dir set");
+    check(/og:image/.test(html) && /rel="icon"/.test(html) && /name="description"/.test(html), "preview, icon and description meta present");
+    for (const f of ["og.png", "favicon.svg", "robots.txt", "sitemap.xml", ".well-known/security.txt", "data/funds.json"]) check(fs.existsSync(path.join(root, f)), f + " exists");
+    server.close();
+  }
+});
