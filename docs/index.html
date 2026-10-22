@@ -26,7 +26,7 @@
 <header>
   <h1>מה היה קורה אילו?</h1>
   <p>תארו סיפור השקעה (הפקדות, תאריכים, מסלולים) וראו מה היה קורה אילו הייתם עוברים מסלול בזמן אחר. החישוב מתבצע בדפדפן בלבד, שום נתון לא נשלח לשום מקום.</p>
-  <p class="warn">לא ייעוץ פיננסי. תשואות עבר אינן מעידות על העתיד. החישוב מבוסס על התשואות החודשיות שדווחו לרשות שוק ההון (גמל-נט) ועל הנחות מפושטות (הפקדה בתחילת חודש, בלי מס, בלי עמלות נוספות מעבר למה שכבר מגולם בתשואה).</p>
+  <p class="warn" role="note">לא ייעוץ פיננסי. תשואות עבר אינן מעידות על העתיד. החישוב מבוסס על התשואות החודשיות שדווחו לרשות שוק ההון (גמל-נט) ועל הנחות מפושטות (הפקדה בתחילת חודש, בלי מס, בלי עמלות נוספות מעבר למה שכבר מגולם בתשואה).</p>
   <details>
     <summary>חשוב לדעת: מעבר בין מוצרים אינו מעבר מסלול</summary>
     <p>המחשבון בודק מעבר בין מסלולי השקעה. מעבר מפוליסת ביטוח מנהלים ותיקה (לפני 2013) לקופת גמל הוא שינוי מוצר, ולא רק מסלול: ייתכן שמקדם קצבה מובטח הולך לאיבוד, כיסויים ביטוחיים ודמי ניהול חוזיים שונים, ובדרך כלל המעבר עצמו אינו אירוע מס. אם יש מקדם קצבה תלוי במסמכי הפוליסה. זהו מידע כללי ולא ייעוץ, המבוסס על סיכומים של כל זכות ומשרד האוצר, ותלוי בפוליסה הספציפית.</p>
@@ -34,31 +34,39 @@
   </details>
 </header>
 <main>
+  <section id="ai-section">
+    <h2>ספרו את הסיפור במילים שלכם</h2>
+    <p class="hint">תארו מה קרה: איפה נפתחה הקופה, מתי, כמה הפקדתם ולאן עברתם. ה-AI יבנה מזה ציר זמן שתוכלו לבדוק ולתקן.</p>
+    <label class="f" for="story-text"><span class="sr-only">תיאור הסיפור</span></label>
+    <textarea id="story-text" rows="6" placeholder="למשל: ב-2005 פתחתי ביטוח מנהלים בהראל, הפקדתי 750 ש&quot;ח בחודש עד 2011, וב-2015 עברתי לגמל של פסגות..."></textarea>
+    <div class="actions">
+      <button type="button" id="build-ai" class="primary">בנה ציר זמן עם AI</button>
+    </div>
+    <p id="ai-status" role="status" class="status"></p>
+    <p class="note">פרטיות: הטקסט נשלח לשרת ולמודל AI חיצוני (Google Gemini, ובגיבוי Cloudflare), בלי שמירה אצלנו. אל תכתבו שמות או מספרי זהות. ה-AI עלול לטעות, לכן בדקו כל אירוע ומסלול לפני החישוב.</p>
+    <details class="adv">
+      <summary>בלי AI: העתקת פרומפט והדבקת תשובה</summary>
+      <p class="hint">העתקו את הפרומפט לצ'אט AI לבחירתכם, והדביקו כאן את תשובת ה-JSON. האתר לא שולח כלום בדרך הזו.</p>
+      <div class="actions"><button type="button" id="copy-prompt">העתק פרומפט</button></div>
+      <label class="f"><span>תשובת ה-AI (JSON)</span><textarea id="ai-reply" rows="6" dir="ltr"></textarea></label>
+      <div class="actions"><button type="button" id="load-reply">טען לציר הזמן</button></div>
+    </details>
+  </section>
   <section id="timeline-section">
     <h2>ציר הזמן</h2>
-    <label>סיום החישוב <input type="date" id="end"></label>
+    <label class="f end"><span>סיום החישוב</span><input type="date" id="end"></label>
     <div id="timeline"></div>
     <button type="button" id="add-event" class="plus" aria-label="הוסף אירוע">+</button>
   </section>
-  <section id="ai-section">
-    <h2>תיאור חופשי עם AI (אופציונלי)</h2>
-    <p class="warn">פרטיות: הכפתור "בנה עם AI" שולח את הטקסט לשרת (Cloudflare Workers AI, מכסה חינמית יומית, בלי שמירה) כדי להפוך אותו לאירועים. אל תכתבו שמות או מספרי זהות. הכפתור "העתק פרומפט" רק מעתיק טקסט בדפדפן. אתם מדביקים אותו בעצמכם בצ'אט AI לבחירתכם, ומדביקים כאן את התשובה. האתר לא שולח כלום. אל תכתבו שמות, מספרי זהות או מספרי פוליסה. התוצאה היא הערכה בלבד ולא ייעוץ.</p>
-    <label for="story-text">תארו את הסיפור במילים שלכם</label>
-    <textarea id="story-text" rows="5" placeholder="למשל: ב-2005 פתחתי ביטוח מנהלים בהראל, הפקדתי 750 בחודש עד 2011, ב-2015 עבר לגמל של פסגות..."></textarea>
-    <button type="button" id="build-ai">בנה עם AI</button>
-    <button type="button" id="copy-prompt">העתק פרומפט</button>
-    <label for="ai-reply">הדביקו כאן את תשובת ה-AI (JSON)</label>
-    <textarea id="ai-reply" rows="5" dir="ltr"></textarea>
-    <button type="button" id="load-reply">טען לציר הזמן</button>
-    <p id="ai-status" role="status"></p>
-  </section>
-  <section>
-    <h2>הערכת קצבה (אופציונלי)</h2>
+  <section class="collapsible">
+    <details id="annuity">
+    <summary><h2>הערכת קצבה (אופציונלי)</h2></summary>
     <p>להערכת קצבה חודשית בפרישה: הזינו מקדם מובטח מהפוליסה (הון נדרש לכל 1 ₪ קצבה, למשל 190) ומקדם שוק משוער להשוואה. בלי מקדמים לא תוצג הערכה.</p>
-    <label>מקדם מובטח <input type="number" id="coef-guar" min="0" step="0.1"></label>
-    <label>מקדם שוק <input type="number" id="coef-market" min="0" step="0.1"></label>
-    <label>חודשים מסוף הנתונים עד הפרישה <input type="number" id="months-ret" min="0" step="1"></label>
-    <label>תשואה שנתית משוערת עד הפרישה (%) <input type="number" id="ret-rate" step="0.1"></label>
+    <div class="grid"><label class="f"><span>מקדם מובטח</span><input type="number" id="coef-guar" min="0" step="0.1"></label>
+    <label class="f"><span>מקדם שוק</span><input type="number" id="coef-market" min="0" step="0.1"></label>
+    <label class="f"><span>חודשים מסוף הנתונים עד הפרישה</span><input type="number" id="months-ret" min="0" step="1"></label>
+    <label class="f"><span>תשואה שנתית משוערת עד הפרישה (%)</span><input type="number" id="ret-rate" step="0.1"></label></div>
+    </details>
   </section>
   <section>
     <button type="button" id="run" class="primary">חשב רווח כולל</button>
@@ -68,8 +76,8 @@
   <section>
     <h2>שמירה וטעינה</h2>
     <p>הסיפור נשמר לקובץ אצלכם (לא באתר). אפשר לטעון אותו שוב מאוחר יותר, או לפתוח קישור שמכיל את הסיפור אחרי הסימן # (החלק הזה לא נשלח לשרת).</p>
-    <button type="button" id="export">שמור סיפור לקובץ</button>
-    <input type="file" id="import" accept="application/json">
+    <div class="actions"><button type="button" id="export">שמור סיפור לקובץ</button></div>
+    <label class="f"><span>טעינה מקובץ</span><input type="file" id="import" accept="application/json"></label>
   </section>
 </main>
 <footer>מקור הנתונים: <a href="https://data.gov.il/dataset/gemelnet">גמל-נט</a> ו<a href="https://data.gov.il/dataset/insurance">ביטוח-נט</a>, רשות שוק ההון (data.gov.il). <span id="data-info"></span> <a href="https://github.com/reihlinstinct/gemel-what-if">קוד המקור</a>.</footer>
