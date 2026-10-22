@@ -23,24 +23,24 @@
       select.innerHTML = "";
       for (const f of W.searchFunds(data, input.value, 40)) {
         const o = document.createElement("option");
-        o.value = f.id;
-        o.textContent = f.id + " | " + f.name + " | " + (f.corp || "") + " | " + (f.cls || "") + " (" + f.start + "-" + f.end + ")";
+        o.value = f.key;
+        o.textContent = (f.src === "insurance" ? "ביטוח" : "גמל") + " " + f.id + " | " + f.name + " | " + (f.corp || "") + " | " + (f.cls || "") + " (" + f.start + "-" + f.end + ")";
         select.append(o);
       }
     };
     const choose = () => {
       el.dataset.fund = select.value || "";
-      const f = funds.get(Number(select.value));
-      chosen.textContent = f ? " ✓ " + f.id + " " + f.name : "";
+      const f = funds.get(select.value);
+      chosen.textContent = f ? " ✓ " + f.name : "";
     };
     input.addEventListener("input", () => { show(); choose(); });
     select.addEventListener("change", choose);
-    el.setFund = (id) => {
-      const f = funds.get(Number(id));
+    el.setFund = (key) => {
+      const f = funds.get(key);
       if (!f) return;
-      input.value = String(f.id);
+      input.value = f.key;
       show();
-      select.value = String(f.id);
+      select.value = f.key;
       choose();
     };
   }
@@ -65,9 +65,14 @@
     r.dataset.kind = "lump";
   }
   function addSwitch(container, v) {
-    const r = addRow(container, 'ב-<input type="month" class="date"> מעבר למסלול: <span class="fundpick"></span>');
+    const r = addRow(container, 'ב-<input type="month" class="date"> מעבר למסלול: <span class="fundpick"></span> עלות חד-פעמית <input type="number" class="exit" min="0" step="0.1" placeholder="0"> % ושינוי דמי ניהול שנתיים <input type="number" class="feeadj" step="0.1" placeholder="0"> נק\' אחוז');
     fundPicker($(".fundpick", r), "");
-    if (v) { $(".date", r).value = v.date; $(".fundpick", r).setFund(v.to); }
+    if (v) {
+      $(".date", r).value = v.date;
+      $(".fundpick", r).setFund(v.to);
+      $(".exit", r).value = v.exitCostPct || "";
+      $(".feeadj", r).value = v.feeAdjPct || "";
+    }
   }
 
   function readDeposits() {
@@ -83,10 +88,15 @@
   }
   function readSwitches(container) {
     return [...container.querySelectorAll(".row")]
-      .map((r) => ({ date: $(".date", r).value, to: Number($(".fundpick", r).dataset.fund) }))
+      .map((r) => ({
+        date: $(".date", r).value,
+        to: $(".fundpick", r).dataset.fund,
+        exitCostPct: Number($(".exit", r).value) || 0,
+        feeAdjPct: Number($(".feeadj", r).value) || 0,
+      }))
       .filter((s) => s.date && s.to);
   }
-  const startFund = (id) => Number($('.fundpick[data-id="' + id + '"]').dataset.fund);
+  const startFund = (id) => $('.fundpick[data-id="' + id + '"]').dataset.fund || "";
 
   function readStory() {
     const start = $("#start").value;
@@ -103,6 +113,23 @@
       actual: { start: s0, switches: readSwitches($("#actual-switches")) },
       alt: { start: a0, switches: readSwitches($("#alt-switches")) },
       same,
+      annuity: {
+        guaranteed: $("#coef-guar").value,
+        market: $("#coef-market").value,
+        months: $("#months-ret").value,
+        rate: $("#ret-rate").value,
+      },
+    };
+  }
+
+  function readAnnuityOptions() {
+    const marketCoeff = Number($("#coef-market").value) || 0;
+    if (!marketCoeff && !(Number($("#coef-guar").value) > 0)) return null;
+    return {
+      guaranteedCoeff: Number($("#coef-guar").value) || 0,
+      marketCoeff,
+      monthsToRetirement: Number($("#months-ret").value) || 0,
+      assumedAnnualPct: Number($("#ret-rate").value) || 0,
     };
   }
 
@@ -124,6 +151,21 @@
       const c = W.compare(s.base, actualPhases, altPhases, funds, data.latest);
       const warn = c.actual.warnings.missingMonths + c.whatIf.warnings.missingMonths;
       const cls = c.diff >= 0 ? "pos" : "neg";
+      const ann = readAnnuityOptions();
+      const aA = ann && W.annuityEstimate(c.actual, funds, ann);
+      const aB = ann && W.annuityEstimate(c.whatIf, funds, ann);
+      const notes = W.productChangeNotes(actualPhases, funds).concat(W.productChangeNotes(altPhases, funds));
+      const basisLabel = (a) => (a.basis === "guaranteed" ? "מקדם מובטח" : "מקדם שוק");
+      const annuityHtml = aA && aB
+        ? "<h3>הערכת קצבה חודשית (הערכה בלבד)</h3><table><tr><th></th><th>בפועל</th><th>אילו</th></tr>" +
+          "<tr><td>יתרה בפרישה</td><td>" + fmt(aA.balance) + " ₪</td><td>" + fmt(aB.balance) + " ₪</td></tr>" +
+          "<tr><td>מקדם (הון ל-1 ₪ קצבה)</td><td>" + aA.coefficient + " (" + basisLabel(aA) + ")</td><td>" + aB.coefficient + " (" + basisLabel(aB) + ")</td></tr>" +
+          "<tr><td>קצבה חודשית משוערת</td><td>" + fmt(aA.monthly) + " ₪</td><td>" + fmt(aB.monthly) + " ₪</td></tr></table>" +
+          "<p class=\"warn\">ההערכה תלויה במקדמים ובתשואה שהוזנו. המקדם המובטח נלקח ממסמכי הפוליסה שלכם ואינו מאומת. כספים במסלול ביטוח מקבלים את המקדם המובטח (אם הוזן), ואחרת מקדם שוק.</p>"
+        : "";
+      const notesHtml = notes.length
+        ? "<div class=\"warn\"><b>מה לא מחושב במעבר בין מוצרים:</b><ul><li>מקדם קצבה מובטח בפוליסה עלול ללכת לאיבוד (ראו הערכת קצבה למעלה, אם הוזנו מקדמים)</li><li>כיסויים ביטוחיים (נכות, שארים) שנגרעים או משתנים</li><li>דמי ניהול חוזיים: אפשר להזין אותם בשדה שינוי דמי ניהול ועלות חד-פעמית</li><li>מסים, וגיל וזכויות ייחודיות שבפוליסה</li></ul></div>"
+        : "";
       $("#result").innerHTML =
         "<table><tr><th></th><th>בפועל</th><th>אילו</th></tr>" +
         "<tr><td>סך הפקדות</td><td>" + fmt(c.actual.paid) + " ₪</td><td>" + fmt(c.whatIf.paid) + " ₪</td></tr>" +
@@ -131,7 +173,7 @@
         "<tr><td>רווח</td><td>" + fmt(c.actual.gain) + " ₪</td><td>" + fmt(c.whatIf.gain) + " ₪</td></tr>" +
         "<tr><td>תשואה שנתית משוקללת</td><td>" + pct(c.actual.annualized) + "</td><td>" + pct(c.whatIf.annualized) + "</td></tr></table>" +
         '<p class="' + cls + '">ההפרש: ' + fmt(c.diff) + " ₪" + (c.diffPercent === null ? "" : " (" + c.diffPercent.toFixed(1) + "%)") + "</p>" +
-        chart(c.actual, c.whatIf) +
+        chart(c.actual, c.whatIf) + annuityHtml + notesHtml +
         (warn ? "<p class=\"warn\">ב-" + warn + " חודשים (במצטבר) לא היה דיווח תשואה למסלול (למשל לפני הקמתו), ולכן חושבה בהם תשואה 0%. כדאי לבדוק את תאריכי המעברים.</p>" : "");
     } catch (e) {
       $("#error").textContent = e.message;
@@ -161,6 +203,11 @@
       if (!s.same) $('.fundpick[data-id="alt-start"]').setFund(s.alt.start);
       $("#alt-switches").innerHTML = "";
       s.alt.switches.forEach((x) => addSwitch($("#alt-switches"), x));
+      const an = s.annuity || {};
+      $("#coef-guar").value = an.guaranteed || "";
+      $("#coef-market").value = an.market || "";
+      $("#months-ret").value = an.months || "";
+      $("#ret-rate").value = an.rate || "";
     }).catch((e) => { $("#error").textContent = "קובץ לא תקין: " + e.message; });
   }
 
