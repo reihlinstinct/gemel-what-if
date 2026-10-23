@@ -34,8 +34,9 @@
   </details>
 </header>
 <main>
-  <section id="ai-section">
-    <h2>ספרו את הסיפור במילים שלכם</h2>
+  <section class="collapsible">
+    <details id="ai-section">
+    <summary><h2>ספרו את הסיפור במילים שלכם</h2></summary>
     <p class="hint">תארו מה קרה: איפה נפתחה הקופה, מתי, כמה הפקדתם ולאן עברתם. ה-AI יבנה מזה ציר זמן שתוכלו לבדוק ולתקן.</p>
     <label class="f" for="story-text"><span class="sr-only">תיאור הסיפור</span></label>
     <textarea id="story-text" rows="6" placeholder="למשל: ב-2005 פתחתי ביטוח מנהלים בהראל, הפקדתי 750 ש&quot;ח בחודש עד 2011, וב-2015 עברתי לגמל של פסגות..."></textarea>
@@ -50,6 +51,7 @@
       <div class="actions"><button type="button" id="copy-prompt">העתק פרומפט</button></div>
       <label class="f"><span>תשובת ה-AI (JSON)</span><textarea id="ai-reply" rows="6" dir="ltr"></textarea></label>
       <div class="actions"><button type="button" id="load-reply">טען לציר הזמן</button></div>
+    </details>
     </details>
   </section>
   <section id="timeline-section">
