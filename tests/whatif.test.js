@@ -219,3 +219,18 @@ test("periodOf converts a month index to YYYYMM", () => {
   assert.strictEqual(W.periodOf(W.toIndex("2024-01")), 202401);
   assert.strictEqual(W.periodOf(W.toIndex("2024-12")), 202412);
 });
+
+test("phasesFromSwitches applies the start fee to the first phase", () => {
+  const ph = W.phasesFromSwitches("2002-01", 1, [], 0.5);
+  assert.strictEqual(ph[0].feeAdjPct, 0.5);
+  assert.strictEqual(W.phasesFromSwitches("2002-01", 1, [])[0].feeAdjPct, 0);
+});
+
+test("timelineToStory carries the start event fee into the simulation", () => {
+  const timeline = { end: "2002-04", events: [{ type: "start", date: "2002-01", fundKey: 1, amount: 1000, feeAdjPct: 1.2 }] };
+  const story = W.timelineToStory(timeline, "actual");
+  assert.strictEqual(story.phases[0].feeAdjPct, 1.2);
+  const noFee = W.simulate(W.timelineToStory({ end: "2002-04", events: [{ type: "start", date: "2002-01", fundKey: 1, amount: 1000 }] }, "actual"), funds);
+  const fee = W.simulate(story, funds);
+  assert.ok(fee.final < noFee.final);
+});

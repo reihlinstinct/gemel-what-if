@@ -128,7 +128,7 @@
   /**
    * Turn an ordered timeline into a story for simulate().
    * timeline = { end?, events: [
-   *   {type:"start", date, fundKey, amount?},
+   *   {type:"start", date, fundKey, amount?, feeAdjPct?},
    *   {type:"deposit", date, amount},
    *   {type:"monthly", from, to?, amount},
    *   {type:"withdraw", date, amount},
@@ -159,7 +159,7 @@
       start: start.date,
       end: timeline.end || undefined,
       deposits,
-      phases: phasesFromSwitches(start.date, start.fundKey, switches),
+      phases: phasesFromSwitches(start.date, start.fundKey, switches, start.feeAdjPct),
       fees,
     };
   }
@@ -213,8 +213,8 @@
    * Build phases from a start track and switch events [{date, from?, to}].
    * If a switch names `from`, it must match the track held at that date.
    */
-  function phasesFromSwitches(start, startFund, switches) {
-    const phases = [{ from: start, fundId: startFund }];
+  function phasesFromSwitches(start, startFund, switches, startFeeAdjPct) {
+    const phases = [{ from: start, fundId: startFund, feeAdjPct: Number(startFeeAdjPct) || 0 }];
     const sorted = (switches || []).slice().sort((a, b) => toIndex(a.date) - toIndex(b.date));
     let current = startFund;
     for (const sw of sorted) {

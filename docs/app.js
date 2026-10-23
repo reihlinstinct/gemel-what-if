@@ -45,13 +45,26 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
         select.append(o);
       }
     };
-    const choose = () => {
+    const feePeriod = (f) => String(f.end).replace(/^(\d{4})(\d{2})$/, "$2/$1");
+    const choose = (fromUser) => {
       el.dataset.fund = select.value || "";
       const f = funds.get(select.value);
       chosen.textContent = f ? "✓ נבחר: " + f.name : "";
+      const card = el.closest(".card");
+      const hint = card && card.querySelector(".feeavg");
+      if (hint) {
+        if (!f) hint.textContent = "";
+        else if (f.fee === null || f.fee === undefined) hint.textContent = "אין נתון דמי ניהול שנתיים ממוצע רשמי למסלול זה; השדה נשאר ריק לעריכה ידנית.";
+        else {
+          const ds = (W.OFFICIAL_SOURCES[f.src] || W.OFFICIAL_SOURCES.gemel).dataset;
+          hint.innerHTML = 'דמי ניהול שנתיים ממוצעים רשמיים במסלול: ' + f.fee + '% (נכון ל-' + feePeriod(f) + ', <a href="' + ds + '" target="_blank" rel="noopener">מקור</a>). הממוצע הנוכחי לא בהכרח היה דמי הניהול לאורך כל שנות הסיפור; אפשר לערוך את השדה.';
+        }
+      }
+      const feeIn = card && card.querySelector(".feeadj");
+      if (fromUser && feeIn && !feeIn.dataset.manual && f && f.fee !== null && f.fee !== undefined) feeIn.value = f.fee;
     };
-    input.addEventListener("input", () => { show(); choose(); });
-    select.addEventListener("change", choose);
+    input.addEventListener("input", () => { show(); choose(true); });
+    select.addEventListener("change", () => choose(true));
     el.setFund = (key) => {
       const f = funds.get(key);
       if (!f) return;
@@ -68,11 +81,11 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
 
   function fieldsFor(type) {
     const grid = (x) => '<div class="grid">' + x + "</div>";
-    if (type === "start") return grid(fld("תאריך פתיחה", dateIn("date")) + fld("סכום פתיחה (אופציונלי, ₪)", num("amount", 'min="0"'))) + '<div class="fundpick"></div>';
+    if (type === "start") return grid(fld("תאריך פתיחה", dateIn("date")) + fld("סכום פתיחה (אופציונלי, ₪)", num("amount", 'min="0"')) + fld("דמי ניהול שנתיים מהצבירה (%)", num("feeadj", 'min="0" step="0.01" placeholder="0"'))) + '<div class="fundpick"></div><div class="feeavg" role="status"></div>';
     if (type === "deposit" || type === "withdraw") return grid(fld("תאריך", dateIn("date")) + fld("סכום (₪)", num("amount", 'min="0"')));
     if (type === "fees") return grid(fld("מתאריך", dateIn("date")) + fld("דמי ניהול מהפקדה (%)", num("depfee", 'min="0" step="0.01" placeholder="0"')) + fld("דמי ניהול שנתיים מהצבירה (%)", num("savfee", 'min="0" step="0.01" placeholder="0"')));
     if (type === "monthly") return grid(fld("מתאריך", dateIn("from")) + fld("עד תאריך (ריק = עד הסוף)", dateIn("to")) + fld("סכום חודשי (₪)", num("amount", 'min="0"')));
-    return grid(fld("תאריך", dateIn("date")) + fld("עלות חד-פעמית (%)", num("exit", 'min="0" step="0.1" placeholder="0"')) + fld("שינוי דמי ניהול שנתיים (נק' אחוז)", num("feeadj", 'step="0.1" placeholder="0"'))) + '<div class="fundpick"></div>';
+    return grid(fld("תאריך", dateIn("date")) + fld("עלות חד-פעמית (%)", num("exit", 'min="0" step="0.1" placeholder="0"')) + fld("דמי ניהול שנתיים מהצבירה (%)", num("feeadj", 'min="0" step="0.01" placeholder="0"'))) + '<div class="fundpick"></div><div class="feeavg" role="status"></div>';
   }
 
   function place(card, scope) {
@@ -136,6 +149,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       $(".body", card).innerHTML = fieldsFor(t);
       const fp = $(".fundpick", card);
       if (fp) fundPicker(fp, "מסלול:");
+      const feeIn = $(".feeadj", card);
+      if (feeIn) feeIn.addEventListener("input", () => { feeIn.dataset.manual = "1"; });
       if (v) fill(card, v);
     };
     render(type, values);
@@ -163,6 +178,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const set = (sel, val) => { const el = $(sel, card); if (el && val !== undefined && val !== null) el.value = pad(val); };
     set(".date", v.date); set(".from", v.from); set(".to", v.to); set(".amount", v.amount);
     set(".depfee", v.depositPct || ""); set(".savfee", v.savingsPct || ""); set(".exit", v.exitCostPct || ""); set(".feeadj", v.feeAdjPct || "");
+    if (v.feeAdjPct) { const fe = $(".feeadj", card); if (fe) fe.dataset.manual = "1"; }
     const fp = $(".fundpick", card);
     if (fp && v.fundKey) fp.setFund(v.fundKey);
   }
@@ -177,6 +193,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     if (type === "start" || type === "deposit" || type === "withdraw") e.amount = num(".amount");
     if (type === "start" || SWITCHES.includes(type)) e.fundKey = $(".fundpick", card).dataset.fund || "";
     if (SWITCHES.includes(type)) { e.exitCostPct = num(".exit"); e.feeAdjPct = num(".feeadj"); }
+    if (type === "start") e.feeAdjPct = num(".feeadj");
     if (type === "fees") { e.depositPct = num(".depfee"); e.savingsPct = num(".savfee"); }
     return e;
   }
@@ -337,7 +354,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
           '<p class="warn">ההערכה תלויה במקדמים ובתשואה שהוזנו. המקדם המובטח נלקח ממסמכי הפוליסה שלכם ואינו מאומת. כספים במסלול ביטוח מקבלים את המקדם המובטח (אם הוזן), ואחרת מקדם שוק.</p>'
         : "";
       const notesHtml = notes.length
-        ? '<div class="warn"><b>מה לא מחושב במעבר בין מוצרים:</b><ul><li>מקדם קצבה מובטח בפוליסה עלול ללכת לאיבוד</li><li>כיסויים ביטוחיים (נכות, שארים) שנגרעים או משתנים</li><li>דמי ניהול חוזיים: אפשר להזין אותם בעלות חד-פעמית ושינוי דמי ניהול</li><li>מסים וזכויות ייחודיות שבפוליסה</li></ul></div>'
+        ? '<div class="warn"><b>מה לא מחושב במעבר בין מוצרים:</b><ul><li>מקדם קצבה מובטח בפוליסה עלול ללכת לאיבוד</li><li>כיסויים ביטוחיים (נכות, שארים) שנגרעים או משתנים</li><li>דמי ניהול חוזיים: ברירת המחדל היא הממוצע הרשמי של המסלול, ואפשר לערוך אותה בשדה דמי הניהול השנתיים</li><li>מסים וזכויות ייחודיות שבפוליסה</li></ul></div>'
         : "";
       $("#result").innerHTML =
         "<table><tr><th></th><th>בפועל</th><th>מה אם</th></tr>" +
