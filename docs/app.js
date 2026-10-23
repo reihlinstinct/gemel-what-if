@@ -229,7 +229,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       const site = VERIFY_SITES[f.src] || VERIFY_SITES.gemel;
       const idPart = f.src === "gemel" ? "קופה " + f.id + " - " : "";
       const meta = f.src === "insurance" ? " (" + (f.corp || "") + ", " + (f.cls || "") + ")" : "";
-      return '<li><a href="' + site.url + '" target="_blank" rel="noopener">' + site.name + "</a>: " + idPart + f.name + meta + ", " + period + "</li>";
+      const shortNote = f.src === "gemel" && p.months < 12 ? " (קטע של פחות מ-12 חודשים: בגמל-נט תצטרכו לבחור חלון רחב יותר)" : "";
+      return '<li><a href="' + site.url + '" target="_blank" rel="noopener">' + site.name + "</a>: " + idPart + f.name + meta + ", " + period + shortNote + "</li>";
     });
   }
 
