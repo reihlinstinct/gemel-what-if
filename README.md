@@ -47,6 +47,16 @@ fund transfer, product change, track change, and optional management fees (off b
 so the page compares the two and shows total profit over the whole timeline (final value + withdrawals - deposits).
 A story can be loaded from a link of the form `index.html#story=<base64url JSON>`; the fragment never leaves the browser.
 
+## Verify against the official sites
+
+The bottom of the result lists every track the money sat in and the exact years for it, with a link to
+[Gemel-Net](https://gemelnet.cma.gov.il/views/gemelTsuot.aspx) (gemel/hishtalmut tracks, by fund number) or
+[Insurance-Net](https://bituachnet.cma.gov.il/bituachTsuotUI/Tsuot/UI/bituachTsuotUI.aspx) (insurance-policy tracks).
+Those systems cannot replay a sequence of track switches, so each phase is checked separately. Their reports are
+session-bound (no deep link into a fund+period report; query-string parameters are ignored), so the link opens the
+report page where you pick the fund and period yourself. Gemel-Net's minimum report period is 12 months, so a
+shorter phase needs a wider window there, and it shows cumulative returns for the period, not a monthly breakdown.
+
 ## Use
 
 Open `docs/index.html` through any static server (`python3 -m http.server -d docs`) or the hosted page if enabled.

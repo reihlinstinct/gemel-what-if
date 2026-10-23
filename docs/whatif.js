@@ -270,6 +270,33 @@
     return { balance, coefficient, basis, monthly: balance / coefficient };
   }
 
+
+  /**
+   * Verification periods for a phase list: one {fundId, from, to} row per run of months the money
+   * spent in the same track, for cross-checking returns on Gemel-Net / Insurance-Net, which cannot
+   * replay a sequence of track switches. `from` accepts any toIndex-able form; `end` likewise.
+   * Labels are "YYYY-MM"; adjacent phases into the same fund are merged; empty periods are dropped.
+   */
+  function phasePeriods(phases, end) {
+    const sorted = (phases || [])
+      .map((p) => ({ from: toIndex(p.from), fundId: p.fundId }))
+      .sort((a, b) => a.from - b.from);
+    const merged = [];
+    for (const p of sorted) {
+      const last = merged[merged.length - 1];
+      if (last && last.fundId === p.fundId) continue;
+      merged.push(p);
+    }
+    const endIndex = toIndex(end);
+    const periods = [];
+    for (let i = 0; i < merged.length; i++) {
+      const to = i + 1 < merged.length ? merged[i + 1].from - 1 : endIndex;
+      if (to < merged[i].from) continue;
+      periods.push({ fundId: merged[i].fundId, from: toLabel(merged[i].from), to: toLabel(to), months: to - merged[i].from + 1 });
+    }
+    return periods;
+  }
+
   /** Plain-language list of things the model does not capture when the product changes. */
   function productChangeNotes(phases, funds) {
     const notes = [];
@@ -309,5 +336,5 @@
     return hits.slice(0, limit || 30);
   }
 
-  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline };
+  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline, phasePeriods };
 });
