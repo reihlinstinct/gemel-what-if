@@ -54,14 +54,21 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       const hint = card && card.querySelector(".feeavg");
       if (hint) {
         if (!f) hint.textContent = "";
-        else if (f.fee === null || f.fee === undefined) hint.textContent = "אין נתון דמי ניהול שנתיים ממוצע רשמי למסלול זה; השדה נשאר ריק לעריכה ידנית.";
         else {
           const ds = (W.OFFICIAL_SOURCES[f.src] || W.OFFICIAL_SOURCES.gemel).dataset;
-          hint.innerHTML = 'דמי ניהול שנתיים ממוצעים רשמיים במסלול: ' + f.fee + '% (נכון ל-' + feePeriod(f) + ', <a href="' + ds + '" target="_blank" rel="noopener">מקור</a>). הממוצע הנוכחי לא בהכרח היה דמי הניהול לאורך כל שנות הסיפור; אפשר לערוך את השדה.';
+          const annual = f.fee === null || f.fee === undefined
+            ? "אין נתון דמי ניהול שנתיים ממוצע רשמי למסלול זה; שדה הצבירה נשאר ריק לעריכה ידנית."
+            : 'דמי ניהול שנתיים ממוצעים רשמיים במסלול: ' + f.fee + '% (נכון ל-' + feePeriod(f) + ', <a href="' + ds + '" target="_blank" rel="noopener">מקור</a>).';
+          const deposit = f.dfee === null || f.dfee === undefined
+            ? "אין נתון דמי ניהול מהפקדה ממוצע רשמי למסלול זה; שדה ההפקדה נשאר ריק לעריכה ידנית."
+            : "דמי ניהול מהפקדה ממוצעים רשמיים במסלול: " + f.dfee + "%.";
+          hint.innerHTML = annual + " " + deposit + " הממוצע הנוכחי לא בהכרח היה דמי הניהול לאורך כל שנות הסיפור; אפשר לערוך את השדות.";
         }
       }
       const feeIn = card && card.querySelector(".feeadj");
       if (fromUser && feeIn && !feeIn.dataset.manual && f && f.fee !== null && f.fee !== undefined) feeIn.value = f.fee;
+      const depIn = card && card.querySelector(".pdepfee");
+      if (fromUser && depIn && !depIn.dataset.manual && f && f.dfee !== null && f.dfee !== undefined) depIn.value = f.dfee;
     };
     input.addEventListener("input", () => { show(); choose(true); });
     select.addEventListener("change", () => choose(true));
@@ -81,11 +88,11 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
 
   function fieldsFor(type) {
     const grid = (x) => '<div class="grid">' + x + "</div>";
-    if (type === "start") return grid(fld("תאריך פתיחה", dateIn("date")) + fld("סכום פתיחה (אופציונלי, ₪)", num("amount", 'min="0"')) + fld("דמי ניהול שנתיים מהצבירה (%)", num("feeadj", 'min="0" step="0.01" placeholder="0"'))) + '<div class="fundpick"></div><div class="feeavg" role="status"></div>';
+    if (type === "start") return grid(fld("תאריך פתיחה", dateIn("date")) + fld("סכום פתיחה (אופציונלי, ₪)", num("amount", 'min="0"')) + fld("דמי ניהול שנתיים מהצבירה (%)", num("feeadj", 'min="0" step="0.01" placeholder="0"')) + fld("דמי ניהול מהפקדה (%)", num("pdepfee", 'min="0" step="0.01" placeholder="0"'))) + '<div class="fundpick"></div><div class="feeavg" role="status"></div>';
     if (type === "deposit" || type === "withdraw") return grid(fld("תאריך", dateIn("date")) + fld("סכום (₪)", num("amount", 'min="0"')));
     if (type === "fees") return grid(fld("מתאריך", dateIn("date")) + fld("דמי ניהול מהפקדה (%)", num("depfee", 'min="0" step="0.01" placeholder="0"')) + fld("דמי ניהול שנתיים מהצבירה (%)", num("savfee", 'min="0" step="0.01" placeholder="0"')));
     if (type === "monthly") return grid(fld("מתאריך", dateIn("from")) + fld("עד תאריך (ריק = עד הסוף)", dateIn("to")) + fld("סכום חודשי (₪)", num("amount", 'min="0"')));
-    return grid(fld("תאריך", dateIn("date")) + fld("עלות חד-פעמית (%)", num("exit", 'min="0" step="0.1" placeholder="0"')) + fld("דמי ניהול שנתיים מהצבירה (%)", num("feeadj", 'min="0" step="0.01" placeholder="0"'))) + '<div class="fundpick"></div><div class="feeavg" role="status"></div>';
+    return grid(fld("תאריך", dateIn("date")) + fld("עלות חד-פעמית (%)", num("exit", 'min="0" step="0.1" placeholder="0"')) + fld("דמי ניהול שנתיים מהצבירה (%)", num("feeadj", 'min="0" step="0.01" placeholder="0"')) + fld("דמי ניהול מהפקדה (%)", num("pdepfee", 'min="0" step="0.01" placeholder="0"'))) + '<div class="fundpick"></div><div class="feeavg" role="status"></div>';
   }
 
   function place(card, scope) {
@@ -149,8 +156,10 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       $(".body", card).innerHTML = fieldsFor(t);
       const fp = $(".fundpick", card);
       if (fp) fundPicker(fp, "מסלול:");
-      const feeIn = $(".feeadj", card);
-      if (feeIn) feeIn.addEventListener("input", () => { feeIn.dataset.manual = "1"; });
+      for (const sel of [".feeadj", ".pdepfee"]) {
+        const feeIn = $(sel, card);
+        if (feeIn) feeIn.addEventListener("input", () => { feeIn.dataset.manual = "1"; });
+      }
       if (v) fill(card, v);
     };
     render(type, values);
@@ -177,8 +186,9 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const pad = (x) => (typeof x === "string" && /^\d{4}-\d{2}$/.test(x) ? x + "-01" : x);
     const set = (sel, val) => { const el = $(sel, card); if (el && val !== undefined && val !== null) el.value = pad(val); };
     set(".date", v.date); set(".from", v.from); set(".to", v.to); set(".amount", v.amount);
-    set(".depfee", v.depositPct || ""); set(".savfee", v.savingsPct || ""); set(".exit", v.exitCostPct || ""); set(".feeadj", v.feeAdjPct || "");
+    set(".depfee", v.depositPct || ""); set(".savfee", v.savingsPct || ""); set(".exit", v.exitCostPct || ""); set(".feeadj", v.feeAdjPct || ""); set(".pdepfee", v.depositFeePct || "");
     if (v.feeAdjPct) { const fe = $(".feeadj", card); if (fe) fe.dataset.manual = "1"; }
+    if (v.depositFeePct) { const pd = $(".pdepfee", card); if (pd) pd.dataset.manual = "1"; }
     const fp = $(".fundpick", card);
     if (fp && v.fundKey) fp.setFund(v.fundKey);
   }
@@ -192,8 +202,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     else { e.date = $(".date", card).value; }
     if (type === "start" || type === "deposit" || type === "withdraw") e.amount = num(".amount");
     if (type === "start" || SWITCHES.includes(type)) e.fundKey = $(".fundpick", card).dataset.fund || "";
-    if (SWITCHES.includes(type)) { e.exitCostPct = num(".exit"); e.feeAdjPct = num(".feeadj"); }
-    if (type === "start") e.feeAdjPct = num(".feeadj");
+    if (SWITCHES.includes(type)) { e.exitCostPct = num(".exit"); e.feeAdjPct = num(".feeadj"); e.depositFeePct = num(".pdepfee"); }
+    if (type === "start") { e.feeAdjPct = num(".feeadj"); e.depositFeePct = num(".pdepfee"); }
     if (type === "fees") { e.depositPct = num(".depfee"); e.savingsPct = num(".savfee"); }
     return e;
   }

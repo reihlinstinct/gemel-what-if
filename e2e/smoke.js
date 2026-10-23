@@ -36,8 +36,12 @@ server.listen(0, async () => {
   const harness = path.join(root, "__e2e.html");
   fs.writeFileSync(harness, `<!doctype html><meta charset=utf-8><div id=o></div><iframe id=f width=900 height=1200></iframe><script>
 const f=document.getElementById('f');f.src='${base}index.html#story=${fragment}';
-f.onload=()=>setTimeout(()=>{const d=f.contentDocument,q=s=>d.querySelector(s);d.querySelector('#ai-reply').value='ok {"events":[{"type":"start","date":"2005-01-01","fundName":"הראל קרן"},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';d.querySelector('#load-reply').click();const aiCards=d.querySelectorAll('.card').length;const aiStatus=d.querySelector('#ai-status').textContent;const sel=d.querySelector('.card .fundpick select');sel.dispatchEvent(new Event('change'));const feeVal=(d.querySelector('.card .feeadj')||{}).value||'';const feeHint=((d.querySelector('.card .feeavg')||{}).textContent||'');d.querySelector('#story-text').value='x';q('#run').click();
-const unnamed=[...d.querySelectorAll('input,select,textarea')].filter(e=>!(e.closest('label')||e.getAttribute('aria-label')||(e.id&&d.querySelector('label[for="'+e.id+'"]')))).length;document.getElementById('o').textContent='RESULT:'+unnamed+'#'+q('#error').textContent+'|'+aiCards+'|'+aiStatus.slice(0,5)+'|'+q('#result').innerText.replace(/\\s+/g,' ')+'|'+[...d.querySelectorAll('#result a')].map(x=>x.getAttribute('href')).join(',')+'@'+d.querySelectorAll('#result .offv').length+'^'+feeVal+'^'+feeHint.slice(0,30);},1500);</script>`);
+f.onload=()=>setTimeout(()=>{const d=f.contentDocument,q=s=>d.querySelector(s);d.querySelector('#ai-reply').value='ok {"events":[{"type":"start","date":"2005-01-01","fundName":"הראל קרן"},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';d.querySelector('#load-reply').click();const aiCards=d.querySelectorAll('.card').length;const aiStatus=d.querySelector('#ai-status').textContent;const sel=d.querySelector('.card .fundpick select');sel.dispatchEvent(new Event('change'));const feeVal=(d.querySelector('.card .feeadj')||{}).value||'';const feeHint=((d.querySelector('.card .feeavg')||{}).textContent||'');let depVal=(d.querySelector('.card .pdepfee')||{}).value||'';
+if(depVal===''){const inp=d.querySelector('.card .fundpick input');inp.value='כלל תמר';inp.dispatchEvent(new Event('input'));for(const o of sel.options){sel.value=o.value;sel.dispatchEvent(new Event('change'));const v=(d.querySelector('.card .pdepfee')||{}).value||'';if(v!==''){depVal=v;break;}}}
+const depHint=((d.querySelector('.card .feeavg')||{}).textContent||'');const depKind=depHint.includes('מהפקדה ממוצעים רשמיים')?'depavg':(depHint.includes('אין נתון דמי ניהול מהפקדה')?'depnone':'depmissing');
+d.querySelector('#ai-reply').value='ok {"events":[{"type":"start","date":"2005-01-01","fundName":"הראל קרן","depositFeePct":0.7},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';d.querySelector('#load-reply').click();const depRestored=(d.querySelector('.card .pdepfee')||{}).value||'';const depManual=(d.querySelector('.card .pdepfee')||{}).dataset.manual||'';
+d.querySelector('#story-text').value='x';q('#run').click();
+const unnamed=[...d.querySelectorAll('input,select,textarea')].filter(e=>!(e.closest('label')||e.getAttribute('aria-label')||(e.id&&d.querySelector('label[for="'+e.id+'"]')))).length;document.getElementById('o').textContent='RESULT:'+unnamed+'#'+q('#error').textContent+'|'+aiCards+'|'+aiStatus.slice(0,5)+'|'+q('#result').innerText.replace(/\\s+/g,' ')+'|'+[...d.querySelectorAll('#result a')].map(x=>x.getAttribute('href')).join(',')+'@'+d.querySelectorAll('#result .offv').length+'^'+feeVal+'^'+feeHint.slice(0,30)+'^'+depVal+'^'+depKind+'^'+depRestored+'^'+depManual;},1500);</script>`);
   try {
     const chrome = process.env.CHROME || "google-chrome";
     const dom = await run(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--virtual-time-budget=10000", "--dump-dom", base + "__e2e.html"]);
@@ -47,7 +51,7 @@ const unnamed=[...d.querySelectorAll('input,select,textarea')].filter(e=>!(e.clo
       const [unnamed, rest] = m[1].split("#");
       const [err, cards, aiStatus, text, linksAndOffv] = rest.split("|");
       const [links, offv] = (linksAndOffv || "").split("@");
-      const [offvCount, feeVal, feeHint] = (offv || "").split("^");
+      const [offvCount, feeVal, feeHint, depVal, depKind, depRestored, depManual] = (offv || "").split("^");
       check(unnamed === "0", "every form control has an accessible name (" + unnamed + " without)");
       check(err === "", "no error shown");
       check(cards === "2", "pasted AI reply replaced the timeline (2 cards)");
@@ -59,6 +63,9 @@ const unnamed=[...d.querySelectorAll('input,select,textarea')].filter(e=>!(e.clo
       check(/טוען נתונים רשמיים|data.gov.il|לא ניתן למשוך/.test(text), "live official-data check renders in the result");
       check(feeVal !== "" && feeVal !== "0", "selecting a track prefills its official average fee (got \"" + feeVal + "\")");
       check(/ממוצע/.test(feeHint || ""), "fee hint shows the official average with its source period (got \"" + feeHint + "\")");
+      check(depKind === "depavg", "scanning the track list finds one with an official deposit average (got \"" + depKind + "\")");
+      check((depKind === "depavg") === (depVal !== ""), "deposit fee prefilled exactly when the track has an official deposit average (kind " + depKind + ", value \"" + depVal + "\")");
+      check(depRestored === "0.7" && depManual === "1", "a restored story keeps its deposit fee as a manual value (got \"" + depRestored + "\", manual=" + depManual + ")");
     }
   } finally {
     fs.unlinkSync(harness);

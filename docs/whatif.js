@@ -64,6 +64,7 @@
         from: toIndex(p.from),
         fundId: p.fundId,
         feeAdjPct: p.feeAdjPct || 0,
+        depositFeePct: p.depositFeePct || 0,
         exitCostPct: p.exitCostPct || 0,
       }))
       .sort((a, b) => a.from - b.from);
@@ -94,7 +95,9 @@
       const dep = deposits.get(i) || 0;
       let fee = { deposit: 0, savings: 0 };
       for (const f of feeSteps) if (f.from <= i) fee = f;
-      balance += dep > 0 ? dep * (1 - fee.deposit / 100) : dep;
+      // Deposit fees: the phase fee (track average, per start/switch) stacks with any "fees" event,
+      // mirroring the savings side (feeAdjPct + fee.savings). Withdrawals (dep < 0) are never charged.
+      balance += dep > 0 ? dep * (1 - (fee.deposit + phase.depositFeePct) / 100) : dep;
       if (dep >= 0) paid += dep;
       else withdrawn -= dep;
       if (dep) flows.push([i - startIndex, dep]);
@@ -128,12 +131,12 @@
   /**
    * Turn an ordered timeline into a story for simulate().
    * timeline = { end?, events: [
-   *   {type:"start", date, fundKey, amount?, feeAdjPct?},
+   *   {type:"start", date, fundKey, amount?, feeAdjPct?, depositFeePct?},
    *   {type:"deposit", date, amount},
    *   {type:"monthly", from, to?, amount},
    *   {type:"withdraw", date, amount},
    *   {type:"fees", date, depositPct?, savingsPct?}   // optional management fees from that date
-   *   {type:"transfer"|"product"|"track", date, fundKey, exitCostPct?, feeAdjPct?}
+   *   {type:"transfer"|"product"|"track", date, fundKey, exitCostPct?, feeAdjPct?, depositFeePct?}
    * ] }
    * Every event may carry scope: "both" (default), "actual" or "whatif".
    */
@@ -151,7 +154,7 @@
       else if (e.type === "monthly") deposits.push({ from: e.from, to: e.to || undefined, monthly: Number(e.amount) });
       else if (e.type === "fees") fees.push({ from: e.date, depositPct: e.depositPct, savingsPct: e.savingsPct });
       else if (SWITCH_TYPES.includes(e.type)) {
-        switches.push({ date: e.date, to: e.fundKey, exitCostPct: e.exitCostPct, feeAdjPct: e.feeAdjPct });
+        switches.push({ date: e.date, to: e.fundKey, exitCostPct: e.exitCostPct, feeAdjPct: e.feeAdjPct, depositFeePct: e.depositFeePct });
       }
     }
     if (!deposits.length) throw new Error("No deposits");
@@ -159,7 +162,7 @@
       start: start.date,
       end: timeline.end || undefined,
       deposits,
-      phases: phasesFromSwitches(start.date, start.fundKey, switches, start.feeAdjPct),
+      phases: phasesFromSwitches(start.date, start.fundKey, switches, start.feeAdjPct, start.depositFeePct),
       fees,
     };
   }
@@ -213,8 +216,8 @@
    * Build phases from a start track and switch events [{date, from?, to}].
    * If a switch names `from`, it must match the track held at that date.
    */
-  function phasesFromSwitches(start, startFund, switches, startFeeAdjPct) {
-    const phases = [{ from: start, fundId: startFund, feeAdjPct: Number(startFeeAdjPct) || 0 }];
+  function phasesFromSwitches(start, startFund, switches, startFeeAdjPct, startDepositFeePct) {
+    const phases = [{ from: start, fundId: startFund, feeAdjPct: Number(startFeeAdjPct) || 0, depositFeePct: Number(startDepositFeePct) || 0 }];
     const sorted = (switches || []).slice().sort((a, b) => toIndex(a.date) - toIndex(b.date));
     let current = startFund;
     for (const sw of sorted) {
@@ -225,6 +228,7 @@
         from: sw.date,
         fundId: sw.to,
         feeAdjPct: Number(sw.feeAdjPct) || 0,
+        depositFeePct: Number(sw.depositFeePct) || 0,
         exitCostPct: Number(sw.exitCostPct) || 0,
       });
       current = sw.to;
