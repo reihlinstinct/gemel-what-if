@@ -15,7 +15,7 @@ const SYSTEM = [
   prompt.buildPrompt("").replace(/\n\nStory:\n$/, ""),
   "You have tools: search_tracks (find the real fundKey for a fund or track name), validate_story, build_story_link.",
   "Workflow: call search_tracks once per fund the person names, with a SHORT query: the company name in Hebrew (e.g. כלל, מיטב, מגדל) plus one track word at most. Use the returned fundKey in the events (g:... gemel, i:... insurance); if search finds nothing keep fundName. Use at most 4 tool calls, then answer with ONLY the final JSON object (no validate loop needed; the server validates).",
-  'Example output: {"end":"2026-09-01","events":[{"type":"start","date":"2002-01-01","fundKey":"i:14012"},{"type":"monthly","from":"2002-01-01","to":"2008-12-01","amount":1000},{"type":"product","date":"2012-01-01","fundKey":"g:877","scope":"actual"}]}',
+  'Example output: {"end":"2026-09-01","events":[{"type":"start","date":"2005-06-01","fundKey":"i:259012"},{"type":"monthly","from":"2005-06-01","to":"2011-06-01","amount":750},{"type":"product","date":"2015-03-01","fundKey":"g:761","scope":"actual"}]}',
 ].join("\n");
 
 const GEMINI_MODEL = "gemini-2.5-flash";

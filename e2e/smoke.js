@@ -12,8 +12,8 @@ const root = path.join(__dirname, "../docs");
 const story = {
   end: "2010-12",
   events: [
-    { type: "start", date: "2002-01", fundKey: "i:14012" },
-    { type: "monthly", from: "2002-01", to: "2008-12", amount: 1000 },
+    { type: "start", date: "2005-06", fundKey: "i:259012" },
+    { type: "monthly", from: "2005-06", to: "2009-06", amount: 750 },
   ],
 };
 const fragment = Buffer.from(JSON.stringify(story)).toString("base64url");
@@ -36,10 +36,10 @@ server.listen(0, async () => {
   const harness = path.join(root, "__e2e.html");
   fs.writeFileSync(harness, `<!doctype html><meta charset=utf-8><div id=o></div><iframe id=f width=900 height=1200></iframe><script>
 const f=document.getElementById('f');f.src='${base}index.html#story=${fragment}';
-f.onload=()=>setTimeout(()=>{const d=f.contentDocument,q=s=>d.querySelector(s);d.querySelector('#ai-reply').value='ok {"events":[{"type":"start","date":"2002-01-01","fundName":"כלל קרן"},{"type":"monthly","from":"2002-01-01","to":"2002-12-01","amount":500}]} thanks';d.querySelector('#load-reply').click();const aiCards=d.querySelectorAll('.card').length;const aiStatus=d.querySelector('#ai-status').textContent;const sel=d.querySelector('.card .fundpick select');sel.dispatchEvent(new Event('change'));const feeVal=(d.querySelector('.card .feeadj')||{}).value||'';const feeHint=((d.querySelector('.card .feeavg')||{}).textContent||'');let depVal=(d.querySelector('.card .pdepfee')||{}).value||'';
+f.onload=()=>setTimeout(()=>{const d=f.contentDocument,q=s=>d.querySelector(s);d.querySelector('#ai-reply').value='ok {"events":[{"type":"start","date":"2005-01-01","fundName":"הראל קרן"},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';d.querySelector('#load-reply').click();const aiCards=d.querySelectorAll('.card').length;const aiStatus=d.querySelector('#ai-status').textContent;const sel=d.querySelector('.card .fundpick select');sel.dispatchEvent(new Event('change'));const feeVal=(d.querySelector('.card .feeadj')||{}).value||'';const feeHint=((d.querySelector('.card .feeavg')||{}).textContent||'');let depVal=(d.querySelector('.card .pdepfee')||{}).value||'';
 if(depVal===''){const inp=d.querySelector('.card .fundpick input');inp.value='כלל תמר';inp.dispatchEvent(new Event('input'));for(const o of sel.options){sel.value=o.value;sel.dispatchEvent(new Event('change'));const v=(d.querySelector('.card .pdepfee')||{}).value||'';if(v!==''){depVal=v;break;}}}
 const depHint=((d.querySelector('.card .feeavg')||{}).textContent||'');const depKind=depHint.includes('מהפקדה ממוצעים רשמיים')?'depavg':(depHint.includes('אין נתון דמי ניהול מהפקדה')?'depnone':'depmissing');
-d.querySelector('#ai-reply').value='ok {"events":[{"type":"start","date":"2002-01-01","fundName":"כלל קרן","depositFeePct":0.7},{"type":"monthly","from":"2002-01-01","to":"2002-12-01","amount":500}]} thanks';d.querySelector('#load-reply').click();const depRestored=(d.querySelector('.card .pdepfee')||{}).value||'';const depManual=(d.querySelector('.card .pdepfee')||{}).dataset.manual||'';
+d.querySelector('#ai-reply').value='ok {"events":[{"type":"start","date":"2005-01-01","fundName":"הראל קרן","depositFeePct":0.7},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';d.querySelector('#load-reply').click();const depRestored=(d.querySelector('.card .pdepfee')||{}).value||'';const depManual=(d.querySelector('.card .pdepfee')||{}).dataset.manual||'';
 d.querySelector('#story-text').value='x';q('#run').click();
 const unnamed=[...d.querySelectorAll('input,select,textarea')].filter(e=>!(e.closest('label')||e.getAttribute('aria-label')||(e.id&&d.querySelector('label[for="'+e.id+'"]')))).length;document.getElementById('o').textContent='RESULT:'+unnamed+'#'+q('#error').textContent+'|'+aiCards+'|'+aiStatus.slice(0,5)+'|'+q('#result').innerText.replace(/\\s+/g,' ')+'|'+[...d.querySelectorAll('#result a')].map(x=>x.getAttribute('href')).join(',')+'@'+d.querySelectorAll('#result .offv').length+'^'+feeVal+'^'+feeHint.slice(0,30)+'^'+depVal+'^'+depKind+'^'+depRestored+'^'+depManual;},1500);</script>`);
   try {
@@ -57,7 +57,7 @@ const unnamed=[...d.querySelectorAll('input,select,textarea')].filter(e=>!(e.clo
       check(cards === "2", "pasted AI reply replaced the timeline (2 cards)");
       check(aiStatus === "נטען.", "AI reply resolved the fund name");
       check(/6,000/.test(text) && /רווח כולל/.test(text), "result shows deposits and total profit");
-      check(/בדיקה מול גמל-נט וביטוח-נט/.test(text) && /01\/2002 - /.test(text), "result ends with per-track verification rows");
+      check(/בדיקה מול גמל-נט וביטוח-נט/.test(text) && /01\/2005 - /.test(text), "result ends with per-track verification rows");
       check(/cma\.gov\.il/.test(links || ""), "verification rows link to the official comparison system");
       check(offvCount === "1", "one live official-data placeholder per verification row (got " + offvCount + ")");
       check(/טוען נתונים רשמיים|data.gov.il|לא ניתן למשוך/.test(text), "live official-data check renders in the result");

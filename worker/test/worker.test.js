@@ -5,7 +5,7 @@ import { createHandler } from "../src/handler.js";
 
 const data = JSON.parse(fs.readFileSync(new URL("../../docs/data/funds.json", import.meta.url)));
 const ORIGIN = "https://reihlinstinct.github.io";
-const GOOD = { end: "2010-12-01", events: [{ type: "start", date: "2002-01-01", fundKey: "i:14012" }, { type: "monthly", from: "2002-01-01", to: "2008-12-01", amount: 1000 }] };
+const GOOD = { end: "2013-12-01", events: [{ type: "start", date: "2005-06-01", fundKey: "i:259012" }, { type: "monthly", from: "2005-06-01", to: "2011-06-01", amount: 750 }] };
 const post = (path, body, headers = {}) => new Request("https://w.test" + path, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
 
 test("remote MCP: tools/list and compute_story over HTTP", async () => {
@@ -20,15 +20,15 @@ test("remote MCP: tools/list and compute_story over HTTP", async () => {
 
 test("AI endpoint: tool-calling loop, then final JSON validated", async () => {
   const replies = [
-    { tool_calls: [{ name: "search_tracks", arguments: { query: "כלל קרן" } }] },
+    { tool_calls: [{ name: "search_tracks", arguments: { query: "הראל קרן" } }] },
     { response: "```json\n" + JSON.stringify(GOOD) + "\n```" },
   ];
   const seen = [];
   const ai = { run: async (_m, req) => { seen.push(req.messages.length); return replies.shift(); } };
   const h = createHandler({ data, ai });
-  const res = await h(post("/api/story", { text: "פתחתי ב-2002" }, { origin: ORIGIN }));
+  const res = await h(post("/api/story", { text: "פתחתי ב-2005" }, { origin: ORIGIN }));
   assert.strictEqual(res.status, 200);
-  assert.deepStrictEqual((await res.json()).story.events[0].fundKey, "i:14012");
+  assert.deepStrictEqual((await res.json()).story.events[0].fundKey, "i:259012");
   assert.ok(seen[1] > seen[0], "tool result was fed back to the model");
 });
 

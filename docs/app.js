@@ -386,9 +386,9 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   const EXAMPLE = {
     end: "2020-12-01",
     events: [
-      { type: "start", date: "2002-01-01", fundKey: "i:14012", scope: "both" },
-      { type: "monthly", from: "2002-01-01", to: "2008-12-01", amount: 1000, scope: "both" },
-      { type: "product", date: "2012-01-01", fundKey: "g:880", scope: "whatif" },
+      { type: "start", date: "2005-06-01", fundKey: "i:259012", scope: "both" },
+      { type: "monthly", from: "2005-06-01", to: "2011-06-01", amount: 750, scope: "both" },
+      { type: "product", date: "2015-03-01", fundKey: "g:761", scope: "whatif" },
     ],
   };
 
@@ -440,7 +440,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     $("#add-whatif").onclick = () => addCard("deposit", { scope: "whatif" });
     $("#load-example").onclick = () => {
       loadTimeline(EXAMPLE);
-      $("#parallel-status").textContent = "נטענה דוגמה: הציר מתפצל: בפועל הכסף נשאר בביטוח, ובמה אם עובר לגמל ב-2012. לחצו חשב.";
+      $("#parallel-status").textContent = "נטענה דוגמה: הציר מתפצל: בפועל הכסף נשאר בביטוח, ובמה אם עובר לגמל ב-2015. לחצו חשב.";
     };
     $("#run").onclick = run;
     $("#build-ai").onclick = async () => {
