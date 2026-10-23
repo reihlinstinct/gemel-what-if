@@ -292,7 +292,7 @@
     for (let i = 0; i < merged.length; i++) {
       const to = i + 1 < merged.length ? merged[i + 1].from - 1 : endIndex;
       if (to < merged[i].from) continue;
-      periods.push({ fundId: merged[i].fundId, from: toLabel(merged[i].from), to: toLabel(to) });
+      periods.push({ fundId: merged[i].fundId, from: toLabel(merged[i].from), to: toLabel(to), months: to - merged[i].from + 1 });
     }
     return periods;
   }
