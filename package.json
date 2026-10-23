@@ -8,6 +8,10 @@
     "test": "node --test tests/*.test.js worker/test/*.test.js && python3 -m unittest discover -s tests -p 'test_*.py'",
     "fetch": "python3 scripts/fetch_data.py",
     "e2e": "node e2e/smoke.js",
-    "links": "node e2e/links.js"
+    "links": "node e2e/links.js",
+    "e2e:webkit": "node e2e/webkit.js"
+  },
+  "devDependencies": {
+    "playwright-webkit": "1.64.1"
   }
 }
