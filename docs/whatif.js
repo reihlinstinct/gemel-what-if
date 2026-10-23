@@ -336,5 +336,84 @@
     return hits.slice(0, limit || 30);
   }
 
-  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline, phasePeriods };
+
+  /**
+   * Official open-data sources (Capital Market Authority datasets on data.gov.il) for the live
+   * consistency check of the site's local data copy. Each source lists its datastore resources in
+   * chronological order; `until` is the last covered month label ("YYYY-MM"), null = still updated.
+   * Keep in sync with scripts/fetch_data.py.
+   */
+  const OFFICIAL_SOURCES = {
+    gemel: {
+      dataset: "https://data.gov.il/dataset/gemelnet",
+      api: "https://data.gov.il/api/3/action/datastore_search",
+      resources: [
+        { until: "2022-12", id: "91c849ed-ddc4-472b-bd09-0f5486cea35c" },
+        { until: "2023-12", id: "2016d770-f094-4a2e-983e-797c26479720" },
+        { until: null, id: "a30dcbea-a1d2-482c-ae29-8f781f5025fb" },
+      ],
+    },
+    insurance: {
+      dataset: "https://data.gov.il/dataset/insurance",
+      api: "https://data.gov.il/api/3/action/datastore_search",
+      resources: [
+        { until: "2022-12", id: "584e6b69-174f-46c9-b8db-03925b4c68c6" },
+        { until: "2023-12", id: "672090ba-7893-4496-a07c-dc7e822cbf18" },
+        { until: null, id: "c6c62cc7-fe02-4b18-8f3e-813abfbb4647" },
+      ],
+    },
+  };
+
+  /** Official datastore resource ids overlapping [from, to] ("YYYY-MM" labels), in order. */
+  function officialResources(src, from, to) {
+    const s = OFFICIAL_SOURCES[src] || OFFICIAL_SOURCES.gemel;
+    const a = toIndex(from);
+    const b = toIndex(to);
+    const out = [];
+    let prevEnd = -Infinity;
+    for (const r of s.resources) {
+      const end = r.until === null ? Infinity : toIndex(r.until);
+      if (b > prevEnd && a <= end) out.push(r.id);
+      prevEnd = end;
+    }
+    return out;
+  }
+
+  /** Compounded cumulative return (fraction) from monthly yields in percent, in order. */
+  function cumulativeYield(monthlyPct) {
+    let acc = 1;
+    for (const m of monthlyPct) acc *= 1 + m / 100;
+    return acc - 1;
+  }
+
+  /** Official API URL returning one fund's raw monthly rows in one resource (prefilled). */
+  function officialRowsUrl(src, resourceId, fundId) {
+    const s = OFFICIAL_SOURCES[src] || OFFICIAL_SOURCES.gemel;
+    return s.api + "?resource_id=" + resourceId + "&limit=1000&filters=" + encodeURIComponent(JSON.stringify({ FUND_ID: String(fundId) }));
+  }
+
+  /** YYYYMM (number) of a month index. */
+  function periodOf(index) {
+    return Math.floor(index / 12) * 100 + (index % 12) + 1;
+  }
+
+  /**
+   * The site-local cumulative return (fraction) of a fund over [from, to] (labels or indexes),
+   * counting unreported months as 0% exactly like simulate(). `missing` counts unreported months
+   * so callers never claim a match on incomplete local coverage.
+   */
+  function localCumulative(fund, from, to) {
+    const a = typeof from === "number" ? from : toIndex(from);
+    const b = typeof to === "number" ? to : toIndex(to);
+    const months = [];
+    let missing = 0;
+    for (let i = a; i <= b; i++) {
+      const y = yieldAt(fund, i);
+      if (y === undefined) missing++;
+      months.push(y || 0);
+    }
+    return { value: cumulativeYield(months), missing, months: months.length };
+  }
+
+  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline, phasePeriods, OFFICIAL_SOURCES, officialResources, officialRowsUrl, cumulativeYield, localCumulative, periodOf };
 });
