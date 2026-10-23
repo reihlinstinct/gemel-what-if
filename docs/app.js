@@ -230,7 +230,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       const idPart = f.src === "gemel" ? "קופה " + f.id + " - " : "";
       const meta = f.src === "insurance" ? " (" + (f.corp || "") + ", " + (f.cls || "") + ")" : "";
       const shortNote = f.src === "gemel" && p.months < 12 ? " (קטע של פחות מ-12 חודשים: בגמל-נט תצטרכו לבחור חלון רחב יותר)" : "";
-      return '<li><a href="' + site.url + '" target="_blank" rel="noopener">' + site.name + "</a>: " + idPart + f.name + meta + ", " + period + shortNote + "</li>";
+      const offv = ' <span class="offv" data-key="' + p.fundId + '" data-from="' + p.from + '" data-to="' + p.to + '">(טוען נתונים רשמיים חיים…)</span>';
+      return '<li><a href="' + site.url + '" target="_blank" rel="noopener">' + site.name + "</a>: " + idPart + f.name + meta + ", " + period + shortNote + offv + "</li>";
     });
   }
 
@@ -241,7 +242,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const same = JSON.stringify(periodsA) === JSON.stringify(periodsB);
     const head =
       "<h3>בדיקה מול גמל-נט וביטוח-נט</h3>" +
-      '<p class="hint">באתרים הרשמיים אי אפשר לשחזר רצף של מעברי מסלול, אבל אפשר לבדוק את התשואה של כל מסלול בנפרד. לכל מסלול בסיפור רשומות למטה השנים שבהן הכסף שהה בו, עם קישור: בחרו שם את המסלול ואת התקופה (בגמל-נט מינימום 12 חודשים, אז קטע קצר יותר ידרוש חלון רחב יותר). שימו לב: שם התשואה מוצגת מצטברת על התקופה, אין פירוט חודשי.</p>';
+      '<p class="hint">באתרים הרשמיים אי אפשר לשחזר רצף של מעברי מסלול, אבל אפשר לבדוק את התשואה של כל מסלול בנפרד. לכל מסלול בסיפור רשומות למטה השנים שבהן הכסף שהה בו, עם קישור: בחרו שם את המסלול ואת התקופה (בגמל-נט מינימום 12 חודשים, אז קטע קצר יותר ידרוש חלון רחב יותר). שימו לב: שם התשואה מוצגת מצטברת על התקופה, אין פירוט חודשי.</p>' +
+      '<p class="hint">בנוסף מוצגת בכל שורה השוואה חיה מול נתוני התשואה החודשית הרשמיים ב-data.gov.il (רשות שוק ההון). התשואה המצטברת שם מחושבת כאן באתר מהחודשים הרשמיים — אין פרסום רשמי של תשואה מצטברת לתקופה חופשית — וההשוואה בודקת שהמאגר המקומי של האתר עדכני ועקבי מול המקור; היא אינה בדיקה בלתי תלויה של נוסחת החישוב.</p>';
     const block = (label, periods) => {
       const rows = verifyRows(periods);
       if (!rows.length) return "";
@@ -249,6 +251,70 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     };
     if (same) return head + block("", periodsA);
     return head + block("בפועל", periodsA) + block("מה אם", periodsB);
+  }
+
+
+  // Live consistency check against the official monthly data (data.gov.il). Only the public fund
+  // number is sent; the story itself never leaves the browser. Rows are paginated, de-duplicated
+  // by report month, and a "match" is shown only on full month coverage of the period.
+  const offCache = new Map();
+  async function fetchOfficialRows(src, resourceId, fundId) {
+    const site = W.OFFICIAL_SOURCES[src] || W.OFFICIAL_SOURCES.gemel;
+    const rows = new Map(); // YYYYMM (number) -> monthly yield (%), null when unreported
+    let offset = 0;
+    for (;;) {
+      const url = site.api + "?resource_id=" + resourceId + "&limit=1000&offset=" + offset + "&filters=" + encodeURIComponent(JSON.stringify({ FUND_ID: String(fundId) }));
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error("data.gov.il HTTP " + resp.status);
+      const j = await resp.json();
+      const recs = (j.result && j.result.records) || [];
+      for (const r of recs) rows.set(Number(r.REPORT_PERIOD), r.MONTHLY_YIELD === null || r.MONTHLY_YIELD === undefined ? null : Number(r.MONTHLY_YIELD));
+      offset += recs.length;
+      if (!recs.length || offset >= ((j.result && j.result.total) || 0)) break;
+    }
+    return rows;
+  }
+
+  async function enhanceOfficial() {
+    for (const sp of document.querySelectorAll("#result .offv")) {
+      const f = funds.get(sp.dataset.key);
+      const src = (f && f.src) || "gemel";
+      const fundId = f ? f.id : sp.dataset.key.split(":")[1] || "";
+      try {
+        const a = W.toIndex(sp.dataset.from);
+        const b = W.toIndex(sp.dataset.to);
+        const rids = W.officialResources(src, sp.dataset.from, sp.dataset.to);
+        const rows = new Map();
+        for (const rid of rids) {
+          const ck = src + "|" + rid + "|" + fundId;
+          if (!offCache.has(ck)) offCache.set(ck, fetchOfficialRows(src, rid, fundId));
+          const part = await offCache.get(ck);
+          for (const [period, y] of part) rows.set(period, y);
+        }
+        const yields = [];
+        for (let i = a; i <= b; i++) {
+          const y = rows.get(W.periodOf(i));
+          if (y !== null && y !== undefined) yields.push(y);
+        }
+        const total = b - a + 1;
+        const official = W.cumulativeYield(yields);
+        const links = rids
+          .map((rid, ix) => '<a href="' + W.officialRowsUrl(src, rid, fundId) + '" target="_blank" rel="noopener">שורות המקור' + (rids.length > 1 ? " " + (ix + 1) : "") + "</a>")
+          .join(" ");
+        if (yields.length < total) {
+          sp.innerHTML = "<br>במקור הרשמי נמצאו " + yields.length + " מתוך " + total + " חודשי התקופה; המצטבר על החודשים שנמצאו: " + pct(official) + " (מחושב מהתשואות החודשיות הרשמיות). " + links;
+          continue;
+        }
+        const local = f ? W.localCumulative(f, a, b) : null;
+        const match = local && local.missing === 0 && Math.abs(official - local.value) < 1e-4;
+        let tail = "";
+        if (match) tail = " ✓ תואם למאגר האתר.";
+        else if (local) tail = " ≠ שונה מהמאגר המקומי" + (local.missing ? " (למאגר האתר חסרים " + local.missing + " חודשים — כנראה שהמקומי פחות מעודכן מהמקור)." : ".");
+        sp.innerHTML = "<br>מקור רשמי חי (data.gov.il): " + pct(official) + " מצטבר, מחושב מהתשואות החודשיות הרשמיות; במאגר האתר: " + (local ? pct(local.value) : "-") + "." + tail + " " + links;
+      } catch (e) {
+        sp.textContent = "(לא ניתן למשוך כעת נתונים חיים מהמקור הרשמי; הקישור לאתר ההשוואה הרשמי עדיין תקף)";
+      }
+    }
   }
 
   function run() {
@@ -284,6 +350,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
         chart(c.actual, c.whatIf) + annuityHtml + notesHtml +
         (warn ? '<p class="warn">ב-' + warn + " חודשים (במצטבר) לא היה דיווח תשואה למסלול (למשל לפני הקמתו), ולכן חושבה בהם תשואה 0%. כדאי לבדוק את התאריכים.</p>" : "") +
         verifyHtml(c);
+        enhanceOfficial();
     } catch (e) {
       $("#error").textContent = e.message;
     }
