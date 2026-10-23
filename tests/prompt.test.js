@@ -3,8 +3,8 @@ const assert = require("node:assert");
 const P = require("../docs/prompt.js");
 
 test("buildPrompt includes instructions and the story", () => {
-  const p = P.buildPrompt("  פתחתי ב-2002  ");
-  assert.ok(p.includes("ONLY one JSON object") && p.endsWith("פתחתי ב-2002"));
+  const p = P.buildPrompt("  פתחתי ב-2005  ");
+  assert.ok(p.includes("ONLY one JSON object") && p.endsWith("פתחתי ב-2005"));
 });
 
 test("extractJson handles fences and surrounding text, rejects junk", () => {

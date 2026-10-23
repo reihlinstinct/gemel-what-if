@@ -5,9 +5,9 @@ const { handle, validate, link } = require("../mcp/server.js");
 const story = {
   end: "2010-12",
   events: [
-    { type: "start", date: "2002-01", fundKey: "i:14012" },
-    { type: "monthly", from: "2002-01", to: "2008-12", amount: 1000 },
-    { type: "product", date: "2009-01", fundKey: "g:877", scope: "actual" },
+    { type: "start", date: "2005-06", fundKey: "i:259012" },
+    { type: "monthly", from: "2005-06", to: "2011-06", amount: 750 },
+    { type: "product", date: "2009-01", fundKey: "g:416", scope: "actual" },
   ],
 };
 
@@ -34,12 +34,12 @@ test("tools/list and tools/call work over the JSON-RPC handler", () => {
 });
 
 test("full dates (YYYY-MM-DD) from the date picker validate and run", () => {
-  const s = { end: "2010-12-01", events: [{ type: "start", date: "2002-01-15", fundKey: "i:14012" }, { type: "monthly", from: "2002-01-15", to: "2008-12-31", amount: 1000 }] };
+  const s = { end: "2012-12-01", events: [{ type: "start", date: "2005-06-15", fundKey: "i:259012" }, { type: "monthly", from: "2005-06-15", to: "2011-06-30", amount: 750 }] };
   assert.deepStrictEqual(validate(s).errors, []);
 });
 
 test("fees event validates and lowers the computed result", () => {
-  const withFees = { end: story.end, events: story.events.concat([{ type: "fees", date: "2002-01", depositPct: 1, savingsPct: 1 }]) };
+  const withFees = { end: story.end, events: story.events.concat([{ type: "fees", date: "2005-06", depositPct: 1, savingsPct: 1 }]) };
   assert.deepStrictEqual(validate(withFees).errors, []);
   const run = (s) => JSON.parse(handle({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "compute_story", arguments: { story: s } } }).result.content[0].text);
   assert.ok(run(withFees).whatIf.finalValue < run(story).whatIf.finalValue);
