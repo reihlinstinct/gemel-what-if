@@ -160,3 +160,24 @@ test("searchFunds understands English company aliases and falls back to the best
   assert.strictEqual(W.searchFunds(data, "Meitav", 5)[0].key, "g:1");
   assert.strictEqual(W.searchFunds(data, "Clal managers insurance", 5)[0].key, "i:2");
 });
+
+test("phasePeriods splits a timeline into per-track periods and merges repeats", () => {
+  const periods = W.phasePeriods(
+    [{ from: "2002-01", fundId: 1 }, { from: "2008-06", fundId: 2 }, { from: "2012-01", fundId: 2 }],
+    "2020-12"
+  );
+  assert.deepStrictEqual(periods, [
+    { fundId: 1, from: "2002-01", to: "2008-05", months: 77 },
+    { fundId: 2, from: "2008-06", to: "2020-12", months: 151 },
+  ]);
+});
+
+test("phasePeriods sorts unsorted phases, accepts a numeric end and drops empty periods", () => {
+  assert.deepStrictEqual(
+    W.phasePeriods([{ from: "2010-01", fundId: 2 }, { from: "2002-01", fundId: 1 }], "2009-12"),
+    [{ fundId: 1, from: "2002-01", to: "2009-12", months: 96 }]
+  );
+  assert.deepStrictEqual(W.phasePeriods([{ from: "2002-01", fundId: 1 }], 202609), [
+    { fundId: 1, from: "2002-01", to: "2026-09", months: 297 },
+  ]);
+});
