@@ -209,6 +209,47 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     return '<svg viewBox="0 0 ' + w + " " + h + '" role="img" aria-label="גרף יתרה"><polyline fill="none" stroke="#777" stroke-width="2" points="' + pts(a.series) + '"/><polyline fill="none" stroke="#1b5fd1" stroke-width="2" points="' + pts(b.series) + '"/></svg><p><span style="color:#777">━ בפועל</span> &nbsp; <span style="color:#1b5fd1">━ מה אם</span></p>';
   }
 
+
+  // Official comparison systems cannot replay a sequence of track switches and their reports are
+  // session-bound (no deep links into a fund+period report), so the bottom of the result lists one
+  // row per track+period with the exact fund and period to select there. Verified 2026-10-23:
+  // gemelTsuot.aspx ignores query-string parameters and renders via a session ReportViewer.
+  const VERIFY_SITES = {
+    gemel: { name: "גמל-נט", url: "https://gemelnet.cma.gov.il/views/gemelTsuot.aspx" },
+    insurance: { name: "ביטוח-נט", url: "https://bituachnet.cma.gov.il/bituachTsuotUI/Tsuot/UI/bituachTsuotUI.aspx" },
+  };
+
+  const mmYYYY = (label) => label.slice(5, 7) + "/" + label.slice(0, 4);
+
+  function verifyRows(periods) {
+    return periods.map((p) => {
+      const f = funds.get(p.fundId);
+      const period = '<span dir="ltr">' + mmYYYY(p.from) + " - " + mmYYYY(p.to) + "</span>";
+      if (!f) return "<li>" + p.fundId + ", " + period + " (המסלול לא נמצא בנתוני האתר)</li>";
+      const site = VERIFY_SITES[f.src] || VERIFY_SITES.gemel;
+      const idPart = f.src === "gemel" ? "קופה " + f.id + " - " : "";
+      const meta = f.src === "insurance" ? " (" + (f.corp || "") + ", " + (f.cls || "") + ")" : "";
+      return '<li><a href="' + site.url + '" target="_blank" rel="noopener">' + site.name + "</a>: " + idPart + f.name + meta + ", " + period + "</li>";
+    });
+  }
+
+  function verifyHtml(c) {
+    const endLabel = W.toLabel(W.toIndex($("#end").value || data.latest));
+    const periodsA = W.phasePeriods(c.phasesActual, endLabel);
+    const periodsB = W.phasePeriods(c.phasesWhatIf, endLabel);
+    const same = JSON.stringify(periodsA) === JSON.stringify(periodsB);
+    const head =
+      "<h3>בדיקה מול גמל-נט וביטוח-נט</h3>" +
+      '<p class="hint">באתרים הרשמיים אי אפשר לשחזר רצף של מעברי מסלול, אבל אפשר לבדוק את התשואה של כל מסלול בנפרד. לכל מסלול בסיפור רשומות למטה השנים שבהן הכסף שהה בו, עם קישור: בחרו שם את המסלול ואת התקופה (בגמל-נט מינימום 12 חודשים, אז קטע קצר יותר ידרוש חלון רחב יותר). שימו לב: שם התשואה מוצגת מצטברת על התקופה, אין פירוט חודשי.</p>';
+    const block = (label, periods) => {
+      const rows = verifyRows(periods);
+      if (!rows.length) return "";
+      return (label ? "<h4>" + label + "</h4>" : "") + "<ul>" + rows.join("") + "</ul>";
+    };
+    if (same) return head + block("", periodsA);
+    return head + block("בפועל", periodsA) + block("מה אם", periodsB);
+  }
+
   function run() {
     $("#error").textContent = "";
     try {
@@ -240,7 +281,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
         "<tr><td>תשואה שנתית משוקללת</td><td>" + pct(c.actual.annualized) + "</td><td>" + pct(c.whatIf.annualized) + "</td></tr></table>" +
         '<p class="' + cls + '">ההפרש בין התרחישים: ' + fmt(c.diff) + " ₪" + (c.diffPercent === null ? "" : " (" + c.diffPercent.toFixed(1) + "%)") + "</p>" +
         chart(c.actual, c.whatIf) + annuityHtml + notesHtml +
-        (warn ? '<p class="warn">ב-' + warn + " חודשים (במצטבר) לא היה דיווח תשואה למסלול (למשל לפני הקמתו), ולכן חושבה בהם תשואה 0%. כדאי לבדוק את התאריכים.</p>" : "");
+        (warn ? '<p class="warn">ב-' + warn + " חודשים (במצטבר) לא היה דיווח תשואה למסלול (למשל לפני הקמתו), ולכן חושבה בהם תשואה 0%. כדאי לבדוק את התאריכים.</p>" : "") +
+        verifyHtml(c);
     } catch (e) {
       $("#error").textContent = e.message;
     }
