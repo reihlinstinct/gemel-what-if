@@ -88,6 +88,7 @@ def build(rows: list[dict], source: str = "gemel") -> list[dict]:
                 "sub": row.get("SUB_SPECIALIZATION"),
                 "pop": row.get("TARGET_POPULATION"),
                 "fee": row.get("AVG_ANNUAL_MANAGEMENT_FEE"),
+                "dfee": row.get("AVG_DEPOSIT_FEE"),
                 "assets": row.get("TOTAL_ASSETS"),
             }
     out = []
@@ -113,6 +114,7 @@ def build(rows: list[dict], source: str = "gemel") -> list[dict]:
                 "sub": meta["sub"],
                 "pop": meta["pop"],
                 "fee": meta["fee"],
+                "dfee": meta["dfee"],
                 "assets": meta["assets"],
                 "start": first_period,
                 "end": last_period,

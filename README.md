@@ -21,11 +21,13 @@ python3 scripts/fetch_data.py   # refresh the data
 ## Fees
 
 Every track card (start or switch) defaults the annual management fee to the track's official average
-(`AVG_ANNUAL_MANAGEMENT_FEE` in the Authority's open data, stored as `fee` in `funds.json`), shown with its
-source period and a dataset link. The field stays editable: typing overrides the default, clearing it models
-no fee, and tracks with no official average prefill nothing. The default is the *current* average — it is not
-evidence of what the fee was throughout the story. Deposit-fee and dated fee changes stay available through
-the dedicated fee event.
+(`AVG_ANNUAL_MANAGEMENT_FEE` in the Authority's open data, stored as `fee` in `funds.json`) and the deposit
+fee to the track's official average deposit fee (`AVG_DEPOSIT_FEE`, stored as `dfee`), each shown with its
+source period and a dataset link. Both fields stay editable: typing overrides the default, clearing a field
+models no fee, and tracks with no official average prefill nothing. The default is the *current* average — it
+is not evidence of what the fee was throughout the story. The phase deposit fee charges positive deposits
+only and stacks with any dated "fees" event, exactly like the phase savings fee (`feeAdjPct`) stacks with the
+event's savings fee; dated fee changes stay available through the dedicated fee event.
 
 ## Model
 

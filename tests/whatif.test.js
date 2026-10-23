@@ -234,3 +234,58 @@ test("timelineToStory carries the start event fee into the simulation", () => {
   const fee = W.simulate(story, funds);
   assert.ok(fee.final < noFee.final);
 });
+
+test("phasesFromSwitches carries the start and switch deposit fees", () => {
+  const ph = W.phasesFromSwitches("2002-01", 1, [{ date: "2002-03", to: 2, depositFeePct: 2 }], 0.5, 1);
+  assert.strictEqual(ph[0].depositFeePct, 1);
+  assert.strictEqual(ph[1].depositFeePct, 2);
+  assert.strictEqual(W.phasesFromSwitches("2002-01", 1, [])[0].depositFeePct, 0);
+});
+
+test("deposit fee charges deposits only, from the phase that sets it", () => {
+  const base = { start: "2002-01", end: "2002-04", deposits: [{ from: "2002-01", to: "2002-04", monthly: 100 }] };
+  const noFee = W.simulate(Object.assign({}, base, { phases: W.phasesFromSwitches("2002-01", 1, [], 0, 0) }), funds);
+  const startFee = W.simulate(Object.assign({}, base, { phases: W.phasesFromSwitches("2002-01", 1, [], 0, 1) }), funds);
+  const switchFee = W.simulate(
+    Object.assign({}, base, { phases: W.phasesFromSwitches("2002-01", 1, [{ date: "2002-03", to: 1, depositFeePct: 1 }], 0, 0) }),
+    funds
+  );
+  // 1% off every deposit from the start beats 1% only from the switch month; both lose to no fee.
+  assert.ok(startFee.final < switchFee.final);
+  assert.ok(switchFee.final < noFee.final);
+  assert.strictEqual(startFee.paid, noFee.paid); // the fee is not a deposit: paid totals stay gross
+});
+
+test("deposit fee stacks with a fees event, like the savings side", () => {
+  const timeline = { end: "2002-04", events: [{ type: "start", date: "2002-01", fundKey: 1, amount: 1000, depositFeePct: 1 }] };
+  const phaseOnly = W.simulate(W.timelineToStory(timeline, "actual"), funds);
+  const stacked = W.simulate(
+    W.timelineToStory({ end: timeline.end, events: timeline.events.concat([{ type: "fees", date: "2002-01", depositPct: 1 }]) }, "actual"),
+    funds
+  );
+  assert.ok(stacked.final < phaseOnly.final);
+});
+
+test("timelineToStory carries start and switch deposit fees into phases", () => {
+  const story = W.timelineToStory(
+    {
+      end: "2002-04",
+      events: [
+        { type: "start", date: "2002-01", fundKey: 1, amount: 1000, depositFeePct: 0.5 },
+        { type: "track", date: "2002-03", fundKey: 2, depositFeePct: 0.25 },
+      ],
+    },
+    "actual"
+  );
+  assert.strictEqual(story.phases[0].depositFeePct, 0.5);
+  assert.strictEqual(story.phases[1].depositFeePct, 0.25);
+});
+
+test("stories without deposit fees are unchanged (backward compatibility)", () => {
+  const timeline = { end: "2002-04", events: [{ type: "start", date: "2002-01", fundKey: 1, amount: 1000 }] };
+  const story = W.timelineToStory(timeline, "actual");
+  assert.strictEqual(story.phases[0].depositFeePct, 0);
+  const before = W.simulate(story, funds);
+  const after = W.simulate(W.timelineToStory({ end: timeline.end, events: [{ type: "start", date: "2002-01", fundKey: 1, amount: 1000, depositFeePct: 0 }] }, "actual"), funds);
+  assert.strictEqual(before.final, after.final);
+});
