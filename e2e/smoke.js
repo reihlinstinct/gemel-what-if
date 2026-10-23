@@ -13,7 +13,7 @@ const story = {
   end: "2010-12",
   events: [
     { type: "start", date: "2005-06", fundKey: "i:259012" },
-    { type: "monthly", from: "2005-06", to: "2011-06", amount: 750 },
+    { type: "monthly", from: "2005-06", to: "2009-06", amount: 750 },
   ],
 };
 const fragment = Buffer.from(JSON.stringify(story)).toString("base64url");
