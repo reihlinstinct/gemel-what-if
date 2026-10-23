@@ -57,6 +57,14 @@ session-bound (no deep link into a fund+period report; query-string parameters a
 report page where you pick the fund and period yourself. Gemel-Net's minimum report period is 12 months, so a
 shorter phase needs a wider window there, and it shows cumulative returns for the period, not a monthly breakdown.
 
+In addition, each row runs a live consistency check against the official monthly yield data on
+[data.gov.il](https://data.gov.il/dataset/gemelnet) (the Capital Market Authority's open data — the same
+upstream this site's local snapshot is built from). The cumulative figure shown there is compounded in the
+browser from the official monthly rows; the Authority does not publish a cumulative return for an arbitrary
+period. A "match" confirms the site's local data copy is fresh and consistent with its source — it is not an
+independent validation of the calculation formula. Only the public fund number is sent; the story stays in the
+browser. If the live fetch fails, the manual links above remain the fallback.
+
 ## Use
 
 Open `docs/index.html` through any static server (`python3 -m http.server -d docs`) or the hosted page if enabled.

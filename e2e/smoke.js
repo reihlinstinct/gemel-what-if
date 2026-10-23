@@ -37,7 +37,7 @@ server.listen(0, async () => {
   fs.writeFileSync(harness, `<!doctype html><meta charset=utf-8><div id=o></div><iframe id=f width=900 height=1200></iframe><script>
 const f=document.getElementById('f');f.src='${base}index.html#story=${fragment}';
 f.onload=()=>setTimeout(()=>{const d=f.contentDocument,q=s=>d.querySelector(s);d.querySelector('#ai-reply').value='ok {"events":[{"type":"start","date":"2005-01-01","fundName":"הראל קרן"},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';d.querySelector('#load-reply').click();const aiCards=d.querySelectorAll('.card').length;const aiStatus=d.querySelector('#ai-status').textContent;d.querySelector('#story-text').value='x';q('#run').click();
-const unnamed=[...d.querySelectorAll('input,select,textarea')].filter(e=>!(e.closest('label')||e.getAttribute('aria-label')||(e.id&&d.querySelector('label[for="'+e.id+'"]')))).length;document.getElementById('o').textContent='RESULT:'+unnamed+'#'+q('#error').textContent+'|'+aiCards+'|'+aiStatus.slice(0,5)+'|'+q('#result').innerText.replace(/\\s+/g,' ')+'|'+[...d.querySelectorAll('#result a')].map(x=>x.getAttribute('href')).join(',');},1500);</script>`);
+const unnamed=[...d.querySelectorAll('input,select,textarea')].filter(e=>!(e.closest('label')||e.getAttribute('aria-label')||(e.id&&d.querySelector('label[for="'+e.id+'"]')))).length;document.getElementById('o').textContent='RESULT:'+unnamed+'#'+q('#error').textContent+'|'+aiCards+'|'+aiStatus.slice(0,5)+'|'+q('#result').innerText.replace(/\\s+/g,' ')+'|'+[...d.querySelectorAll('#result a')].map(x=>x.getAttribute('href')).join(',')+'@'+d.querySelectorAll('#result .offv').length;},1500);</script>`);
   try {
     const chrome = process.env.CHROME || "google-chrome";
     const dom = await run(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--virtual-time-budget=10000", "--dump-dom", base + "__e2e.html"]);
@@ -45,7 +45,8 @@ const unnamed=[...d.querySelectorAll('input,select,textarea')].filter(e=>!(e.clo
     check(m, "page produced a result");
     if (m) {
       const [unnamed, rest] = m[1].split("#");
-      const [err, cards, aiStatus, text, links] = rest.split("|");
+      const [err, cards, aiStatus, text, linksAndOffv] = rest.split("|");
+      const [links, offv] = (linksAndOffv || "").split("@");
       check(unnamed === "0", "every form control has an accessible name (" + unnamed + " without)");
       check(err === "", "no error shown");
       check(cards === "2", "pasted AI reply replaced the timeline (2 cards)");
@@ -53,6 +54,8 @@ const unnamed=[...d.querySelectorAll('input,select,textarea')].filter(e=>!(e.clo
       check(/6,000/.test(text) && /רווח כולל/.test(text), "result shows deposits and total profit");
       check(/בדיקה מול גמל-נט וביטוח-נט/.test(text) && /01\/2005 - /.test(text), "result ends with per-track verification rows");
       check(/cma\.gov\.il/.test(links || ""), "verification rows link to the official comparison system");
+      check(offv === "1", "one live official-data placeholder per verification row (got " + offv + ")");
+      check(/טוען נתונים רשמיים|data.gov.il|לא ניתן למשוך/.test(text), "live official-data check renders in the result");
     }
   } finally {
     fs.unlinkSync(harness);

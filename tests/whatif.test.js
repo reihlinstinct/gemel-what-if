@@ -181,3 +181,41 @@ test("phasePeriods sorts unsorted phases, accepts a numeric end and drops empty 
     { fundId: 1, from: "2002-01", to: "2026-09", months: 297 },
   ]);
 });
+
+test("officialResources maps periods to the right source periods", () => {
+  const one = W.officialResources("gemel", "2023-02", "2023-11");
+  assert.deepStrictEqual(one, ["2016d770-f094-4a2e-983e-797c26479720"]);
+  const span = W.officialResources("gemel", "2022-06", "2024-02");
+  assert.deepStrictEqual(span, [
+    "91c849ed-ddc4-472b-bd09-0f5486cea35c",
+    "2016d770-f094-4a2e-983e-797c26479720",
+    "a30dcbea-a1d2-482c-ae29-8f781f5025fb",
+  ]);
+  const ins = W.officialResources("insurance", "2024-01", "2024-05");
+  assert.deepStrictEqual(ins, ["c6c62cc7-fe02-4b18-8f3e-813abfbb4647"]);
+  assert.notDeepStrictEqual(W.officialResources("gemel", "2020-01", "2020-12"), W.officialResources("insurance", "2020-01", "2020-12"));
+});
+
+test("cumulativeYield compounds monthly percents", () => {
+  assert.ok(Math.abs(W.cumulativeYield([10, -10]) - (1.1 * 0.9 - 1)) < 1e-12);
+  assert.strictEqual(W.cumulativeYield([]), 0);
+});
+
+test("officialRowsUrl carries the resource and a FUND_ID filter", () => {
+  const u = W.officialRowsUrl("gemel", "a30dcbea-a1d2-482c-ae29-8f781f5025fb", 880);
+  assert.ok(u.startsWith("https://data.gov.il/api/3/action/datastore_search?resource_id=a30dcbea-a1d2-482c-ae29-8f781f5025fb"));
+  assert.ok(decodeURIComponent(u).includes('{"FUND_ID":"880"}'));
+});
+
+test("localCumulative matches simulate's missing-months-as-zero rule", () => {
+  const f = fund(3, 200201, [2, null, 2]);
+  const r = W.localCumulative(f, "2002-01", "2002-03");
+  assert.ok(Math.abs(r.value - (1.02 * 1 * 1.02 - 1)) < 1e-12);
+  assert.strictEqual(r.missing, 1);
+  assert.strictEqual(r.months, 3);
+});
+
+test("periodOf converts a month index to YYYYMM", () => {
+  assert.strictEqual(W.periodOf(W.toIndex("2024-01")), 202401);
+  assert.strictEqual(W.periodOf(W.toIndex("2024-12")), 202412);
+});
