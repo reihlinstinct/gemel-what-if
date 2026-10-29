@@ -1,0 +1,18 @@
+{
+  "mappings": [
+    { "pattern": "docs/whatif.js", "checks": ["test", "e2e", "e2e-webkit"] },
+    { "pattern": "docs/app.js", "checks": ["test", "e2e", "e2e-webkit"] },
+    { "pattern": "docs/prompt.js", "checks": ["test"] },
+    { "pattern": "docs/index.html", "checks": ["e2e", "e2e-webkit"] },
+    { "pattern": "docs/style.css", "checks": ["e2e", "e2e-webkit"] },
+    { "pattern": "docs/data/**", "checks": ["test"] },
+    { "pattern": "docs/**", "checks": ["e2e", "e2e-webkit"] },
+    { "pattern": "mcp/**", "checks": ["test"] },
+    { "pattern": "worker/**", "checks": ["test"] },
+    { "pattern": "scripts/**", "checks": ["test"] },
+    { "pattern": "tests/**", "checks": ["test"] },
+    { "pattern": "e2e/**", "checks": ["e2e", "e2e-webkit"] },
+    { "pattern": "package.json", "checks": ["test", "e2e", "e2e-webkit", "links"] },
+    { "pattern": "package-lock.json", "checks": ["test", "review"] }
+  ]
+}
