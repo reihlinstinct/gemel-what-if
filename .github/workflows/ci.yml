@@ -34,6 +34,8 @@ jobs:
       - run: npm run e2e:webkit
 
   summary:
+    permissions:
+      contents: read
     name: Run summary
     if: always()
     needs: [test, e2e, e2e-webkit]

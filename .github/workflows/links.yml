@@ -16,6 +16,8 @@ jobs:
       - run: node e2e/links.js
 
   summary:
+    permissions:
+      contents: read
     name: Run summary
     if: always()
     needs: [links]

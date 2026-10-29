@@ -10,6 +10,8 @@ jobs:
       - uses: actions/dependency-review-action@v5
 
   summary:
+    permissions:
+      contents: read
     name: Run summary
     if: always()
     needs: [review]

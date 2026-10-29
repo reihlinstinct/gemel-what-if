@@ -22,6 +22,8 @@ jobs:
       - uses: actions/deploy-pages@v5
 
   summary:
+    permissions:
+      contents: read
     name: Run summary
     if: always()
     needs: [deploy]
