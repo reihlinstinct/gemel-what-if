@@ -1,0 +1,53 @@
+{
+ "version": 1,
+ "findings": [
+  {
+   "path": ".github/workflows/scorecard.yml",
+   "rule": "job-write",
+   "scope": "analysis",
+   "evidence": "security-events: write",
+   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+   "reason": "Approved job-scoped SARIF upload to GitHub code scanning; no code or secrets write."
+  },
+  {
+   "path": ".github/workflows/codeql.yml",
+   "rule": "top-level-write",
+   "scope": "workflow",
+   "evidence": "security-events: write",
+   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+   "reason": "Pre-existing workflow-level write permission; tracked for job-level scoping in this issue."
+  },
+  {
+   "path": ".github/workflows/dependency-review.yml",
+   "rule": "unpinned-action",
+   "scope": "review",
+   "evidence": "actions/checkout@v7",
+   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+   "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+  },
+  {
+   "path": ".github/workflows/dependency-review.yml",
+   "rule": "unpinned-action",
+   "scope": "review",
+   "evidence": "actions/dependency-review-action@v5",
+   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+   "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+  },
+  {
+   "path": ".github/workflows/links.yml",
+   "rule": "unpinned-action",
+   "scope": "links",
+   "evidence": "actions/checkout@v7",
+   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+   "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+  },
+  {
+   "path": ".github/workflows/links.yml",
+   "rule": "unpinned-action",
+   "scope": "links",
+   "evidence": "actions/setup-node@v7",
+   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+   "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+  }
+ ]
+}
