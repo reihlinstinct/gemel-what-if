@@ -26,7 +26,8 @@
       "pattern": "docs/index.html",
       "checks": [
         "e2e",
-        "e2e-webkit"
+        "e2e-webkit",
+        "links"
       ]
     },
     {
@@ -89,8 +90,7 @@
       "pattern": "e2e/shared.js",
       "checks": [
         "e2e",
-        "e2e-webkit",
-        "links"
+        "e2e-webkit"
       ]
     },
     {
