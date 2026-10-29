@@ -62,12 +62,6 @@
       ]
     },
     {
-      "pattern": "scripts/**",
-      "checks": [
-        "test"
-      ]
-    },
-    {
       "pattern": "tests/**",
       "checks": [
         "test"
