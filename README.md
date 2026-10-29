@@ -89,6 +89,8 @@ npm test        # node:test for the engine + unittest for the data builder
 ```
 
 Layout: `docs/whatif.js` (pure engine), `docs/app.js` (UI), `scripts/` (data), `tests/`.
+
+Every workflow ends with a `Run summary` job that writes a summary to the top of the run page: which jobs ran, their result and duration, what was skipped and why, the commits and files the run changed, and which checks cover those changes (`.github/ci-coverage-map.json` declares the coverage; files matching no mapping are flagged). The script is `scripts/ci/run_summary.py`.
 One issue and one PR per change; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
