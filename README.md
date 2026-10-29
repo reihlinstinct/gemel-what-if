@@ -1,5 +1,7 @@
 # gemel-what-if
 
+[![CI](https://github.com/reihlinstinct/gemel-what-if/actions/workflows/ci.yml/badge.svg)](https://github.com/reihlinstinct/gemel-what-if/actions/workflows/ci.yml)
+
 A static, client-side "what if" calculator for Israeli provident funds (קופות גמל, קרנות השתלמות, pension tracks).
 Describe an investment story (deposits, dates, the track the money was in) and compare it with a story where you
 switched track at a different time. Everything runs in the browser; nothing you type leaves the page.
