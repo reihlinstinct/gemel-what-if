@@ -244,12 +244,18 @@ def main():
             out.append("Commits:")
             for line in log.splitlines() or ["(none)"]:
                 out.append(f"- {line}")
-            diff = sh("git", "diff", "--name-status", rng).strip()
-            for line in diff.splitlines():
-                parts = line.split("\t")
-                status = parts[0]
-                path = parts[-1]
-                files.append((status[0], path))
+            # -z: NUL-delimited, no quoting of non-ASCII paths.
+            diff = sh("git", "diff", "--name-status", "-z", rng)
+            records = [r for r in diff.split("\x00") if r]
+            i = 0
+            while i < len(records):
+                status = records[i]
+                if status.startswith(("R", "C")):
+                    i += 1  # skip old path; report the new one
+                if i + 1 > len(records) - 1:
+                    break
+                files.append((status[0], records[i + 1]))
+                i += 2
         except subprocess.CalledProcessError:
             out.append("Diff unavailable in this checkout "
                        "(shallow history or missing base).")
