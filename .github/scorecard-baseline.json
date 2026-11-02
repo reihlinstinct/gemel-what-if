@@ -96,6 +96,14 @@
    "evidence": "actions/deploy-pages@v5",
    "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
    "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+  },
+  {
+   "path": ".github/workflows/ci.yml",
+   "rule": "job-write",
+   "scope": "alert",
+   "evidence": "issues: write",
+   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/82",
+   "reason": "Job-scoped issues:write lets the scheduled-failure alert open/update the single ci-alert issue; runs only on schedule failure, no code or secrets access, no checkout."
   }
  ]
 }
