@@ -18,10 +18,10 @@
 <meta property="og:locale" content="he_IL">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://reihlinstinct.github.io/gemel-what-if/og.png">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://gemel-what-if.reihlinstinct.workers.dev https://data.gov.il; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://gemel-what-if.reihlinstinct.workers.dev https://data.gov.il https://cloudflareinsights.com; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <link rel="stylesheet" href="style.css">
-</head>
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "05e697b053694153817f4ec7e09a3838"}'></script></head>
 <body>
 <header>
   <h1>מה היה קורה אילו?</h1>
@@ -44,7 +44,7 @@
       <button type="button" id="build-ai" class="primary">בנה ציר זמן עם AI</button>
     </div>
     <p id="ai-status" role="status" class="status"></p>
-    <p class="note">פרטיות: הטקסט נשלח לשרת ולמודל AI חיצוני (Google Gemini, ובגיבוי Cloudflare), בלי שמירה אצלנו. אל תכתבו שמות או מספרי זהות. ה-AI עלול לטעות, לכן בדקו כל אירוע ומסלול לפני החישוב.</p>
+    <p class="note">פרטיות: ספירת ביקורים אנונימית (Cloudflare Web Analytics) בלבד - ללא עוגיות וללא שמירת כתובות IP. הטקסט נשלח לשרת ולמודל AI חיצוני (Google Gemini, ובגיבוי Cloudflare), בלי שמירה אצלנו. אל תכתבו שמות או מספרי זהות. ה-AI עלול לטעות, לכן בדקו כל אירוע ומסלול לפני החישוב.</p>
     <details class="adv">
       <summary>בלי AI: העתקת פרומפט והדבקת תשובה</summary>
       <p class="hint">העתקו את הפרומפט לצ'אט AI לבחירתכם, והדביקו כאן את תשובת ה-JSON. האתר לא שולח כלום בדרך הזו.</p>
