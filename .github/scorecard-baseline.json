@@ -1,109 +1,117 @@
 {
- "version": 1,
- "findings": [
-  {
-   "path": ".github/workflows/scorecard.yml",
-   "rule": "job-write",
-   "scope": "analysis",
-   "evidence": "security-events: write",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
-   "reason": "Approved job-scoped SARIF upload to GitHub code scanning; no code or secrets write."
-  },
-  {
-   "path": ".github/workflows/codeql.yml",
-   "rule": "top-level-write",
-   "scope": "workflow",
-   "evidence": "security-events: write",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
-   "reason": "Pre-existing workflow-level write permission; tracked for job-level scoping in this issue."
-  },
-  {
-   "path": ".github/workflows/dependency-review.yml",
-   "rule": "unpinned-action",
-   "scope": "review",
-   "evidence": "actions/checkout@v7",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
-   "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
-  },
-  {
-   "path": ".github/workflows/dependency-review.yml",
-   "rule": "unpinned-action",
-   "scope": "review",
-   "evidence": "actions/dependency-review-action@v5",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
-   "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
-  },
-  {
-   "path": ".github/workflows/links.yml",
-   "rule": "unpinned-action",
-   "scope": "links",
-   "evidence": "actions/checkout@v7",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
-   "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
-  },
-  {
-   "path": ".github/workflows/links.yml",
-   "rule": "unpinned-action",
-   "scope": "links",
-   "evidence": "actions/setup-node@v7",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
-   "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
-  },
-  {
-   "path": ".github/workflows/pages.yml",
-   "rule": "top-level-write",
-   "scope": "workflow",
-   "evidence": "pages: write",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
-   "reason": "Pre-existing workflow-level write permission required for GitHub Pages deployment; tracked for job-level scoping in this issue."
-  },
-  {
-   "path": ".github/workflows/pages.yml",
-   "rule": "top-level-write",
-   "scope": "workflow",
-   "evidence": "id-token: write",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
-   "reason": "Pre-existing workflow-level id-token permission required for Pages OIDC deployment; tracked for job-level scoping in this issue."
-  },
-  {
-   "path": ".github/workflows/pages.yml",
-   "rule": "unpinned-action",
-   "scope": "deploy",
-   "evidence": "actions/checkout@v7",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
-   "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
-  },
-  {
-   "path": ".github/workflows/pages.yml",
-   "rule": "unpinned-action",
-   "scope": "deploy",
-   "evidence": "actions/configure-pages@v6",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
-   "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
-  },
-  {
-   "path": ".github/workflows/pages.yml",
-   "rule": "unpinned-action",
-   "scope": "deploy",
-   "evidence": "actions/upload-pages-artifact@v5",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
-   "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
-  },
-  {
-   "path": ".github/workflows/pages.yml",
-   "rule": "unpinned-action",
-   "scope": "deploy",
-   "evidence": "actions/deploy-pages@v5",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
-   "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
-  },
-  {
-   "path": ".github/workflows/ci.yml",
-   "rule": "job-write",
-   "scope": "alert",
-   "evidence": "issues: write",
-   "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/82",
-   "reason": "Job-scoped issues:write lets the scheduled-failure alert open/update the single ci-alert issue; runs only on schedule failure, no code or secrets access, no checkout."
-  }
- ]
+  "version": 1,
+  "findings": [
+    {
+      "path": ".github/workflows/scorecard.yml",
+      "rule": "job-write",
+      "scope": "analysis",
+      "evidence": "security-events: write",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+      "reason": "Approved job-scoped SARIF upload to GitHub code scanning; no code or secrets write."
+    },
+    {
+      "path": ".github/workflows/codeql.yml",
+      "rule": "top-level-write",
+      "scope": "workflow",
+      "evidence": "security-events: write",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+      "reason": "Pre-existing workflow-level write permission; tracked for job-level scoping in this issue."
+    },
+    {
+      "path": ".github/workflows/dependency-review.yml",
+      "rule": "unpinned-action",
+      "scope": "review",
+      "evidence": "actions/checkout@v7",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+      "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+    },
+    {
+      "path": ".github/workflows/dependency-review.yml",
+      "rule": "unpinned-action",
+      "scope": "review",
+      "evidence": "actions/dependency-review-action@v5",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+      "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+    },
+    {
+      "path": ".github/workflows/links.yml",
+      "rule": "unpinned-action",
+      "scope": "links",
+      "evidence": "actions/checkout@v7",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+      "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+    },
+    {
+      "path": ".github/workflows/links.yml",
+      "rule": "unpinned-action",
+      "scope": "links",
+      "evidence": "actions/setup-node@v7",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+      "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "rule": "top-level-write",
+      "scope": "workflow",
+      "evidence": "pages: write",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+      "reason": "Pre-existing workflow-level write permission required for GitHub Pages deployment; tracked for job-level scoping in this issue."
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "rule": "top-level-write",
+      "scope": "workflow",
+      "evidence": "id-token: write",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+      "reason": "Pre-existing workflow-level id-token permission required for Pages OIDC deployment; tracked for job-level scoping in this issue."
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "rule": "unpinned-action",
+      "scope": "deploy",
+      "evidence": "actions/checkout@v7",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+      "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "rule": "unpinned-action",
+      "scope": "deploy",
+      "evidence": "actions/configure-pages@v6",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+      "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "rule": "unpinned-action",
+      "scope": "deploy",
+      "evidence": "actions/upload-pages-artifact@v5",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+      "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "rule": "unpinned-action",
+      "scope": "deploy",
+      "evidence": "actions/deploy-pages@v5",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/78",
+      "reason": "Pre-existing action ref pinned by tag/branch, not commit SHA; tracked for SHA pinning in this issue."
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "rule": "job-write",
+      "scope": "alert",
+      "evidence": "issues: write",
+      "issue": "https://github.com/reihlinstinct/gemel-what-if/issues/82",
+      "reason": "Job-scoped issues:write lets the scheduled-failure alert open/update the single ci-alert issue; runs only on schedule failure, no code or secrets access, no checkout."
+    },
+    {
+      "path": ".github/workflows/gemini-review.yml",
+      "rule": "job-write",
+      "scope": "gemini-review",
+      "evidence": "pull-requests: write",
+      "issue": "https://github.com/reihlinstinct/gemini-pr-review/issues/1",
+      "reason": "Owner-approved event-driven Gemini PR review; COMMENT-only advisory reviews, idempotent per head SHA. Tracked in reihlinstinct/gemini-pr-review#1."
+    }
+  ]
 }
