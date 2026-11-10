@@ -32,7 +32,13 @@
     if (fence) s = fence[1];
     var a = s.indexOf("{");
     var b = s.lastIndexOf("}");
-    if (a < 0 || b <= a) throw new Error("לא נמצא JSON בתשובה");
+    if (a < 0 || b <= a) {
+      // The page shows the catalog text for i18nKey. The message itself is also model-facing feedback in
+      // the Worker's retry loop, so it stays word for word (tests/i18n.test.js pins it to the catalog).
+      var err = new Error("לא נמצא JSON בתשובה");
+      err.i18nKey = "prompt.no_json";
+      throw err;
+    }
     return JSON.parse(s.slice(a, b + 1));
   }
 

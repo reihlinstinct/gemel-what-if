@@ -4,6 +4,7 @@ import fs from "node:fs";
 import { createHandler } from "../src/handler.js";
 
 const data = JSON.parse(fs.readFileSync(new URL("../../docs/data/funds.json", import.meta.url)));
+const catalog = JSON.parse(fs.readFileSync(new URL("../../docs/i18n/strings.json", import.meta.url)));
 const ORIGIN = "https://reihlinstinct.github.io";
 const GOOD = { end: "2013-12-01", events: [{ type: "start", date: "2005-06-01", fundKey: "i:259012" }, { type: "monthly", from: "2005-06-01", to: "2011-06-01", amount: 750 }] };
 const post = (path, body, headers = {}) => new Request("https://w.test" + path, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
@@ -83,4 +84,23 @@ test("Gemini path: function call, final JSON, daily cap, fallback to Workers AI"
   const r3 = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "4.4.4.4" }));
   assert.strictEqual(r3.status, 200);
   assert.strictEqual(geminiCalls, before);
+});
+
+test("AI endpoint errors: a code for the page, plus the default-language text exactly as before the catalog", async () => {
+  const ai = { run: async () => ({ response: "no json at all" }) };
+  const h = createHandler({ data, ai, catalog });
+  const long = await h(post("/api/story", { text: "x".repeat(3000) }, { origin: ORIGIN }));
+  assert.deepStrictEqual(await long.json(), { error: "הטקסט ריק או ארוך מ-2000 תווים", code: "text_length", params: { max: 2000 } });
+  const bad = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "4.4.4.4" }));
+  assert.strictEqual(bad.status, 502);
+  assert.deepStrictEqual(await bad.json(), { error: "המודל לא החזיר JSON תקין", code: "model_bad_json" });
+  let last;
+  for (let i = 0; i < 6; i++) last = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "5.5.5.5" }));
+  assert.strictEqual(last.status, 429);
+  assert.deepStrictEqual(await last.json(), { error: "יותר מדי בקשות, נסו שוב בעוד שעה", code: "rate_limited" });
+  const invalid = { run: async () => ({ response: JSON.stringify({ events: [{ type: "start", date: "bad", fundKey: "nope" }] }) }) };
+  const r = await (await createHandler({ data, ai: invalid, catalog })(post("/api/story", { text: "x" }, { origin: ORIGIN }))).json();
+  assert.strictEqual(r.code, "story_invalid");
+  assert.strictEqual(r.error, "הסיפור לא עבר אימות: " + r.params.details);
+  assert.ok(r.params.details.length > 0);
 });

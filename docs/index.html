@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>מה היה קורה אילו - קופות גמל ופנסיה</title>
-<meta name="description" content="משחק מה היה קורה אילו על תשואות קופות גמל, השתלמות וביטוח מנהלים: בנו ציר זמן וראו מה היה קורה. הערכה בלבד, לא ייעוץ פיננסי.">
+<title data-i18n="meta.title">מה היה קורה אילו - קופות גמל ופנסיה</title>
+<meta name="description" content="משחק מה היה קורה אילו על תשואות קופות גמל, השתלמות וביטוח מנהלים: בנו ציר זמן וראו מה היה קורה. הערכה בלבד, לא ייעוץ פיננסי." data-i18n-content="meta.description">
 <meta name="theme-color" content="#1f4e79">
 <link rel="canonical" href="https://reihlinstinct.github.io/gemel-what-if/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
-<meta property="og:title" content="מה היה קורה אילו - קופות גמל ופנסיה">
-<meta property="og:description" content="בנו ציר זמן של סיפור השקעה וראו מה היה קורה. החישוב בדפדפן בלבד. לא ייעוץ פיננסי.">
+<meta property="og:title" content="מה היה קורה אילו - קופות גמל ופנסיה" data-i18n-content="meta.title">
+<meta property="og:description" content="בנו ציר זמן של סיפור השקעה וראו מה היה קורה. החישוב בדפדפן בלבד. לא ייעוץ פיננסי." data-i18n-content="meta.og_description">
 <meta property="og:url" content="https://reihlinstinct.github.io/gemel-what-if/">
 <meta property="og:image" content="https://reihlinstinct.github.io/gemel-what-if/og.png">
 <meta property="og:image:width" content="1200">
@@ -24,75 +24,77 @@
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "05e697b053694153817f4ec7e09a3838"}'></script></head>
 <body>
 <header>
-  <h1>מה היה קורה אילו?</h1>
-  <p>תארו סיפור השקעה (הפקדות, תאריכים, מסלולים) וראו מה היה קורה אילו הייתם עוברים מסלול בזמן אחר. החישוב מתבצע בדפדפן בלבד, שום נתון לא נשלח לשום מקום.</p>
-  <p class="warn" role="note">לא ייעוץ פיננסי. תשואות עבר אינן מעידות על העתיד. החישוב מבוסס על התשואות החודשיות שדווחו לרשות שוק ההון (גמל-נט) ועל הנחות מפושטות (הפקדה בתחילת חודש, בלי מס, בלי עמלות נוספות מעבר למה שכבר מגולם בתשואה).</p>
+  <label class="lang-pick" hidden><span data-i18n="ui.language">שפה</span> <select id="lang"></select></label>
+  <h1 data-i18n="page.heading">מה היה קורה אילו?</h1>
+  <p data-i18n="page.intro">תארו סיפור השקעה (הפקדות, תאריכים, מסלולים) וראו מה היה קורה אילו הייתם עוברים מסלול בזמן אחר. החישוב מתבצע בדפדפן בלבד, שום נתון לא נשלח לשום מקום.</p>
+  <p class="warn" role="note" data-i18n="page.disclaimer">לא ייעוץ פיננסי. תשואות עבר אינן מעידות על העתיד. החישוב מבוסס על התשואות החודשיות שדווחו לרשות שוק ההון (גמל-נט) ועל הנחות מפושטות (הפקדה בתחילת חודש, בלי מס, בלי עמלות נוספות מעבר למה שכבר מגולם בתשואה).</p>
   <details>
-    <summary>חשוב לדעת: מעבר בין מוצרים אינו מעבר מסלול</summary>
-    <p>המחשבון בודק מעבר בין מסלולי השקעה. מעבר מפוליסת ביטוח מנהלים ותיקה (לפני 2013) לקופת גמל הוא שינוי מוצר, ולא רק מסלול: ייתכן שמקדם קצבה מובטח הולך לאיבוד, כיסויים ביטוחיים ודמי ניהול חוזיים שונים, ובדרך כלל המעבר עצמו אינו אירוע מס. אם יש מקדם קצבה תלוי במסמכי הפוליסה. זהו מידע כללי ולא ייעוץ, המבוסס על סיכומים של כל זכות ומשרד האוצר, ותלוי בפוליסה הספציפית.</p>
-    <p><a href="https://haotzarsheli.mof.gov.il/Subject/Pages/Types-Of-Pension-Savings.aspx">קריאה נוספת: ההבדלים בין סוגי החיסכון הפנסיוני (משרד האוצר)</a></p>
+    <summary data-i18n="page.product_summary">חשוב לדעת: מעבר בין מוצרים אינו מעבר מסלול</summary>
+    <p data-i18n="page.product_body">המחשבון בודק מעבר בין מסלולי השקעה. מעבר מפוליסת ביטוח מנהלים ותיקה (לפני 2013) לקופת גמל הוא שינוי מוצר, ולא רק מסלול: ייתכן שמקדם קצבה מובטח הולך לאיבוד, כיסויים ביטוחיים ודמי ניהול חוזיים שונים, ובדרך כלל המעבר עצמו אינו אירוע מס. אם יש מקדם קצבה תלוי במסמכי הפוליסה. זהו מידע כללי ולא ייעוץ, המבוסס על סיכומים של כל זכות ומשרד האוצר, ותלוי בפוליסה הספציפית.</p>
+    <p><a href="https://haotzarsheli.mof.gov.il/Subject/Pages/Types-Of-Pension-Savings.aspx" data-i18n="page.product_more">קריאה נוספת: ההבדלים בין סוגי החיסכון הפנסיוני (משרד האוצר)</a></p>
   </details>
 </header>
 <main>
   <section class="collapsible">
     <details id="ai-section">
-    <summary><h2>ספרו את הסיפור במילים שלכם</h2></summary>
-    <p class="hint">תארו מה קרה: איפה נפתחה הקופה, מתי, כמה הפקדתם ולאן עברתם. ה-AI יבנה מזה ציר זמן שתוכלו לבדוק ולתקן.</p>
-    <label class="f" for="story-text"><span class="sr-only">תיאור הסיפור</span></label>
-    <textarea id="story-text" rows="6" placeholder="למשל: ב-2005 פתחתי ביטוח מנהלים בהראל, הפקדתי 750 ש&quot;ח בחודש עד 2011, וב-2015 עברתי לגמל של פסגות..."></textarea>
+    <summary><h2 data-i18n="ai.heading">ספרו את הסיפור במילים שלכם</h2></summary>
+    <p class="hint" data-i18n="ai.hint">תארו מה קרה: איפה נפתחה הקופה, מתי, כמה הפקדתם ולאן עברתם. ה-AI יבנה מזה ציר זמן שתוכלו לבדוק ולתקן.</p>
+    <label class="f" for="story-text"><span class="sr-only" data-i18n="ai.story_label">תיאור הסיפור</span></label>
+    <textarea id="story-text" rows="6" placeholder="למשל: ב-2005 פתחתי ביטוח מנהלים בהראל, הפקדתי 750 ש&quot;ח בחודש עד 2011, וב-2015 עברתי לגמל של פסגות..." data-i18n-placeholder="ai.story_placeholder"></textarea>
     <div class="actions">
-      <button type="button" id="build-ai" class="primary">בנה ציר זמן עם AI</button>
+      <button type="button" id="build-ai" class="primary" data-i18n="ai.build">בנה ציר זמן עם AI</button>
     </div>
     <p id="ai-status" role="status" class="status"></p>
-    <p class="note">פרטיות: ספירת ביקורים אנונימית (Cloudflare Web Analytics) בלבד - ללא עוגיות וללא שמירת כתובות IP. הטקסט נשלח לשרת ולמודל AI חיצוני (Google Gemini, ובגיבוי Cloudflare), בלי שמירה אצלנו. אל תכתבו שמות או מספרי זהות. ה-AI עלול לטעות, לכן בדקו כל אירוע ומסלול לפני החישוב.</p>
+    <p class="note" data-i18n="ai.privacy">פרטיות: ספירת ביקורים אנונימית (Cloudflare Web Analytics) בלבד - ללא עוגיות וללא שמירת כתובות IP. הטקסט נשלח לשרת ולמודל AI חיצוני (Google Gemini, ובגיבוי Cloudflare), בלי שמירה אצלנו. אל תכתבו שמות או מספרי זהות. ה-AI עלול לטעות, לכן בדקו כל אירוע ומסלול לפני החישוב.</p>
     <details class="adv">
-      <summary>בלי AI: העתקת פרומפט והדבקת תשובה</summary>
-      <p class="hint">העתקו את הפרומפט לצ'אט AI לבחירתכם, והדביקו כאן את תשובת ה-JSON. האתר לא שולח כלום בדרך הזו.</p>
-      <div class="actions"><button type="button" id="copy-prompt">העתק פרומפט</button></div>
-      <label class="f"><span>תשובת ה-AI (JSON)</span><textarea id="ai-reply" rows="6" dir="ltr"></textarea></label>
-      <div class="actions"><button type="button" id="load-reply">טען לציר הזמן</button></div>
+      <summary data-i18n="prompt.summary">בלי AI: העתקת פרומפט והדבקת תשובה</summary>
+      <p class="hint" data-i18n="prompt.hint">העתקו את הפרומפט לצ'אט AI לבחירתכם, והדביקו כאן את תשובת ה-JSON. האתר לא שולח כלום בדרך הזו.</p>
+      <div class="actions"><button type="button" id="copy-prompt" data-i18n="prompt.copy">העתק פרומפט</button></div>
+      <label class="f"><span data-i18n="prompt.reply_label">תשובת ה-AI (JSON)</span><textarea id="ai-reply" rows="6" dir="ltr"></textarea></label>
+      <div class="actions"><button type="button" id="load-reply" data-i18n="prompt.load">טען לציר הזמן</button></div>
     </details>
     </details>
   </section>
   <section id="timeline-section">
-    <h2>ציר הזמן</h2>
-    <p class="hint">בנו את הסיפור מלמעלה למטה. כדי להשוות, לחצו "⑂ פצל" (בסוף הציר או על אירוע מסוים): מנקודת הפיצול יוצגו שני צדדים, "בפועל" ו"מה אם", כל אחד עם האירועים שלו. התוצאה משווה בין שני הצדדים.</p>
-    <div class="actions"><button type="button" id="fork-btn">⑂ פצל את הציר (תרחיש מקביל)</button><button type="button" id="unfork-btn" hidden>בטל פיצול</button><button type="button" id="load-example">טען דוגמה</button></div>
+    <h2 data-i18n="timeline.heading">ציר הזמן</h2>
+    <p class="hint" data-i18n="timeline.hint">בנו את הסיפור מלמעלה למטה. כדי להשוות, לחצו "⑂ פצל" (בסוף הציר או על אירוע מסוים): מנקודת הפיצול יוצגו שני צדדים, "בפועל" ו"מה אם", כל אחד עם האירועים שלו. התוצאה משווה בין שני הצדדים.</p>
+    <div class="actions"><button type="button" id="fork-btn" data-i18n="timeline.fork">⑂ פצל את הציר (תרחיש מקביל)</button><button type="button" id="unfork-btn" hidden data-i18n="timeline.unfork">בטל פיצול</button><button type="button" id="load-example" data-i18n="timeline.example">טען דוגמה</button></div>
     <p id="parallel-status" role="status" class="status"></p>
-    <label class="f end"><span>סיום החישוב</span><input type="date" id="end"></label>
+    <label class="f end"><span data-i18n="timeline.end">סיום החישוב</span><input type="date" id="end"></label>
     <div id="timeline"></div>
     <div id="fork" class="fork" hidden>
-      <div class="fork-line">⑂ מכאן הציר מתפצל</div>
+      <div class="fork-line" data-i18n="timeline.fork_line">⑂ מכאן הציר מתפצל</div>
       <div class="fork-cols">
-        <div class="col col-actual"><h3>בפועל</h3><div id="col-actual"></div><button type="button" id="add-actual" class="plus" aria-label="הוסף אירוע לבפועל">+</button></div>
-        <div class="col col-whatif"><h3>מה אם</h3><div id="col-whatif"></div><button type="button" id="add-whatif" class="plus" aria-label="הוסף אירוע למה אם">+</button></div>
+        <div class="col col-actual"><h3 data-i18n="scope.actual">בפועל</h3><div id="col-actual"></div><button type="button" id="add-actual" class="plus" aria-label="הוסף אירוע לבפועל" data-i18n-aria-label="timeline.add_actual">+</button></div>
+        <div class="col col-whatif"><h3 data-i18n="scope.whatif">מה אם</h3><div id="col-whatif"></div><button type="button" id="add-whatif" class="plus" aria-label="הוסף אירוע למה אם" data-i18n-aria-label="timeline.add_whatif">+</button></div>
       </div>
     </div>
-    <button type="button" id="add-event" class="plus" aria-label="הוסף אירוע">+</button>
+    <button type="button" id="add-event" class="plus" aria-label="הוסף אירוע" data-i18n-aria-label="timeline.add">+</button>
   </section>
   <section class="collapsible">
     <details id="annuity">
-    <summary><h2>הערכת קצבה (אופציונלי)</h2></summary>
-    <p>להערכת קצבה חודשית בפרישה: הזינו מקדם מובטח מהפוליסה (הון נדרש לכל 1 ₪ קצבה, למשל 190) ומקדם שוק משוער להשוואה. בלי מקדמים לא תוצג הערכה.</p>
-    <div class="grid"><label class="f"><span>מקדם מובטח</span><input type="number" id="coef-guar" min="0" step="0.1"></label>
-    <label class="f"><span>מקדם שוק</span><input type="number" id="coef-market" min="0" step="0.1"></label>
-    <label class="f"><span>חודשים מסוף הנתונים עד הפרישה</span><input type="number" id="months-ret" min="0" step="1"></label>
-    <label class="f"><span>תשואה שנתית משוערת עד הפרישה (%)</span><input type="number" id="ret-rate" step="0.1"></label></div>
+    <summary><h2 data-i18n="annuity.heading">הערכת קצבה (אופציונלי)</h2></summary>
+    <p data-i18n="annuity.hint">להערכת קצבה חודשית בפרישה: הזינו מקדם מובטח מהפוליסה (הון נדרש לכל 1 ₪ קצבה, למשל 190) ומקדם שוק משוער להשוואה. בלי מקדמים לא תוצג הערכה.</p>
+    <div class="grid"><label class="f"><span data-i18n="annuity.coef_guar">מקדם מובטח</span><input type="number" id="coef-guar" min="0" step="0.1"></label>
+    <label class="f"><span data-i18n="annuity.coef_market">מקדם שוק</span><input type="number" id="coef-market" min="0" step="0.1"></label>
+    <label class="f"><span data-i18n="annuity.months">חודשים מסוף הנתונים עד הפרישה</span><input type="number" id="months-ret" min="0" step="1"></label>
+    <label class="f"><span data-i18n="annuity.rate">תשואה שנתית משוערת עד הפרישה (%)</span><input type="number" id="ret-rate" step="0.1"></label></div>
     </details>
   </section>
   <section>
-    <button type="button" id="run" class="primary">חשב רווח כולל</button>
+    <button type="button" id="run" class="primary" data-i18n="run.button">חשב רווח כולל</button>
     <div id="error" role="alert"></div>
     <div id="result"></div>
   </section>
   <section>
-    <h2>שמירה וטעינה</h2>
-    <p>הסיפור נשמר לקובץ אצלכם (לא באתר). אפשר לטעון אותו שוב מאוחר יותר, או לפתוח קישור שמכיל את הסיפור אחרי הסימן # (החלק הזה לא נשלח לשרת).</p>
-    <div class="actions"><button type="button" id="export">שמור סיפור לקובץ</button></div>
-    <label class="f"><span>טעינה מקובץ</span><input type="file" id="import" accept="application/json"></label>
+    <h2 data-i18n="save.heading">שמירה וטעינה</h2>
+    <p data-i18n="save.hint">הסיפור נשמר לקובץ אצלכם (לא באתר). אפשר לטעון אותו שוב מאוחר יותר, או לפתוח קישור שמכיל את הסיפור אחרי הסימן # (החלק הזה לא נשלח לשרת).</p>
+    <div class="actions"><button type="button" id="export" data-i18n="save.export">שמור סיפור לקובץ</button></div>
+    <label class="f"><span data-i18n="save.import">טעינה מקובץ</span><input type="file" id="import" accept="application/json"></label>
   </section>
 </main>
-<footer>מקור הנתונים: <a href="https://data.gov.il/dataset/gemelnet">גמל-נט</a> ו<a href="https://data.gov.il/dataset/insurance">ביטוח-נט</a>, רשות שוק ההון (data.gov.il). <span id="data-info"></span> <a href="https://github.com/reihlinstinct/gemel-what-if">קוד המקור</a>.</footer>
+<footer><span data-i18n-html="footer.source">מקור הנתונים: <a href="https://data.gov.il/dataset/gemelnet">גמל-נט</a> ו<a href="https://data.gov.il/dataset/insurance">ביטוח-נט</a>, רשות שוק ההון (data.gov.il).</span> <span id="data-info"></span> <a href="https://github.com/reihlinstinct/gemel-what-if" data-i18n="footer.code">קוד המקור</a>.</footer>
+<script src="i18n.js"></script>
 <script src="whatif.js"></script>
 <script src="prompt.js"></script>
 <script src="app.js"></script>

@@ -3,6 +3,7 @@
 import core from "../../mcp/core.js";
 import prompt from "../../docs/prompt.js";
 import whatif from "../../docs/whatif.js";
+import i18n from "../../docs/i18n.js";
 
 const { createCore } = core;
 const PAGES_ORIGIN = "https://reihlinstinct.github.io";
@@ -21,8 +22,13 @@ const SYSTEM = [
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_DAILY_CAP = 100;
 
-export function createHandler({ data, ai, gemini = null, caps = null, fetchImpl = fetch, model = "@cf/meta/llama-3.3-70b-instruct-fp8-fast", now = () => Date.now() }) {
+export function createHandler({ data, ai, catalog = null, gemini = null, caps = null, fetchImpl = fetch, model = "@cf/meta/llama-3.3-70b-instruct-fp8-fast", now = () => Date.now() }) {
   const mcp = createCore(data);
+  // User-facing errors carry a code (the page shows its own catalog text for it) plus the text in the
+  // catalog's default language, for clients that only read `error`. The model-facing feedback stays as is.
+  const L = i18n.create(catalog);
+  const fail = (code, params) => Object.assign(new Error(L.t("worker." + code, params)), { code, params });
+  const errorBody = (code, params) => (params ? { error: L.t("worker." + code, params), code, params } : { error: L.t("worker." + code), code });
   const hits = new Map();
 
   const json = (obj, status = 200, extra = {}) =>
@@ -110,16 +116,16 @@ export function createHandler({ data, ai, gemini = null, caps = null, fetchImpl 
       }
       let story;
       try { story = prompt.resolveFunds(prompt.extractJson(out), (n) => whatif.searchFunds(data, n, 3)); } catch (e) {
-        if (retries++ >= MAX_RETRIES) throw new Error("המודל לא החזיר JSON תקין");
+        if (retries++ >= MAX_RETRIES) throw fail("model_bad_json");
         contents.push({ role: "user", parts: [{ text: "Invalid JSON: " + e.message + ". Reply with ONLY the JSON object." }] });
         continue;
       }
       const v = mcp.validate(story.story);
       if (!v.errors.length) return { story: story.story, resolved: story.resolved, warnings: v.warnings };
-      if (retries++ >= MAX_RETRIES) throw new Error("הסיפור לא עבר אימות: " + v.errors.slice(0, 3).join("; "));
+      if (retries++ >= MAX_RETRIES) throw fail("story_invalid", { details: v.errors.slice(0, 3).join("; ") });
       contents.push({ role: "user", parts: [{ text: "Validation errors: " + v.errors.join("; ") + ". Fix them and reply with ONLY the corrected JSON object." }] });
     }
-    throw new Error("המודל לא הגיע לתשובה סופית");
+    throw fail("no_final");
   }
 
   async function storyFromText(text) {
@@ -147,16 +153,16 @@ export function createHandler({ data, ai, gemini = null, caps = null, fetchImpl 
       try {
         story = prompt.resolveFunds(prompt.extractJson(res.response), (n) => whatif.searchFunds(data, n, 3));
       } catch (e) {
-        if (retries++ >= MAX_RETRIES) throw new Error("המודל לא החזיר JSON תקין");
+        if (retries++ >= MAX_RETRIES) throw fail("model_bad_json");
         messages.push({ role: "assistant", content: String(res.response || "") }, { role: "user", content: "Invalid JSON: " + e.message + ". Reply with ONLY the JSON object." });
         continue;
       }
       const v = mcp.validate(story.story);
       if (!v.errors.length) return { story: story.story, resolved: story.resolved, warnings: v.warnings };
-      if (retries++ >= MAX_RETRIES) throw new Error("הסיפור לא עבר אימות: " + v.errors.slice(0, 3).join("; "));
+      if (retries++ >= MAX_RETRIES) throw fail("story_invalid", { details: v.errors.slice(0, 3).join("; ") });
       messages.push({ role: "assistant", content: JSON.stringify(story.story) }, { role: "user", content: "Validation errors: " + v.errors.join("; ") + ". Fix them and reply with ONLY the corrected JSON object." });
     }
-    throw new Error("המודל לא הגיע לתשובה סופית");
+    throw fail("no_final");
   }
 
   return async function handle(request) {
@@ -177,15 +183,15 @@ export function createHandler({ data, ai, gemini = null, caps = null, fetchImpl 
       if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
       if (request.method !== "POST") return json({ error: "POST only" }, 405, cors);
       if (origin !== PAGES_ORIGIN) return json({ error: "origin not allowed" }, 403, cors);
-      if (limited(request.headers.get("cf-connecting-ip") || "unknown")) return json({ error: "יותר מדי בקשות, נסו שוב בעוד שעה" }, 429, cors);
+      if (limited(request.headers.get("cf-connecting-ip") || "unknown")) return json(errorBody("rate_limited"), 429, cors);
       let body;
       try { body = await request.json(); } catch { return json({ error: "bad request" }, 400, cors); }
       const text = String((body && body.text) || "").trim();
-      if (!text || text.length > MAX_TEXT) return json({ error: "הטקסט ריק או ארוך מ-" + MAX_TEXT + " תווים" }, 400, cors);
+      if (!text || text.length > MAX_TEXT) return json(errorBody("text_length", { max: MAX_TEXT }), 400, cors);
       try {
         return json(await storyFromText(text), 200, cors);
       } catch (e) {
-        return json({ error: String(e.message) }, 502, cors);
+        return json(e.code ? errorBody(e.code, e.params) : { error: String(e.message) }, 502, cors);
       }
     }
     return json({ name: "gemel-what-if worker", endpoints: ["POST /mcp", "POST /api/story"] }, 200);

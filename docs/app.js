@@ -3,21 +3,24 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   "use strict";
   const W = window.WhatIf;
   let data = null;
+  let L = null; // catalog helpers for the active language (docs/i18n.js)
+  const t = (k, p) => L.t(k, p);
   let funds = null;
   const $ = (s, r) => (r || document).querySelector(s);
-  const fmt = (n) => Math.round(n).toLocaleString("he-IL");
+  const fmt = (n) => Math.round(n).toLocaleString(L.locale());
   const pct = (n) => (n === null || n === undefined ? "-" : (n * 100).toFixed(2) + "%");
 
   const TYPES = {
-    deposit: "הפקדה חד-פעמית",
-    monthly: "הפקדות חודשיות",
-    withdraw: "משיכה",
-    transfer: "מעבר קופה",
-    product: "שינוי מוצר",
-    track: "שינוי מסלול",
-    fees: "דמי ניהול (אופציונלי)",
+    deposit: "event.deposit",
+    monthly: "event.monthly",
+    withdraw: "event.withdraw",
+    transfer: "event.transfer",
+    product: "event.product",
+    track: "event.track",
+    fees: "event.fees",
   };
   const SWITCHES = ["transfer", "product", "track"];
+  const typeLabel = (k) => t(TYPES[k]);
 
   /** Fund picker: search box + select; the chosen key is kept in el.dataset.fund. */
   function fundPicker(el, label) {
@@ -28,10 +31,10 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     lab.textContent = label;
     const input = document.createElement("input");
     input.type = "search";
-    input.setAttribute("aria-label", "חיפוש מסלול");
-    input.placeholder = "חיפוש: שם מסלול, חברה או מספר קופה";
+    input.setAttribute("aria-label", t("fund.search_aria"));
+    input.placeholder = t("fund.search_placeholder");
     const select = document.createElement("select");
-    select.setAttribute("aria-label", "בחירת מסלול");
+    select.setAttribute("aria-label", t("fund.select_aria"));
     const chosen = document.createElement("div");
     chosen.className = "chosen";
     chosen.setAttribute("role", "status");
@@ -41,7 +44,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       for (const f of W.searchFunds(data, input.value, 40)) {
         const o = document.createElement("option");
         o.value = f.key;
-        o.textContent = (f.src === "insurance" ? "ביטוח" : "גמל") + " " + f.id + " | " + f.name + " | " + (f.corp || "") + " (" + f.start + "-" + f.end + ")";
+        o.textContent = (f.src === "insurance" ? t("fund.src_insurance") : t("fund.src_gemel")) + " " + f.id + " | " + f.name + " | " + (f.corp || "") + " (" + f.start + "-" + f.end + ")";
         select.append(o);
       }
     };
@@ -49,7 +52,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const choose = (fromUser) => {
       el.dataset.fund = select.value || "";
       const f = funds.get(select.value);
-      chosen.textContent = f ? "✓ נבחר: " + f.name : "";
+      chosen.textContent = f ? t("fund.chosen", { name: f.name }) : "";
       const card = el.closest(".card");
       const hint = card && card.querySelector(".feeavg");
       if (hint) {
@@ -57,12 +60,12 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
         else {
           const ds = (W.OFFICIAL_SOURCES[f.src] || W.OFFICIAL_SOURCES.gemel).dataset;
           const annual = f.fee === null || f.fee === undefined
-            ? "אין נתון דמי ניהול שנתיים ממוצע רשמי למסלול זה; שדה הצבירה נשאר ריק לעריכה ידנית."
-            : 'דמי ניהול שנתיים ממוצעים רשמיים במסלול: ' + f.fee + '% (נכון ל-' + feePeriod(f) + ', <a href="' + ds + '" target="_blank" rel="noopener">מקור</a>).';
+            ? t("fee.annual_none")
+            : t("fee.annual_avg", { fee: f.fee, period: feePeriod(f), href: ds });
           const deposit = f.dfee === null || f.dfee === undefined
-            ? "אין נתון דמי ניהול מהפקדה ממוצע רשמי למסלול זה; שדה ההפקדה נשאר ריק לעריכה ידנית."
-            : "דמי ניהול מהפקדה ממוצעים רשמיים במסלול: " + f.dfee + "%.";
-          hint.innerHTML = annual + " " + deposit + " הממוצע הנוכחי לא בהכרח היה דמי הניהול לאורך כל שנות הסיפור; אפשר לערוך את השדות.";
+            ? t("fee.deposit_none")
+            : t("fee.deposit_avg", { fee: f.dfee });
+          hint.innerHTML = t("fee.current_note", { annual, deposit });
         }
       }
       const feeIn = card && card.querySelector(".feeadj");
@@ -88,11 +91,11 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
 
   function fieldsFor(type) {
     const grid = (x) => '<div class="grid">' + x + "</div>";
-    if (type === "start") return grid(fld("תאריך פתיחה", dateIn("date")) + fld("סכום פתיחה (אופציונלי, ₪)", num("amount", 'min="0"')) + fld("דמי ניהול שנתיים מהצבירה (%)", num("feeadj", 'min="0" step="0.01" placeholder="0"')) + fld("דמי ניהול מהפקדה (%)", num("pdepfee", 'min="0" step="0.01" placeholder="0"'))) + '<div class="fundpick"></div><div class="feeavg" role="status"></div>';
-    if (type === "deposit" || type === "withdraw") return grid(fld("תאריך", dateIn("date")) + fld("סכום (₪)", num("amount", 'min="0"')));
-    if (type === "fees") return grid(fld("מתאריך", dateIn("date")) + fld("דמי ניהול מהפקדה (%)", num("depfee", 'min="0" step="0.01" placeholder="0"')) + fld("דמי ניהול שנתיים מהצבירה (%)", num("savfee", 'min="0" step="0.01" placeholder="0"')));
-    if (type === "monthly") return grid(fld("מתאריך", dateIn("from")) + fld("עד תאריך (ריק = עד הסוף)", dateIn("to")) + fld("סכום חודשי (₪)", num("amount", 'min="0"')));
-    return grid(fld("תאריך", dateIn("date")) + fld("עלות חד-פעמית (%)", num("exit", 'min="0" step="0.1" placeholder="0"')) + fld("דמי ניהול שנתיים מהצבירה (%)", num("feeadj", 'min="0" step="0.01" placeholder="0"')) + fld("דמי ניהול מהפקדה (%)", num("pdepfee", 'min="0" step="0.01" placeholder="0"'))) + '<div class="fundpick"></div><div class="feeavg" role="status"></div>';
+    if (type === "start") return grid(fld(t("field.open_date"), dateIn("date")) + fld(t("field.open_amount"), num("amount", 'min="0"')) + fld(t("field.fee_savings"), num("feeadj", 'min="0" step="0.01" placeholder="0"')) + fld(t("field.fee_deposit"), num("pdepfee", 'min="0" step="0.01" placeholder="0"'))) + '<div class="fundpick"></div><div class="feeavg" role="status"></div>';
+    if (type === "deposit" || type === "withdraw") return grid(fld(t("field.date"), dateIn("date")) + fld(t("field.amount"), num("amount", 'min="0"')));
+    if (type === "fees") return grid(fld(t("field.from"), dateIn("date")) + fld(t("field.fee_deposit"), num("depfee", 'min="0" step="0.01" placeholder="0"')) + fld(t("field.fee_savings"), num("savfee", 'min="0" step="0.01" placeholder="0"')));
+    if (type === "monthly") return grid(fld(t("field.from"), dateIn("from")) + fld(t("field.to"), dateIn("to")) + fld(t("field.monthly_amount"), num("amount", 'min="0"')));
+    return grid(fld(t("field.date"), dateIn("date")) + fld(t("field.exit_cost"), num("exit", 'min="0" step="0.1" placeholder="0"')) + fld(t("field.fee_savings"), num("feeadj", 'min="0" step="0.01" placeholder="0"')) + fld(t("field.fee_deposit"), num("pdepfee", 'min="0" step="0.01" placeholder="0"'))) + '<div class="fundpick"></div><div class="feeavg" role="status"></div>';
   }
 
   function place(card, scope) {
@@ -123,7 +126,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     }
     $("#fork").hidden = false;
     syncFork();
-    $("#parallel-status").textContent = "הציר פוצל. מימין בפועל ומשמאל מה אם: שנו את הצד של \"מה אם\" (מסלול, תאריך מעבר) ולחצו חשב.";
+    $("#parallel-status").textContent = t("status.forked");
   }
   function unfork() {
     for (const c of [...document.querySelectorAll("#col-whatif .card")]) c.remove();
@@ -134,7 +137,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     }
     $("#fork").hidden = true;
     syncFork();
-    $("#parallel-status").textContent = "הפיצול בוטל. נשמר הצד של \"בפועל\".";
+    $("#parallel-status").textContent = t("status.unforked");
   }
 
   function addCard(type, values) {
@@ -142,20 +145,21 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     card.className = "card" + (type === "start" ? " start" : "");
     card.dataset.type = type;
     let head;
+    const scopeSel = '<select class="scope" aria-label="' + t("scope.label") + '"><option value="both">' + t("scope.both") + '</option><option value="actual">' + t("scope.actual_only") + '</option><option value="whatif">' + t("scope.whatif_only") + "</option></select>";
     if (type === "start") {
-      head = '<h3>אירוע התחלה: פתיחת קופה <span class="badge"></span> <label class="scope-l scope-start" hidden>חל על <select class="scope" aria-label="חל על"><option value="both">משותף: בפועל ומה אם</option><option value="actual">בפועל בלבד</option><option value="whatif">מה אם בלבד</option></select></label></h3>';
+      head = '<h3>' + t("event.start_title") + ' <span class="badge"></span> <label class="scope-l scope-start" hidden>' + t("scope.label") + " " + scopeSel + "</label></h3>";
     } else {
-      const options = Object.keys(TYPES).map((k) => '<option value="' + k + '"' + (k === type ? " selected" : "") + ">" + TYPES[k] + "</option>").join("");
-      head = '<h3><select class="type" aria-label="סוג אירוע">' + options + '</select> <span class="badge"></span> <label class="scope-l">חל על <select class="scope" aria-label="חל על"><option value="both">משותף: בפועל ומה אם</option><option value="actual">בפועל בלבד</option><option value="whatif">מה אם בלבד</option></select></label> <button type="button" class="split">⑂ פצל מכאן</button> <button type="button" class="rm">הסר</button></h3>';
+      const options = Object.keys(TYPES).map((k) => '<option value="' + k + '"' + (k === type ? " selected" : "") + ">" + typeLabel(k) + "</option>").join("");
+      head = '<h3><select class="type" aria-label="' + t("event.type_aria") + '">' + options + '</select> <span class="badge"></span> <label class="scope-l">' + t("scope.label") + " " + scopeSel + '</label> <button type="button" class="split">' + t("event.split") + '</button> <button type="button" class="rm">' + t("event.remove") + "</button></h3>";
     }
     card.innerHTML = head + '<div class="body"></div>';
     const wantScope = (values && values.scope) || "both";
     place(card, wantScope);
-    const render = (t, v) => {
-      card.dataset.type = t;
-      $(".body", card).innerHTML = fieldsFor(t);
+    const render = (ty, v) => {
+      card.dataset.type = ty;
+      $(".body", card).innerHTML = fieldsFor(ty);
       const fp = $(".fundpick", card);
-      if (fp) fundPicker(fp, "מסלול:");
+      if (fp) fundPicker(fp, t("fund.label"));
       for (const sel of [".feeadj", ".pdepfee"]) {
         const feeIn = $(sel, card);
         if (feeIn) feeIn.addEventListener("input", () => { feeIn.dataset.manual = "1"; });
@@ -164,7 +168,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     };
     render(type, values);
     const sc = $(".scope", card);
-    const BADGES = { both: "", actual: "בפועל", whatif: "מה אם" };
+    const BADGES = { both: "", actual: t("scope.actual"), whatif: t("scope.whatif") };
     const paint = () => {
       card.dataset.scope = sc.value;
       if (card.parentNode && card.parentNode.id !== ({ both: "timeline", actual: "col-actual", whatif: "col-whatif" })[sc.value]) place(card, sc.value);
@@ -211,9 +215,9 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   function readTimeline() {
     const events = [...document.querySelectorAll("#timeline .card, #col-actual .card, #col-whatif .card")].map(readEvent);
     for (const e of events) {
-      if (e.type === "monthly" ? !e.from || !e.amount : !e.date) throw new Error("חסר תאריך באחד האירועים");
-      if ((e.type === "start" || SWITCHES.includes(e.type)) && !e.fundKey) throw new Error("בחרו מסלול באירוע " + TYPES[e.type] || "ההתחלה");
-      if (["deposit", "monthly", "withdraw"].includes(e.type) && !e.amount) throw new Error("חסר סכום באחד האירועים");
+      if (e.type === "monthly" ? !e.from || !e.amount : !e.date) throw new Error(t("error.missing_date"));
+      if ((e.type === "start" || SWITCHES.includes(e.type)) && !e.fundKey) throw new Error(t("error.missing_fund", { type: TYPES[e.type] ? typeLabel(e.type) : undefined }));
+      if (["deposit", "monthly", "withdraw"].includes(e.type) && !e.amount) throw new Error(t("error.missing_amount"));
     }
     return { end: $("#end").value || undefined, events, annuity: annuityInputs() };
   }
@@ -233,7 +237,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const max = Math.max(...a.series.concat(b.series).map((p) => p.balance), 1);
     const n = a.series.length;
     const pts = (s) => s.map((p, i) => (pad + (i / Math.max(n - 1, 1)) * (w - 2 * pad)).toFixed(1) + "," + (h - pad - (p.balance / max) * (h - 2 * pad)).toFixed(1)).join(" ");
-    return '<svg viewBox="0 0 ' + w + " " + h + '" role="img" aria-label="גרף יתרה"><polyline fill="none" stroke="#777" stroke-width="2" points="' + pts(a.series) + '"/><polyline fill="none" stroke="#1b5fd1" stroke-width="2" points="' + pts(b.series) + '"/></svg><p><span style="color:#777">━ בפועל</span> &nbsp; <span style="color:#1b5fd1">━ מה אם</span></p>';
+    return '<svg viewBox="0 0 ' + w + " " + h + '" role="img" aria-label="' + t("chart.aria") + '"><polyline fill="none" stroke="#777" stroke-width="2" points="' + pts(a.series) + '"/><polyline fill="none" stroke="#1b5fd1" stroke-width="2" points="' + pts(b.series) + '"/></svg><p><span style="color:#777">━ ' + t("scope.actual") + '</span> &nbsp; <span style="color:#1b5fd1">━ ' + t("scope.whatif") + "</span></p>";
   }
 
 
@@ -242,8 +246,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   // row per track+period with the exact fund and period to select there. Verified 2026-10-23:
   // gemelTsuot.aspx ignores query-string parameters and renders via a session ReportViewer.
   const VERIFY_SITES = {
-    gemel: { name: "גמל-נט", url: "https://gemelnet.cma.gov.il/views/gemelTsuot.aspx" },
-    insurance: { name: "ביטוח-נט", url: "https://bituachnet.cma.gov.il/bituachTsuotUI/Tsuot/UI/bituachTsuotUI.aspx" },
+    gemel: { name: "verify.site_gemel", url: "https://gemelnet.cma.gov.il/views/gemelTsuot.aspx" },
+    insurance: { name: "verify.site_insurance", url: "https://bituachnet.cma.gov.il/bituachTsuotUI/Tsuot/UI/bituachTsuotUI.aspx" },
   };
 
   const mmYYYY = (label) => label.slice(5, 7) + "/" + label.slice(0, 4);
@@ -252,13 +256,13 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     return periods.map((p) => {
       const f = funds.get(p.fundId);
       const period = '<span dir="ltr">' + mmYYYY(p.from) + " - " + mmYYYY(p.to) + "</span>";
-      if (!f) return "<li>" + p.fundId + ", " + period + " (המסלול לא נמצא בנתוני האתר)</li>";
+      if (!f) return "<li>" + t("verify.not_found", { fund: p.fundId, period }) + "</li>";
       const site = VERIFY_SITES[f.src] || VERIFY_SITES.gemel;
-      const idPart = f.src === "gemel" ? "קופה " + f.id + " - " : "";
+      const idPart = f.src === "gemel" ? t("verify.fund_id", { id: f.id }) : "";
       const meta = f.src === "insurance" ? " (" + (f.corp || "") + ", " + (f.cls || "") + ")" : "";
-      const shortNote = f.src === "gemel" && p.months < 12 ? " (קטע של פחות מ-12 חודשים: בגמל-נט תצטרכו לבחור חלון רחב יותר)" : "";
-      const offv = ' <span class="offv" data-key="' + p.fundId + '" data-from="' + p.from + '" data-to="' + p.to + '">(טוען נתונים רשמיים חיים…)</span>';
-      return '<li><a href="' + site.url + '" target="_blank" rel="noopener">' + site.name + "</a>: " + idPart + f.name + meta + ", " + period + shortNote + offv + "</li>";
+      const shortNote = f.src === "gemel" && p.months < 12 ? t("verify.short_note") : "";
+      const offv = ' <span class="offv" data-key="' + p.fundId + '" data-from="' + p.from + '" data-to="' + p.to + '">' + t("official.loading") + "</span>";
+      return '<li><a href="' + site.url + '" target="_blank" rel="noopener">' + t(site.name) + "</a>: " + idPart + f.name + meta + ", " + period + shortNote + offv + "</li>";
     });
   }
 
@@ -268,16 +272,16 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const periodsB = W.phasePeriods(c.phasesWhatIf, endLabel);
     const same = JSON.stringify(periodsA) === JSON.stringify(periodsB);
     const head =
-      "<h3>בדיקה מול גמל-נט וביטוח-נט</h3>" +
-      '<p class="hint">באתרים הרשמיים אי אפשר לשחזר רצף של מעברי מסלול, אבל אפשר לבדוק את התשואה של כל מסלול בנפרד. לכל מסלול בסיפור רשומות למטה השנים שבהן הכסף שהה בו, עם קישור: בחרו שם את המסלול ואת התקופה (בגמל-נט מינימום 12 חודשים, אז קטע קצר יותר ידרוש חלון רחב יותר). שימו לב: שם התשואה מוצגת מצטברת על התקופה, אין פירוט חודשי.</p>' +
-      '<p class="hint">בנוסף מוצגת בכל שורה השוואה חיה מול נתוני התשואה החודשית הרשמיים ב-data.gov.il (רשות שוק ההון). התשואה המצטברת שם מחושבת כאן באתר מהחודשים הרשמיים — אין פרסום רשמי של תשואה מצטברת לתקופה חופשית — וההשוואה בודקת שהמאגר המקומי של האתר עדכני ועקבי מול המקור; היא אינה בדיקה בלתי תלויה של נוסחת החישוב.</p>';
+      "<h3>" + t("verify.title") + "</h3>" +
+      '<p class="hint">' + t("verify.hint_manual") + "</p>" +
+      '<p class="hint">' + t("verify.hint_live") + "</p>";
     const block = (label, periods) => {
       const rows = verifyRows(periods);
       if (!rows.length) return "";
       return (label ? "<h4>" + label + "</h4>" : "") + "<ul>" + rows.join("") + "</ul>";
     };
     if (same) return head + block("", periodsA);
-    return head + block("בפועל", periodsA) + block("מה אם", periodsB);
+    return head + block(t("scope.actual"), periodsA) + block(t("scope.whatif"), periodsB);
   }
 
 
@@ -326,20 +330,20 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
         const total = b - a + 1;
         const official = W.cumulativeYield(yields);
         const links = rids
-          .map((rid, ix) => '<a href="' + W.officialRowsUrl(src, rid, fundId) + '" target="_blank" rel="noopener">שורות המקור' + (rids.length > 1 ? " " + (ix + 1) : "") + "</a>")
+          .map((rid, ix) => '<a href="' + W.officialRowsUrl(src, rid, fundId) + '" target="_blank" rel="noopener">' + t("official.rows") + (rids.length > 1 ? " " + (ix + 1) : "") + "</a>")
           .join(" ");
         if (yields.length < total) {
-          sp.innerHTML = "<br>במקור הרשמי נמצאו " + yields.length + " מתוך " + total + " חודשי התקופה; המצטבר על החודשים שנמצאו: " + pct(official) + " (מחושב מהתשואות החודשיות הרשמיות). " + links;
+          sp.innerHTML = t("official.partial", { found: yields.length, total, cum: pct(official), links });
           continue;
         }
         const local = f ? W.localCumulative(f, a, b) : null;
         const match = local && local.missing === 0 && Math.abs(official - local.value) < 1e-4;
         let tail = "";
-        if (match) tail = " ✓ תואם למאגר האתר.";
-        else if (local) tail = " ≠ שונה מהמאגר המקומי" + (local.missing ? " (למאגר האתר חסרים " + local.missing + " חודשים — כנראה שהמקומי פחות מעודכן מהמקור)." : ".");
-        sp.innerHTML = "<br>מקור רשמי חי (data.gov.il): " + pct(official) + " מצטבר, מחושב מהתשואות החודשיות הרשמיות; במאגר האתר: " + (local ? pct(local.value) : "-") + "." + tail + " " + links;
+        if (match) tail = t("official.match");
+        else if (local) tail = t("official.differs", { reason: local.missing ? t("official.local_missing", { n: local.missing }) : "." });
+        sp.innerHTML = t("official.live", { official: pct(official), local: local ? pct(local.value) : "-", tail, links });
       } catch (e) {
-        sp.textContent = "(לא ניתן למשוך כעת נתונים חיים מהמקור הרשמי; הקישור לאתר ההשוואה הרשמי עדיין תקף)";
+        sp.textContent = t("official.failed");
       }
     }
   }
@@ -354,28 +358,29 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       const ann = annuityOptions();
       const aA = ann && W.annuityEstimate(c.actual, funds, ann);
       const aB = ann && W.annuityEstimate(c.whatIf, funds, ann);
+      const head2 = "<table><tr><th></th><th>" + t("scope.actual") + "</th><th>" + t("scope.whatif") + "</th></tr>";
       const notes = W.productChangeNotes(c.phasesActual, funds).concat(W.productChangeNotes(c.phasesWhatIf, funds));
-      const label = (a) => (a.basis === "guaranteed" ? "מקדם מובטח" : "מקדם שוק");
+      const label = (a) => (a.basis === "guaranteed" ? t("annuity.basis_guaranteed") : t("annuity.basis_market"));
       const annuityHtml = aA && aB
-        ? "<h3>הערכת קצבה חודשית (הערכה בלבד)</h3><table><tr><th></th><th>בפועל</th><th>מה אם</th></tr>" +
-          "<tr><td>יתרה בפרישה</td><td>" + fmt(aA.balance) + " ₪</td><td>" + fmt(aB.balance) + " ₪</td></tr>" +
-          "<tr><td>מקדם (הון ל-1 ₪ קצבה)</td><td>" + aA.coefficient + " (" + label(aA) + ")</td><td>" + aB.coefficient + " (" + label(aB) + ")</td></tr>" +
-          "<tr><td>קצבה חודשית משוערת</td><td>" + fmt(aA.monthly) + " ₪</td><td>" + fmt(aB.monthly) + " ₪</td></tr></table>" +
-          '<p class="warn">ההערכה תלויה במקדמים ובתשואה שהוזנו. המקדם המובטח נלקח ממסמכי הפוליסה שלכם ואינו מאומת. כספים במסלול ביטוח מקבלים את המקדם המובטח (אם הוזן), ואחרת מקדם שוק.</p>'
+        ? "<h3>" + t("annuity.title") + "</h3>" + head2 +
+          "<tr><td>" + t("annuity.balance") + "</td><td>" + fmt(aA.balance) + " ₪</td><td>" + fmt(aB.balance) + " ₪</td></tr>" +
+          "<tr><td>" + t("annuity.coefficient") + "</td><td>" + aA.coefficient + " (" + label(aA) + ")</td><td>" + aB.coefficient + " (" + label(aB) + ")</td></tr>" +
+          "<tr><td>" + t("annuity.monthly") + "</td><td>" + fmt(aA.monthly) + " ₪</td><td>" + fmt(aB.monthly) + " ₪</td></tr></table>" +
+          '<p class="warn">' + t("annuity.warn") + "</p>"
         : "";
       const notesHtml = notes.length
-        ? '<div class="warn"><b>מה לא מחושב במעבר בין מוצרים:</b><ul><li>מקדם קצבה מובטח בפוליסה עלול ללכת לאיבוד</li><li>כיסויים ביטוחיים (נכות, שארים) שנגרעים או משתנים</li><li>דמי ניהול חוזיים: ברירת המחדל היא הממוצע הרשמי של המסלול, ואפשר לערוך אותה בשדה דמי הניהול השנתיים</li><li>מסים וזכויות ייחודיות שבפוליסה</li></ul></div>'
+        ? '<div class="warn"><b>' + t("notes.title") + "</b><ul>" + [1, 2, 3, 4].map((n) => "<li>" + t("notes.item" + n) + "</li>").join("") + "</ul></div>"
         : "";
       $("#result").innerHTML =
-        "<table><tr><th></th><th>בפועל</th><th>מה אם</th></tr>" +
-        "<tr><td>סך הפקדות</td><td>" + fmt(c.actual.paid) + " ₪</td><td>" + fmt(c.whatIf.paid) + " ₪</td></tr>" +
-        "<tr><td>סך משיכות</td><td>" + fmt(c.actual.withdrawn) + " ₪</td><td>" + fmt(c.whatIf.withdrawn) + " ₪</td></tr>" +
-        "<tr><td>שווי סופי</td><td>" + fmt(c.actual.final) + " ₪</td><td>" + fmt(c.whatIf.final) + " ₪</td></tr>" +
-        "<tr><td><b>רווח כולל על כל ציר הזמן</b></td><td><b>" + fmt(c.actual.gain) + " ₪</b></td><td><b>" + fmt(c.whatIf.gain) + " ₪</b></td></tr>" +
-        "<tr><td>תשואה שנתית משוקללת</td><td>" + pct(c.actual.annualized) + "</td><td>" + pct(c.whatIf.annualized) + "</td></tr></table>" +
-        '<p class="' + cls + '">ההפרש בין התרחישים: ' + fmt(c.diff) + " ₪" + (c.diffPercent === null ? "" : " (" + c.diffPercent.toFixed(1) + "%)") + "</p>" +
+        head2 +
+        "<tr><td>" + t("result.paid") + "</td><td>" + fmt(c.actual.paid) + " ₪</td><td>" + fmt(c.whatIf.paid) + " ₪</td></tr>" +
+        "<tr><td>" + t("result.withdrawn") + "</td><td>" + fmt(c.actual.withdrawn) + " ₪</td><td>" + fmt(c.whatIf.withdrawn) + " ₪</td></tr>" +
+        "<tr><td>" + t("result.final") + "</td><td>" + fmt(c.actual.final) + " ₪</td><td>" + fmt(c.whatIf.final) + " ₪</td></tr>" +
+        "<tr><td><b>" + t("result.gain") + "</b></td><td><b>" + fmt(c.actual.gain) + " ₪</b></td><td><b>" + fmt(c.whatIf.gain) + " ₪</b></td></tr>" +
+        "<tr><td>" + t("result.annualized") + "</td><td>" + pct(c.actual.annualized) + "</td><td>" + pct(c.whatIf.annualized) + "</td></tr></table>" +
+        '<p class="' + cls + '">' + t("result.diff", { diff: fmt(c.diff), pct: c.diffPercent === null ? "" : " (" + c.diffPercent.toFixed(1) + "%)" }) + "</p>" +
         chart(c.actual, c.whatIf) + annuityHtml + notesHtml +
-        (warn ? '<p class="warn">ב-' + warn + " חודשים (במצטבר) לא היה דיווח תשואה למסלול (למשל לפני הקמתו), ולכן חושבה בהם תשואה 0%. כדאי לבדוק את התאריכים.</p>" : "") +
+        (warn ? '<p class="warn">' + t("result.missing_months", { n: warn }) + "</p>" : "") +
         verifyHtml(c);
         enhanceOfficial();
     } catch (e) {
@@ -420,17 +425,37 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     return JSON.parse(new TextDecoder().decode(bytes));
   }
 
-  fetch("data/funds.json").then((r) => r.json()).then((d) => {
+  // A caught error shows the catalog text when it carries a key (docs/prompt.js), else its message.
+  const errText = (e) => (e && e.i18nKey ? t(e.i18nKey) : e.message);
+  // The Worker answers {error, code, params}; the page shows its own catalog text for a known code.
+  const workerError = (body) => (body.code && L.has("worker." + body.code) ? t("worker." + body.code, body.params) : body.error);
+  const toFragment = (obj) => {
+    let s = "";
+    for (const b of new TextEncoder().encode(JSON.stringify(obj))) s += String.fromCharCode(b);
+    return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  };
+  // Switching language reloads with ?lang=<code>; the story rides along in the fragment (never sent).
+  const pickLanguage = (code) => {
+    let hash = location.hash;
+    try { hash = "#story=" + toFragment(readTimeline()); } catch (e) { /* incomplete story: keep the current fragment */ }
+    const q = new URLSearchParams(location.search);
+    q.set("lang", code);
+    location.href = location.pathname + "?" + q + hash;
+  };
+
+  Promise.all([fetch("i18n/strings.json").then((r) => r.json()), fetch("data/funds.json").then((r) => r.json())]).then(([catalog, d]) => {
+    L = I18n.create(catalog, I18n.langFromSearch(catalog, location.search));
+    I18n.apply(L, document, pickLanguage);
     data = d;
     funds = W.indexFunds(d);
     $("#end").value = W.toLabel(W.toIndex(d.latest)) + "-01";
-    $("#data-info").textContent = "נתונים עד " + W.toLabel(W.toIndex(d.latest)) + ", " + d.funds.length + " מסלולים.";
+    $("#data-info").textContent = t("data.info", { latest: W.toLabel(W.toIndex(d.latest)), count: d.funds.length });
     let loaded = false;
     try {
       const tl = fromFragment();
       if (tl && Array.isArray(tl.events)) { loadTimeline(tl); loaded = true; }
     } catch (e) {
-      $("#error").textContent = "הסיפור בקישור אינו תקין: " + e.message;
+      $("#error").textContent = t("error.bad_link", { msg: errText(e) });
     }
     if (!loaded) addCard("start");
     $("#add-event").onclick = () => addCard("deposit");
@@ -440,40 +465,40 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     $("#add-whatif").onclick = () => addCard("deposit", { scope: "whatif" });
     $("#load-example").onclick = () => {
       loadTimeline(EXAMPLE);
-      $("#parallel-status").textContent = "נטענה דוגמה: הציר מתפצל: בפועל הכסף נשאר בביטוח, ובמה אם עובר לגמל ב-2015. לחצו חשב.";
+      $("#parallel-status").textContent = t("status.example_loaded");
     };
     $("#run").onclick = run;
     $("#build-ai").onclick = async () => {
       const text = $("#story-text").value.trim();
-      if (!text) { $("#ai-status").textContent = "כתבו קודם את הסיפור"; return; }
-      $("#ai-status").textContent = "בונה...";
+      if (!text) { $("#ai-status").textContent = t("ai.need_text"); return; }
+      $("#ai-status").textContent = t("ai.building");
       $("#build-ai").disabled = true;
       try {
         const res = await fetch(WORKER_URL + "/api/story", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text }) });
         const body = await res.json();
-        if (!res.ok) throw new Error(body.error || "שגיאה " + res.status);
+        if (!res.ok) throw new Error(workerError(body) || t("ai.http_error", { status: res.status }));
         loadTimeline(body.story);
-        $("#ai-status").textContent = "נטען לציר הזמן. בדקו כל אירוע ומסלול לפני החישוב (ה-AI עלול לטעות)." + ((body.warnings || []).length ? " הערות: " + body.warnings.join("; ") : "");
+        $("#ai-status").textContent = t("ai.loaded", { notes: (body.warnings || []).length ? t("ai.notes", { list: body.warnings.join("; ") }) : "" });
         $("#error").textContent = "";
-      } catch (e) { $("#ai-status").textContent = "לא הצלחתי: " + e.message + ". אפשר להשתמש ב'העתק פרומפט'."; }
+      } catch (e) { $("#ai-status").textContent = t("ai.failed", { msg: errText(e) }); }
       $("#build-ai").disabled = false;
     };
     $("#copy-prompt").onclick = () => {
       const text = StoryPrompt.buildPrompt($("#story-text").value);
-      const done = () => { $("#ai-status").textContent = "הפרומפט הועתק. הדביקו אותו בצ'אט AI, והדביקו כאן את התשובה."; };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => { $("#ai-reply").value = text; $("#ai-status").textContent = "ההעתקה נחסמה. הפרומפט הוצב בתיבה למטה, העתיקו אותו ידנית."; });
-      else { $("#ai-reply").value = text; $("#ai-status").textContent = "הפרומפט הוצב בתיבה למטה, העתיקו אותו ידנית."; }
+      const done = () => { $("#ai-status").textContent = t("prompt.copied"); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => { $("#ai-reply").value = text; $("#ai-status").textContent = t("prompt.blocked"); });
+      else { $("#ai-reply").value = text; $("#ai-status").textContent = t("prompt.manual"); }
     };
     $("#load-reply").onclick = () => {
       try {
         const r = StoryPrompt.resolveFunds(StoryPrompt.extractJson($("#ai-reply").value), (name) => W.searchFunds(data, name, 3));
         loadTimeline(r.story);
         const lines = r.resolved.map((x) => "\"" + x.asked + "\" -> " + x.got);
-        $("#ai-status").textContent = "נטען. בדקו שהמסלולים נכונים: " + (lines.join("; ") || "-") + (r.missing.length ? ". לא נמצאו: " + r.missing.join(", ") : "");
+        $("#ai-status").textContent = t("reply.loaded", { lines: lines.join("; ") || "-", missing: r.missing.length ? t("reply.missing", { list: r.missing.join(", ") }) : "" });
         $("#error").textContent = "";
-      } catch (e) { $("#ai-status").textContent = "לא הצלחתי לטעון: " + e.message; }
+      } catch (e) { $("#ai-status").textContent = t("reply.failed", { msg: errText(e) }); }
     };
     $("#export").onclick = () => { try { exportStory(); } catch (e) { $("#error").textContent = e.message; } };
-    $("#import").onchange = (e) => e.target.files[0] && e.target.files[0].text().then((t) => loadTimeline(JSON.parse(t))).catch((x) => { $("#error").textContent = "קובץ לא תקין: " + x.message; });
+    $("#import").onchange = (e) => e.target.files[0] && e.target.files[0].text().then((txt) => loadTimeline(JSON.parse(txt))).catch((x) => { $("#error").textContent = t("error.bad_file", { msg: errText(x) }); });
   });
 })();

@@ -4,7 +4,7 @@
 // rendering and behavior close to Safari; it is not the Safari app on iOS/macOS
 // itself (different chrome, fonts and platform features).
 "use strict";
-const { fragment, serve, domProbe, assertResult, staticChecks, check } = require("./shared");
+const { fragment, fixtureFragment, serve, domProbe, uiTour, assertResult, assertTour, staticChecks, check } = require("./shared");
 
 (async () => {
   const { server, base } = await serve();
@@ -17,6 +17,10 @@ const { fragment, serve, domProbe, assertResult, staticChecks, check } = require
     await page.waitForSelector("#timeline .card", { timeout: 15000 });
     const payload = await page.evaluate(domProbe);
     assertResult("RESULT:" + payload);
+    const tourPage = await browser.newPage();
+    await tourPage.goto(base + "fixture/index.html#story=" + fixtureFragment, { waitUntil: "load" });
+    await tourPage.waitForSelector("#timeline .card", { timeout: 15000 });
+    assertTour(await tourPage.evaluate(uiTour));
   } catch (e) {
     check(false, "WebKit run completed (" + e.message + ")");
   } finally {

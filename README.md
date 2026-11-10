@@ -9,6 +9,17 @@ switched track at a different time. Everything runs in the browser; nothing you 
 > **Not financial advice.** Past returns do not predict future returns. Results are a simplified model of reported
 > monthly yields, not a statement of any real account.
 
+## Languages
+
+All page text lives in `docs/i18n/strings.json`, which is also the only list of languages. Each language is one
+block under `languages`: its own name (shown in the picker), `dir`, `locale` (number format and `og:locale`) and
+`status` (`source` for the default, Hebrew; `machine-draft` until a native speaker has reviewed it). Every key under
+`strings` has one value per language. Adding a language means adding its block and a value for every key; the picker
+(`?lang=<code>`, hidden while there is only one language), `<html lang dir>` and the tests all read the catalog.
+The Hebrew text stays baked into `docs/index.html` for crawlers and readers without JavaScript, and
+`tests/i18n.test.js` keeps it equal to the catalog. Not translated: fund, track and company names (they are data),
+the search aliases, the AI prompt and the MCP tool descriptions.
+
 ## Data
 
 Monthly yields come from the Capital Market Authority's open data: [Gemel-Net](https://data.gov.il/dataset/gemelnet)
