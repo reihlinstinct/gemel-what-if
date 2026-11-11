@@ -72,7 +72,10 @@ function serve({ offline = false, port = 0 } = {}) {
     let content = fs.readFileSync(file);
     // Synthetic accessibility previews exclude only analytics, never UI assets.
     if (offline && path.extname(file) === ".html") {
-      content = content.toString("utf8").replace(/<script[^>]+src=['"]https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js['"][^>]*><\/script>/g, "");
+      // A known first-party source line, not an HTML sanitizer for user input.
+      const lines = content.toString("utf8").split("\n");
+      content = lines.map(line => line.startsWith("<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' ")
+        ? "</head>" : line).join("\n");
     }
     if (offline && path.extname(file) === ".js") {
       content = content.toString("utf8").replaceAll("https://data.gov.il/api/3/action/datastore_search", "/__a11y_official");

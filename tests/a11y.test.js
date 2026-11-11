@@ -22,5 +22,8 @@ test("accessibility statement is in the interface and explains manual gaps", () 
     assert.ok(catalog.strings["a11y.target"][code]);
     assert.ok(catalog.strings["a11y.limits"][code]);
   }
-  assert.ok(statement.includes("https://github.com/reihlinstinct/gemel-what-if/issues/109"));
+  const hrefs = [...statement.matchAll(/href="([^"]*)"/g)].map(match => match[1]);
+  const feedback = hrefs.find(href => href === "https://github.com/reihlinstinct/gemel-what-if/issues/109");
+  assert.equal(new URL(feedback).origin, "https://github.com");
+  assert.equal(new URL(feedback).pathname, "/reihlinstinct/gemel-what-if/issues/109");
 });
