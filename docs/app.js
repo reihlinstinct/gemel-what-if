@@ -237,7 +237,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const max = Math.max(...a.series.concat(b.series).map((p) => p.balance), 1);
     const n = a.series.length;
     const pts = (s) => s.map((p, i) => (pad + (i / Math.max(n - 1, 1)) * (w - 2 * pad)).toFixed(1) + "," + (h - pad - (p.balance / max) * (h - 2 * pad)).toFixed(1)).join(" ");
-    return '<svg viewBox="0 0 ' + w + " " + h + '" role="img" aria-label="' + t("chart.aria") + '"><polyline fill="none" stroke="#777" stroke-width="2" points="' + pts(a.series) + '"/><polyline fill="none" stroke="#1b5fd1" stroke-width="2" points="' + pts(b.series) + '"/></svg><p><span style="color:#777">━ ' + t("scope.actual") + '</span> &nbsp; <span style="color:#1b5fd1">━ ' + t("scope.whatif") + "</span></p>";
+    return '<svg viewBox="0 0 ' + w + " " + h + '" role="img" aria-label="' + t("chart.aria") + '"><polyline fill="none" stroke="#777" stroke-width="2" points="' + pts(a.series) + '"/><polyline fill="none" stroke="#1b5fd1" stroke-width="2" points="' + pts(b.series) + '"/></svg><p><span style="color:#666">━ ' + t("scope.actual") + '</span> &nbsp; <span style="color:#1b5fd1">━ ' + t("scope.whatif") + "</span></p>";
   }
 
 

@@ -52,7 +52,7 @@ function check(cond, msg) {
 
 // Serves docs/. Under /fixture/ the same files are served, except data/funds.json, which is fixtureData
 // (same origin, so the harness can drive the page).
-function serve() {
+function serve({ offline = false, port = 0 } = {}) {
   const server = http.createServer((req, res) => {
     let url = req.url.split("?")[0].split("#")[0];
     if (url.startsWith("/fixture/")) {
@@ -62,12 +62,27 @@ function serve() {
         return res.end(JSON.stringify(fixtureData));
       }
     }
+    if (offline && url === "/__a11y_official") {
+      res.writeHead(200, { "content-type": "application/json" });
+      return res.end(JSON.stringify({ success: true, result: { records: [], total: 0 } }));
+    }
     const file = path.join(root, decodeURIComponent(url).replace(/\/$/, "/index.html"));
     if (!file.startsWith(root) || !fs.existsSync(file)) { res.writeHead(404); return res.end(); }
     res.writeHead(200, { "content-type": types[path.extname(file)] || "application/octet-stream" });
-    res.end(fs.readFileSync(file));
+    let content = fs.readFileSync(file);
+    // Synthetic accessibility previews exclude only analytics, never UI assets.
+    if (offline && path.extname(file) === ".html") {
+      // A known first-party source line, not an HTML sanitizer for user input.
+      const lines = content.toString("utf8").split("\n");
+      content = lines.map(line => line.startsWith("<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' ")
+        ? "</head>" : line).join("\n");
+    }
+    if (offline && path.extname(file) === ".js") {
+      content = content.toString("utf8").replaceAll("https://data.gov.il/api/3/action/datastore_search", "/__a11y_official");
+    }
+    res.end(content);
   });
-  return new Promise((resolve) => server.listen(0, () => resolve({ server, base: "http://localhost:" + server.address().port + "/" })));
+  return new Promise((resolve) => server.listen(port, () => resolve({ server, base: "http://localhost:" + server.address().port + "/" })));
 }
 
 // Runs inside the app page, in any engine. Drives the collapsed AI section, the

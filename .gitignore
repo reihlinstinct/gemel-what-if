@@ -3,3 +3,6 @@ stories/
 story.json
 node_modules/
 __pycache__/
+
+.a11y-routes.json
+.ci/
