@@ -22,6 +22,11 @@ const routes = Object.keys(catalog.languages).map(code => "/fixture/?lang=" + co
   const states = [];
   try {
     const initial = await scan(base, { version: 1, paths: routes }, { inspect: async (page, report) => {
+      const origin = new URL(page.url()).origin;
+      let failed = false;
+      page.on("request", request => { if (new URL(request.url()).origin !== origin) failed = true; });
+      page.on("pageerror", () => { failed = true; });
+      page.on("response", response => { if (response.status() >= 400) failed = true; });
       await page.goto(page.url() + "#story=" + fixtureFragment);
       await page.reload({ waitUntil: "networkidle" });
       await page.waitForSelector("#timeline .card");
@@ -31,6 +36,7 @@ const routes = Object.keys(catalog.languages).map(code => "/fixture/?lang=" + co
       await page.addScriptTag({ content: axe.source });
       const result = await page.evaluate(tags => window.axe.run(document,
         { runOnly: { type: "tag", values: tags } }), TAGS);
+      if (failed || new URL(page.url()).origin !== origin) throw new Error("interaction failed");
       states.push({ engine: report.engine, width: report.width, page: report.page,
         state: "results-and-statement", ...summarize(result) });
       if (process.env.A11Y_SCREENSHOT && report.engine === "chromium" && report.width === 390) {
