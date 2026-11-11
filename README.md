@@ -16,6 +16,7 @@ block under `languages`: its own name (shown in the picker), `dir`, `locale` (nu
 `status` (`source` for the default, Hebrew; `machine-draft` until a native speaker has reviewed it). Every key under
 `strings` has one value per language. Adding a language means adding its block and a value for every key; the picker
 (`?lang=<code>`, hidden while there is only one language), `<html lang dir>` and the tests all read the catalog.
+French is available as a machine draft, with a visible notice pending native-speaker review.
 The Hebrew text stays baked into `docs/index.html` for crawlers and readers without JavaScript, and
 `tests/i18n.test.js` keeps it equal to the catalog. Not translated: fund, track and company names (they are data),
 the search aliases, the AI prompt and the MCP tool descriptions.
