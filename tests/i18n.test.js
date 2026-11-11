@@ -83,10 +83,10 @@ function fakeDocument(specs) {
     return m && (!m[1] || m[1] === e.tag) && e.hasAttribute(m[2]) && (m[3] === undefined || e.attrs[m[2]] === m[3]);
   };
   return {
-    documentElement: { lang: "", dir: "" }, all, wrap, sel,
+    documentElement: { lang: "", dir: "" }, all, wrap, sel, draft: make("p", {}),
     querySelectorAll(s) { return all.filter((e) => match(s, e)); },
     querySelector(s) { return all.find((e) => match(s, e)) || null; },
-    getElementById(id) { return id === "lang" ? sel : null; },
+    getElementById(id) { return id === "lang" ? sel : id === "translation-draft" ? this.draft : null; },
     createElement(tag) { return make(tag, {}); },
   };
 }
@@ -245,4 +245,28 @@ test("the tripwire itself catches a stray code, a locale and a lang attribute", 
   assert.deepStrictEqual(hardcodedLanguages("x.js", 'n.toLocaleString("he-IL")'), ["he-IL"]);
   assert.deepStrictEqual(hardcodedLanguages("x.html", '<p lang="ar">'), ["ar", "lang=ar"]);
   assert.deepStrictEqual(hardcodedLanguages("x.js", 'const k = "id"; const t = "amount";'), []);
+});
+
+
+test("French is a complete flagged draft and makes the real picker visible", () => {
+  assert.strictEqual(catalog.languages.fr.status, "machine-draft");
+  assert.strictEqual(catalog.languages.fr.machine_draft, true);
+  const doc = fakeDocument([{ tag: "h1", attrs: { "data-i18n": "page.heading" } }]);
+  const L = I18n.create(catalog, I18n.langFromSearch(catalog, "?lang=fr"));
+  I18n.apply(L, doc);
+  assert.strictEqual(doc.wrap.hidden, false);
+  assert.strictEqual(doc.documentElement.lang, "fr");
+  assert.strictEqual(doc.documentElement.dir, "ltr");
+  assert.strictEqual(doc.sel.value, "fr");
+  assert.strictEqual(doc.draft.hidden, false);
+  assert.strictEqual(doc.all[0].textContent, "Et si ?");
+  assert.strictEqual(L.locale(), "fr-FR");
+  for (const key of keys) {
+    assert.ok(catalog.strings[key].fr.trim(), key);
+    assert.deepStrictEqual(placeholders(catalog.strings[key].fr), placeholders(catalog.strings[key][def]), key);
+  }
+  I18n.apply(I18n.create(catalog), doc);
+  assert.strictEqual(doc.documentElement.lang, def);
+  assert.strictEqual(doc.documentElement.dir, catalog.languages[def].dir);
+  assert.strictEqual(doc.draft.hidden, true);
 });

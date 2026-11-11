@@ -85,3 +85,5 @@ a{color:#0b4fb3}
 @media (max-width:760px){.fork-cols{grid-template-columns:1fr}}
 .fork-cols .card .split{display:none}
 .card .scope-l{display:none!important}
+/* Longer translated labels must shrink inside the mobile scenario columns. */
+.col{min-width:0;overflow-wrap:anywhere}

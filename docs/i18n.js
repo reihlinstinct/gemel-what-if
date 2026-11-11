@@ -69,6 +69,8 @@
     ["content", "placeholder", "aria-label"].forEach(function (attr) {
       each("[data-i18n-" + attr + "]", function (el) { el.setAttribute(attr, i18n.t(el.getAttribute("data-i18n-" + attr))); });
     });
+    var draft = doc.getElementById("translation-draft");
+    if (draft) draft.hidden = meta.status !== "machine-draft";
     var sel = doc.getElementById("lang");
     if (!sel) return;
     var opts = i18n.pickerOptions();

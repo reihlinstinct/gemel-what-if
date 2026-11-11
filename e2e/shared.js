@@ -134,7 +134,7 @@ function uiTour(d) {
         return;
       }
       if (n.nodeType !== 1) return;
-      if (n.hidden || n.tagName === "SCRIPT" || n.tagName === "STYLE" || n.classList.contains("offv")) return;
+      if (n.hidden || n.tagName === "SCRIPT" || n.tagName === "STYLE" || n.classList.contains("offv") || n.classList.contains("lang-pick")) return;
       for (const a of ["placeholder", "aria-label", "title"]) if (n.hasAttribute(a)) out.push("@" + a + "=" + n.getAttribute(a));
       for (const c of n.childNodes) walk(c);
     };

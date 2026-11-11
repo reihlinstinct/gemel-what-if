@@ -67,6 +67,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm run e2e
+      - run: npm ci --ignore-scripts
+      - run: node e2e/language.js
   e2e-webkit:
     needs: [changes]
     if: needs.changes.outputs.code == 'true'

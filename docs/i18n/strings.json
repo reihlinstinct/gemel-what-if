@@ -6,446 +6,603 @@
       "locale": "he-IL",
       "default": true,
       "status": "source"
+    },
+    "fr": {
+      "name": "Français",
+      "dir": "ltr",
+      "locale": "fr-FR",
+      "status": "machine-draft",
+      "machine_draft": true
     }
   },
   "strings": {
     "ai.build": {
-      "he": "בנה ציר זמן עם AI"
+      "he": "בנה ציר זמן עם AI",
+      "fr": "Créer une chronologie avec l'IA"
     },
     "ai.building": {
-      "he": "בונה..."
+      "he": "בונה...",
+      "fr": "Création en cours..."
     },
     "ai.failed": {
-      "he": "לא הצלחתי: {msg}. אפשר להשתמש ב'העתק פרומפט'."
+      "he": "לא הצלחתי: {msg}. אפשר להשתמש ב'העתק פרומפט'.",
+      "fr": "Échec : {msg}. Vous pouvez utiliser « Copier le prompt »."
     },
     "ai.heading": {
-      "he": "ספרו את הסיפור במילים שלכם"
+      "he": "ספרו את הסיפור במילים שלכם",
+      "fr": "Racontez votre parcours avec vos propres mots"
     },
     "ai.hint": {
-      "he": "תארו מה קרה: איפה נפתחה הקופה, מתי, כמה הפקדתם ולאן עברתם. ה-AI יבנה מזה ציר זמן שתוכלו לבדוק ולתקן."
+      "he": "תארו מה קרה: איפה נפתחה הקופה, מתי, כמה הפקדתם ולאן עברתם. ה-AI יבנה מזה ציר זמן שתוכלו לבדוק ולתקן.",
+      "fr": "Décrivez votre parcours : où le contrat a été ouvert, quand, combien vous avez versé et vers quel organisme vous avez ensuite transféré votre épargne. L'IA créera une chronologie à vérifier et à corriger."
     },
     "ai.http_error": {
-      "he": "שגיאה {status}"
+      "he": "שגיאה {status}",
+      "fr": "Erreur {status}"
     },
     "ai.loaded": {
-      "he": "נטען לציר הזמן. בדקו כל אירוע ומסלול לפני החישוב (ה-AI עלול לטעות).{notes}"
+      "he": "נטען לציר הזמן. בדקו כל אירוע ומסלול לפני החישוב (ה-AI עלול לטעות).{notes}",
+      "fr": "Chronologie chargée. Vérifiez chaque événement et chaque support avant le calcul (l'IA peut se tromper).{notes}"
     },
     "ai.need_text": {
-      "he": "כתבו קודם את הסיפור"
+      "he": "כתבו קודם את הסיפור",
+      "fr": "Commencez par décrire votre parcours"
     },
     "ai.notes": {
-      "he": " הערות: {list}"
+      "he": " הערות: {list}",
+      "fr": " Remarques : {list}"
     },
     "ai.privacy": {
-      "he": "פרטיות: ספירת ביקורים אנונימית (Cloudflare Web Analytics) בלבד - ללא עוגיות וללא שמירת כתובות IP. הטקסט נשלח לשרת ולמודל AI חיצוני (Google Gemini, ובגיבוי Cloudflare), בלי שמירה אצלנו. אל תכתבו שמות או מספרי זהות. ה-AI עלול לטעות, לכן בדקו כל אירוע ומסלול לפני החישוב."
+      "he": "פרטיות: ספירת ביקורים אנונימית (Cloudflare Web Analytics) בלבד - ללא עוגיות וללא שמירת כתובות IP. הטקסט נשלח לשרת ולמודל AI חיצוני (Google Gemini, ובגיבוי Cloudflare), בלי שמירה אצלנו. אל תכתבו שמות או מספרי זהות. ה-AI עלול לטעות, לכן בדקו כל אירוע ומסלול לפני החישוב.",
+      "fr": "Confidentialité : comptage anonyme des visites (Cloudflare Web Analytics) uniquement, sans cookies ni conservation des adresses IP. Le texte est envoyé au serveur et à un modèle d'IA externe (Google Gemini, avec Cloudflare en secours), sans stockage de notre côté. Ne saisissez ni noms ni numéros d'identité. L'IA peut se tromper : vérifiez chaque événement et chaque support avant le calcul."
     },
     "ai.story_label": {
-      "he": "תיאור הסיפור"
+      "he": "תיאור הסיפור",
+      "fr": "Description du parcours"
     },
     "ai.story_placeholder": {
-      "he": "למשל: ב-2005 פתחתי ביטוח מנהלים בהראל, הפקדתי 750 ש\"ח בחודש עד 2011, וב-2015 עברתי לגמל של פסגות..."
+      "he": "למשל: ב-2005 פתחתי ביטוח מנהלים בהראל, הפקדתי 750 ש\"ח בחודש עד 2011, וב-2015 עברתי לגמל של פסגות...",
+      "fr": "Par exemple : en 2005, j'ai ouvert une assurance retraite auprès de Harel, versé 750 ₪ par mois jusqu'en 2011, puis transféré mon épargne vers un fonds de Psagot en 2015..."
     },
     "annuity.balance": {
-      "he": "יתרה בפרישה"
+      "he": "יתרה בפרישה",
+      "fr": "Capital à la retraite"
     },
     "annuity.basis_guaranteed": {
-      "he": "מקדם מובטח"
+      "he": "מקדם מובטח",
+      "fr": "Coefficient garanti"
     },
     "annuity.basis_market": {
-      "he": "מקדם שוק"
+      "he": "מקדם שוק",
+      "fr": "Coefficient de marché"
     },
     "annuity.coef_guar": {
-      "he": "מקדם מובטח"
+      "he": "מקדם מובטח",
+      "fr": "Coefficient garanti"
     },
     "annuity.coef_market": {
-      "he": "מקדם שוק"
+      "he": "מקדם שוק",
+      "fr": "Coefficient de marché"
     },
     "annuity.coefficient": {
-      "he": "מקדם (הון ל-1 ₪ קצבה)"
+      "he": "מקדם (הון ל-1 ₪ קצבה)",
+      "fr": "Coefficient (capital pour 1 ₪ de rente)"
     },
     "annuity.heading": {
-      "he": "הערכת קצבה (אופציונלי)"
+      "he": "הערכת קצבה (אופציונלי)",
+      "fr": "Estimation de la rente (facultatif)"
     },
     "annuity.hint": {
-      "he": "להערכת קצבה חודשית בפרישה: הזינו מקדם מובטח מהפוליסה (הון נדרש לכל 1 ₪ קצבה, למשל 190) ומקדם שוק משוער להשוואה. בלי מקדמים לא תוצג הערכה."
+      "he": "להערכת קצבה חודשית בפרישה: הזינו מקדם מובטח מהפוליסה (הון נדרש לכל 1 ₪ קצבה, למשל 190) ומקדם שוק משוער להשוואה. בלי מקדמים לא תוצג הערכה.",
+      "fr": "Pour estimer la rente mensuelle à la retraite, indiquez le coefficient garanti du contrat (capital nécessaire pour 1 ₪ de rente, par exemple 190) et un coefficient de marché estimé pour la comparaison. Sans coefficients, aucune estimation ne sera affichée."
     },
     "annuity.monthly": {
-      "he": "קצבה חודשית משוערת"
+      "he": "קצבה חודשית משוערת",
+      "fr": "Rente mensuelle estimée"
     },
     "annuity.months": {
-      "he": "חודשים מסוף הנתונים עד הפרישה"
+      "he": "חודשים מסוף הנתונים עד הפרישה",
+      "fr": "Mois entre la fin des données et la retraite"
     },
     "annuity.rate": {
-      "he": "תשואה שנתית משוערת עד הפרישה (%)"
+      "he": "תשואה שנתית משוערת עד הפרישה (%)",
+      "fr": "Rendement annuel estimé jusqu'à la retraite (%)"
     },
     "annuity.title": {
-      "he": "הערכת קצבה חודשית (הערכה בלבד)"
+      "he": "הערכת קצבה חודשית (הערכה בלבד)",
+      "fr": "Estimation de la rente mensuelle (indicative uniquement)"
     },
     "annuity.warn": {
-      "he": "ההערכה תלויה במקדמים ובתשואה שהוזנו. המקדם המובטח נלקח ממסמכי הפוליסה שלכם ואינו מאומת. כספים במסלול ביטוח מקבלים את המקדם המובטח (אם הוזן), ואחרת מקדם שוק."
+      "he": "ההערכה תלויה במקדמים ובתשואה שהוזנו. המקדם המובטח נלקח ממסמכי הפוליסה שלכם ואינו מאומת. כספים במסלול ביטוח מקבלים את המקדם המובטח (אם הוזן), ואחרת מקדם שוק.",
+      "fr": "L'estimation dépend des coefficients et du rendement saisis. Le coefficient garanti provient de vos documents contractuels et n'est pas vérifié. Les sommes placées en assurance utilisent le coefficient garanti s'il est renseigné, sinon le coefficient de marché."
     },
     "chart.aria": {
-      "he": "גרף יתרה"
+      "he": "גרף יתרה",
+      "fr": "Graphique du capital"
     },
     "data.info": {
-      "he": "נתונים עד {latest}, {count} מסלולים."
+      "he": "נתונים עד {latest}, {count} מסלולים.",
+      "fr": "Données jusqu'à {latest}, {count} supports."
     },
     "error.bad_file": {
-      "he": "קובץ לא תקין: {msg}"
+      "he": "קובץ לא תקין: {msg}",
+      "fr": "Fichier non valide : {msg}"
     },
     "error.bad_link": {
-      "he": "הסיפור בקישור אינו תקין: {msg}"
+      "he": "הסיפור בקישור אינו תקין: {msg}",
+      "fr": "Le parcours du lien n'est pas valide : {msg}"
     },
     "error.missing_amount": {
-      "he": "חסר סכום באחד האירועים"
+      "he": "חסר סכום באחד האירועים",
+      "fr": "Un montant manque dans un événement"
     },
     "error.missing_date": {
-      "he": "חסר תאריך באחד האירועים"
+      "he": "חסר תאריך באחד האירועים",
+      "fr": "Une date manque dans un événement"
     },
     "error.missing_fund": {
-      "he": "בחרו מסלול באירוע {type}"
+      "he": "בחרו מסלול באירוע {type}",
+      "fr": "Sélectionnez un support pour l'événement {type}"
     },
     "event.deposit": {
-      "he": "הפקדה חד-פעמית"
+      "he": "הפקדה חד-פעמית",
+      "fr": "Versement ponctuel"
     },
     "event.fees": {
-      "he": "דמי ניהול (אופציונלי)"
+      "he": "דמי ניהול (אופציונלי)",
+      "fr": "Frais de gestion (facultatif)"
     },
     "event.monthly": {
-      "he": "הפקדות חודשיות"
+      "he": "הפקדות חודשיות",
+      "fr": "Versements mensuels"
     },
     "event.product": {
-      "he": "שינוי מוצר"
+      "he": "שינוי מוצר",
+      "fr": "Changement de produit"
     },
     "event.remove": {
-      "he": "הסר"
+      "he": "הסר",
+      "fr": "Supprimer"
     },
     "event.split": {
-      "he": "⑂ פצל מכאן"
+      "he": "⑂ פצל מכאן",
+      "fr": "⑂ Séparer à partir d'ici"
     },
     "event.start_title": {
-      "he": "אירוע התחלה: פתיחת קופה"
+      "he": "אירוע התחלה: פתיחת קופה",
+      "fr": "Événement initial : ouverture du contrat"
     },
     "event.track": {
-      "he": "שינוי מסלול"
+      "he": "שינוי מסלול",
+      "fr": "Changement de support"
     },
     "event.transfer": {
-      "he": "מעבר קופה"
+      "he": "מעבר קופה",
+      "fr": "Transfert vers un autre fonds"
     },
     "event.type_aria": {
-      "he": "סוג אירוע"
+      "he": "סוג אירוע",
+      "fr": "Type d'événement"
     },
     "event.withdraw": {
-      "he": "משיכה"
+      "he": "משיכה",
+      "fr": "Retrait"
     },
     "fee.annual_avg": {
-      "he": "דמי ניהול שנתיים ממוצעים רשמיים במסלול: {fee}% (נכון ל-{period}, <a href=\"{href}\" target=\"_blank\" rel=\"noopener\">מקור</a>)."
+      "he": "דמי ניהול שנתיים ממוצעים רשמיים במסלול: {fee}% (נכון ל-{period}, <a href=\"{href}\" target=\"_blank\" rel=\"noopener\">מקור</a>).",
+      "fr": "Frais de gestion annuels moyens officiels du support : {fee}% (au {period}, <a href=\"{href}\" target=\"_blank\" rel=\"noopener\">source</a>)."
     },
     "fee.annual_none": {
-      "he": "אין נתון דמי ניהול שנתיים ממוצע רשמי למסלול זה; שדה הצבירה נשאר ריק לעריכה ידנית."
+      "he": "אין נתון דמי ניהול שנתיים ממוצע רשמי למסלול זה; שדה הצבירה נשאר ריק לעריכה ידנית.",
+      "fr": "Aucune donnée officielle sur les frais de gestion annuels moyens de ce support ; le champ des frais sur l'encours reste vide pour une saisie manuelle."
     },
     "fee.current_note": {
-      "he": "{annual} {deposit} הממוצע הנוכחי לא בהכרח היה דמי הניהול לאורך כל שנות הסיפור; אפשר לערוך את השדות."
+      "he": "{annual} {deposit} הממוצע הנוכחי לא בהכרח היה דמי הניהול לאורך כל שנות הסיפור; אפשר לערוך את השדות.",
+      "fr": "{annual} {deposit} La moyenne actuelle ne correspond pas nécessairement aux frais appliqués pendant toutes les années du parcours ; vous pouvez modifier les champs."
     },
     "fee.deposit_avg": {
-      "he": "דמי ניהול מהפקדה ממוצעים רשמיים במסלול: {fee}%."
+      "he": "דמי ניהול מהפקדה ממוצעים רשמיים במסלול: {fee}%.",
+      "fr": "Frais moyens officiels sur versement du support : {fee}%."
     },
     "fee.deposit_none": {
-      "he": "אין נתון דמי ניהול מהפקדה ממוצע רשמי למסלול זה; שדה ההפקדה נשאר ריק לעריכה ידנית."
+      "he": "אין נתון דמי ניהול מהפקדה ממוצע רשמי למסלול זה; שדה ההפקדה נשאר ריק לעריכה ידנית.",
+      "fr": "Aucune donnée officielle sur les frais moyens sur versement de ce support ; le champ reste vide pour une saisie manuelle."
     },
     "field.amount": {
-      "he": "סכום (₪)"
+      "he": "סכום (₪)",
+      "fr": "Montant (₪)"
     },
     "field.date": {
-      "he": "תאריך"
+      "he": "תאריך",
+      "fr": "Date"
     },
     "field.exit_cost": {
-      "he": "עלות חד-פעמית (%)"
+      "he": "עלות חד-פעמית (%)",
+      "fr": "Coût ponctuel (%)"
     },
     "field.fee_deposit": {
-      "he": "דמי ניהול מהפקדה (%)"
+      "he": "דמי ניהול מהפקדה (%)",
+      "fr": "Frais sur versement (%)"
     },
     "field.fee_savings": {
-      "he": "דמי ניהול שנתיים מהצבירה (%)"
+      "he": "דמי ניהול שנתיים מהצבירה (%)",
+      "fr": "Frais de gestion annuels sur l'encours (%)"
     },
     "field.from": {
-      "he": "מתאריך"
+      "he": "מתאריך",
+      "fr": "À partir du"
     },
     "field.monthly_amount": {
-      "he": "סכום חודשי (₪)"
+      "he": "סכום חודשי (₪)",
+      "fr": "Montant mensuel (₪)"
     },
     "field.open_amount": {
-      "he": "סכום פתיחה (אופציונלי, ₪)"
+      "he": "סכום פתיחה (אופציונלי, ₪)",
+      "fr": "Capital initial (facultatif, ₪)"
     },
     "field.open_date": {
-      "he": "תאריך פתיחה"
+      "he": "תאריך פתיחה",
+      "fr": "Date d'ouverture"
     },
     "field.to": {
-      "he": "עד תאריך (ריק = עד הסוף)"
+      "he": "עד תאריך (ריק = עד הסוף)",
+      "fr": "Jusqu'au (vide = jusqu'à la fin)"
     },
     "footer.code": {
-      "he": "קוד המקור"
+      "he": "קוד המקור",
+      "fr": "Code source"
     },
     "footer.source": {
-      "he": "מקור הנתונים: <a href=\"https://data.gov.il/dataset/gemelnet\">גמל-נט</a> ו<a href=\"https://data.gov.il/dataset/insurance\">ביטוח-נט</a>, רשות שוק ההון (data.gov.il)."
+      "he": "מקור הנתונים: <a href=\"https://data.gov.il/dataset/gemelnet\">גמל-נט</a> ו<a href=\"https://data.gov.il/dataset/insurance\">ביטוח-נט</a>, רשות שוק ההון (data.gov.il).",
+      "fr": "Source des données : <a href=\"https://data.gov.il/dataset/gemelnet\">Gemel-Net</a> et <a href=\"https://data.gov.il/dataset/insurance\">Bituach-Net</a>, Autorité du marché des capitaux (data.gov.il)."
     },
     "fund.chosen": {
-      "he": "✓ נבחר: {name}"
+      "he": "✓ נבחר: {name}",
+      "fr": "✓ Sélectionné : {name}"
     },
     "fund.label": {
-      "he": "מסלול:"
+      "he": "מסלול:",
+      "fr": "Support :"
     },
     "fund.search_aria": {
-      "he": "חיפוש מסלול"
+      "he": "חיפוש מסלול",
+      "fr": "Rechercher un support"
     },
     "fund.search_placeholder": {
-      "he": "חיפוש: שם מסלול, חברה או מספר קופה"
+      "he": "חיפוש: שם מסלול, חברה או מספר קופה",
+      "fr": "Recherche : support, organisme ou numéro de fonds"
     },
     "fund.select_aria": {
-      "he": "בחירת מסלול"
+      "he": "בחירת מסלול",
+      "fr": "Sélectionner un support"
     },
     "fund.src_gemel": {
-      "he": "גמל"
+      "he": "גמל",
+      "fr": "Épargne retraite"
     },
     "fund.src_insurance": {
-      "he": "ביטוח"
+      "he": "ביטוח",
+      "fr": "Assurance"
     },
     "meta.description": {
-      "he": "משחק מה היה קורה אילו על תשואות קופות גמל, השתלמות וביטוח מנהלים: בנו ציר זמן וראו מה היה קורה. הערכה בלבד, לא ייעוץ פיננסי."
+      "he": "משחק מה היה קורה אילו על תשואות קופות גמל, השתלמות וביטוח מנהלים: בנו ציר זמן וראו מה היה קורה. הערכה בלבד, לא ייעוץ פיננסי.",
+      "fr": "Simulez les rendements de fonds d'épargne retraite, de formation et d'assurance retraite israéliens : créez une chronologie et comparez les résultats. Estimation uniquement, pas un conseil financier."
     },
     "meta.og_description": {
-      "he": "בנו ציר זמן של סיפור השקעה וראו מה היה קורה. החישוב בדפדפן בלבד. לא ייעוץ פיננסי."
+      "he": "בנו ציר זמן של סיפור השקעה וראו מה היה קורה. החישוב בדפדפן בלבד. לא ייעוץ פיננסי.",
+      "fr": "Créez la chronologie d'un parcours d'investissement et comparez les résultats possibles. Calcul uniquement dans le navigateur. Pas un conseil financier."
     },
     "meta.title": {
-      "he": "מה היה קורה אילו - קופות גמל ופנסיה"
+      "he": "מה היה קורה אילו - קופות גמל ופנסיה",
+      "fr": "Et si ? - Épargne retraite et pension"
     },
     "notes.item1": {
-      "he": "מקדם קצבה מובטח בפוליסה עלול ללכת לאיבוד"
+      "he": "מקדם קצבה מובטח בפוליסה עלול ללכת לאיבוד",
+      "fr": "Un coefficient de rente garanti peut être perdu"
     },
     "notes.item2": {
-      "he": "כיסויים ביטוחיים (נכות, שארים) שנגרעים או משתנים"
+      "he": "כיסויים ביטוחיים (נכות, שארים) שנגרעים או משתנים",
+      "fr": "Les garanties d'assurance (invalidité, survivants) peuvent être supprimées ou modifiées"
     },
     "notes.item3": {
-      "he": "דמי ניהול חוזיים: ברירת המחדל היא הממוצע הרשמי של המסלול, ואפשר לערוך אותה בשדה דמי הניהול השנתיים"
+      "he": "דמי ניהול חוזיים: ברירת המחדל היא הממוצע הרשמי של המסלול, ואפשר לערוך אותה בשדה דמי הניהול השנתיים",
+      "fr": "Frais de gestion contractuels : la moyenne officielle du support est utilisée par défaut et peut être modifiée dans le champ des frais annuels"
     },
     "notes.item4": {
-      "he": "מסים וזכויות ייחודיות שבפוליסה"
+      "he": "מסים וזכויות ייחודיות שבפוליסה",
+      "fr": "Fiscalité et droits propres au contrat"
     },
     "notes.title": {
-      "he": "מה לא מחושב במעבר בין מוצרים:"
+      "he": "מה לא מחושב במעבר בין מוצרים:",
+      "fr": "Ce qui n'est pas calculé lors d'un changement de produit :"
     },
     "official.differs": {
-      "he": " ≠ שונה מהמאגר המקומי{reason}"
+      "he": " ≠ שונה מהמאגר המקומי{reason}",
+      "fr": " ≠ Différent des données locales{reason}"
     },
     "official.failed": {
-      "he": "(לא ניתן למשוך כעת נתונים חיים מהמקור הרשמי; הקישור לאתר ההשוואה הרשמי עדיין תקף)"
+      "he": "(לא ניתן למשוך כעת נתונים חיים מהמקור הרשמי; הקישור לאתר ההשוואה הרשמי עדיין תקף)",
+      "fr": "(Les données officielles en direct sont indisponibles pour le moment ; le lien vers le site officiel de comparaison reste valide.)"
     },
     "official.live": {
-      "he": "<br>מקור רשמי חי (data.gov.il): {official} מצטבר, מחושב מהתשואות החודשיות הרשמיות; במאגר האתר: {local}.{tail} {links}"
+      "he": "<br>מקור רשמי חי (data.gov.il): {official} מצטבר, מחושב מהתשואות החודשיות הרשמיות; במאגר האתר: {local}.{tail} {links}",
+      "fr": "<br>Source officielle en direct (data.gov.il) : {official} cumulés, calculés à partir des rendements mensuels officiels ; données du site : {local}.{tail} {links}"
     },
     "official.loading": {
-      "he": "(טוען נתונים רשמיים חיים…)"
+      "he": "(טוען נתונים רשמיים חיים…)",
+      "fr": "(Chargement des données officielles en direct...)"
     },
     "official.local_missing": {
-      "he": " (למאגר האתר חסרים {n} חודשים — כנראה שהמקומי פחות מעודכן מהמקור)."
+      "he": " (למאגר האתר חסרים {n} חודשים — כנראה שהמקומי פחות מעודכן מהמקור).",
+      "fr": " (Il manque {n} mois dans les données du site ; la copie locale est probablement moins à jour que la source.)"
     },
     "official.match": {
-      "he": " ✓ תואם למאגר האתר."
+      "he": " ✓ תואם למאגר האתר.",
+      "fr": " ✓ Conforme aux données du site."
     },
     "official.partial": {
-      "he": "<br>במקור הרשמי נמצאו {found} מתוך {total} חודשי התקופה; המצטבר על החודשים שנמצאו: {cum} (מחושב מהתשואות החודשיות הרשמיות). {links}"
+      "he": "<br>במקור הרשמי נמצאו {found} מתוך {total} חודשי התקופה; המצטבר על החודשים שנמצאו: {cum} (מחושב מהתשואות החודשיות הרשמיות). {links}",
+      "fr": "<br>La source officielle contient {found} des {total} mois de la période ; rendement cumulé des mois disponibles : {cum} (calculé à partir des rendements mensuels officiels). {links}"
     },
     "official.rows": {
-      "he": "שורות המקור"
+      "he": "שורות המקור",
+      "fr": "Lignes de la source"
     },
     "page.disclaimer": {
-      "he": "לא ייעוץ פיננסי. תשואות עבר אינן מעידות על העתיד. החישוב מבוסס על התשואות החודשיות שדווחו לרשות שוק ההון (גמל-נט) ועל הנחות מפושטות (הפקדה בתחילת חודש, בלי מס, בלי עמלות נוספות מעבר למה שכבר מגולם בתשואה)."
+      "he": "לא ייעוץ פיננסי. תשואות עבר אינן מעידות על העתיד. החישוב מבוסס על התשואות החודשיות שדווחו לרשות שוק ההון (גמל-נט) ועל הנחות מפושטות (הפקדה בתחילת חודש, בלי מס, בלי עמלות נוספות מעבר למה שכבר מגולם בתשואה).",
+      "fr": "Ceci n'est pas un conseil financier. Les performances passées ne préjugent pas des performances futures. Le calcul repose sur les rendements mensuels déclarés à l'Autorité du marché des capitaux (Gemel-Net) et sur des hypothèses simplifiées : versement au début du mois, sans fiscalité ni frais supplémentaires autres que ceux déjà intégrés au rendement."
     },
     "page.heading": {
-      "he": "מה היה קורה אילו?"
+      "he": "מה היה קורה אילו?",
+      "fr": "Et si ?"
     },
     "page.intro": {
-      "he": "תארו סיפור השקעה (הפקדות, תאריכים, מסלולים) וראו מה היה קורה אילו הייתם עוברים מסלול בזמן אחר. החישוב מתבצע בדפדפן בלבד, שום נתון לא נשלח לשום מקום."
+      "he": "תארו סיפור השקעה (הפקדות, תאריכים, מסלולים) וראו מה היה קורה אילו הייתם עוברים מסלול בזמן אחר. החישוב מתבצע בדפדפן בלבד, שום נתון לא נשלח לשום מקום.",
+      "fr": "Décrivez un parcours d'investissement (versements, dates, supports) et voyez ce qui se serait passé en changeant de support à un autre moment. Le calcul est effectué uniquement dans le navigateur, aucune donnée n'est envoyée ailleurs."
     },
     "page.product_body": {
-      "he": "המחשבון בודק מעבר בין מסלולי השקעה. מעבר מפוליסת ביטוח מנהלים ותיקה (לפני 2013) לקופת גמל הוא שינוי מוצר, ולא רק מסלול: ייתכן שמקדם קצבה מובטח הולך לאיבוד, כיסויים ביטוחיים ודמי ניהול חוזיים שונים, ובדרך כלל המעבר עצמו אינו אירוע מס. אם יש מקדם קצבה תלוי במסמכי הפוליסה. זהו מידע כללי ולא ייעוץ, המבוסס על סיכומים של כל זכות ומשרד האוצר, ותלוי בפוליסה הספציפית."
+      "he": "המחשבון בודק מעבר בין מסלולי השקעה. מעבר מפוליסת ביטוח מנהלים ותיקה (לפני 2013) לקופת גמל הוא שינוי מוצר, ולא רק מסלול: ייתכן שמקדם קצבה מובטח הולך לאיבוד, כיסויים ביטוחיים ודמי ניהול חוזיים שונים, ובדרך כלל המעבר עצמו אינו אירוע מס. אם יש מקדם קצבה תלוי במסמכי הפוליסה. זהו מידע כללי ולא ייעוץ, המבוסס על סיכומים של כל זכות ומשרד האוצר, ותלוי בפוליסה הספציפית.",
+      "fr": "Le simulateur étudie les changements de supports d'investissement. Passer d'un ancien contrat d'assurance retraite de type Bituach Menahalim (avant 2013) à un fonds d'épargne retraite est un changement de produit, pas seulement de support : un coefficient de rente garanti peut être perdu, les garanties d'assurance et les frais contractuels peuvent différer. Le transfert lui-même n'est généralement pas un événement fiscal. L'existence d'un coefficient garanti dépend des documents du contrat. Il s'agit d'informations générales, pas d'un conseil, fondées sur les synthèses de Kol Zchut et du ministère des Finances et dépendant du contrat concerné."
     },
     "page.product_more": {
-      "he": "קריאה נוספת: ההבדלים בין סוגי החיסכון הפנסיוני (משרד האוצר)"
+      "he": "קריאה נוספת: ההבדלים בין סוגי החיסכון הפנסיוני (משרד האוצר)",
+      "fr": "En savoir plus : différences entre les produits d'épargne retraite (ministère des Finances)"
     },
     "page.product_summary": {
-      "he": "חשוב לדעת: מעבר בין מוצרים אינו מעבר מסלול"
+      "he": "חשוב לדעת: מעבר בין מוצרים אינו מעבר מסלול",
+      "fr": "Important : changer de produit n'est pas changer de support"
     },
     "prompt.blocked": {
-      "he": "ההעתקה נחסמה. הפרומפט הוצב בתיבה למטה, העתיקו אותו ידנית."
+      "he": "ההעתקה נחסמה. הפרומפט הוצב בתיבה למטה, העתיקו אותו ידנית.",
+      "fr": "La copie a été bloquée. Le prompt figure dans la zone ci-dessous ; copiez-le manuellement."
     },
     "prompt.copied": {
-      "he": "הפרומפט הועתק. הדביקו אותו בצ'אט AI, והדביקו כאן את התשובה."
+      "he": "הפרומפט הועתק. הדביקו אותו בצ'אט AI, והדביקו כאן את התשובה.",
+      "fr": "Prompt copié. Collez-le dans une conversation avec une IA, puis collez sa réponse ici."
     },
     "prompt.copy": {
-      "he": "העתק פרומפט"
+      "he": "העתק פרומפט",
+      "fr": "Copier le prompt"
     },
     "prompt.hint": {
-      "he": "העתקו את הפרומפט לצ'אט AI לבחירתכם, והדביקו כאן את תשובת ה-JSON. האתר לא שולח כלום בדרך הזו."
+      "he": "העתקו את הפרומפט לצ'אט AI לבחירתכם, והדביקו כאן את תשובת ה-JSON. האתר לא שולח כלום בדרך הזו.",
+      "fr": "Copiez le prompt dans l'outil d'IA de votre choix, puis collez sa réponse JSON ici. Le site n'envoie rien par cette méthode."
     },
     "prompt.load": {
-      "he": "טען לציר הזמן"
+      "he": "טען לציר הזמן",
+      "fr": "Charger dans la chronologie"
     },
     "prompt.manual": {
-      "he": "הפרומפט הוצב בתיבה למטה, העתיקו אותו ידנית."
+      "he": "הפרומפט הוצב בתיבה למטה, העתיקו אותו ידנית.",
+      "fr": "Le prompt figure dans la zone ci-dessous ; copiez-le manuellement."
     },
     "prompt.no_json": {
-      "he": "לא נמצא JSON בתשובה"
+      "he": "לא נמצא JSON בתשובה",
+      "fr": "Aucun JSON trouvé dans la réponse"
     },
     "prompt.reply_label": {
-      "he": "תשובת ה-AI (JSON)"
+      "he": "תשובת ה-AI (JSON)",
+      "fr": "Réponse de l'IA (JSON)"
     },
     "prompt.summary": {
-      "he": "בלי AI: העתקת פרומפט והדבקת תשובה"
+      "he": "בלי AI: העתקת פרומפט והדבקת תשובה",
+      "fr": "Sans IA intégrée : copier le prompt et coller la réponse"
     },
     "reply.failed": {
-      "he": "לא הצלחתי לטעון: {msg}"
+      "he": "לא הצלחתי לטעון: {msg}",
+      "fr": "Impossible de charger : {msg}"
     },
     "reply.loaded": {
-      "he": "נטען. בדקו שהמסלולים נכונים: {lines}{missing}"
+      "he": "נטען. בדקו שהמסלולים נכונים: {lines}{missing}",
+      "fr": "Chargé. Vérifiez les supports : {lines}{missing}"
     },
     "reply.missing": {
-      "he": ". לא נמצאו: {list}"
+      "he": ". לא נמצאו: {list}",
+      "fr": ". Introuvables : {list}"
     },
     "result.annualized": {
-      "he": "תשואה שנתית משוקללת"
+      "he": "תשואה שנתית משוקללת",
+      "fr": "Rendement annualisé pondéré"
     },
     "result.diff": {
-      "he": "ההפרש בין התרחישים: {diff} ₪{pct}"
+      "he": "ההפרש בין התרחישים: {diff} ₪{pct}",
+      "fr": "Écart entre les scénarios : {diff} ₪{pct}"
     },
     "result.final": {
-      "he": "שווי סופי"
+      "he": "שווי סופי",
+      "fr": "Capital final"
     },
     "result.gain": {
-      "he": "רווח כולל על כל ציר הזמן"
+      "he": "רווח כולל על כל ציר הזמן",
+      "fr": "Gain total sur toute la chronologie"
     },
     "result.missing_months": {
-      "he": "ב-{n} חודשים (במצטבר) לא היה דיווח תשואה למסלול (למשל לפני הקמתו), ולכן חושבה בהם תשואה 0%. כדאי לבדוק את התאריכים."
+      "he": "ב-{n} חודשים (במצטבר) לא היה דיווח תשואה למסלול (למשל לפני הקמתו), ולכן חושבה בהם תשואה 0%. כדאי לבדוק את התאריכים.",
+      "fr": "Pour {n} mois au total, aucun rendement n'était déclaré pour le support (par exemple avant sa création) ; un rendement de 0% a donc été appliqué. Vérifiez les dates."
     },
     "result.paid": {
-      "he": "סך הפקדות"
+      "he": "סך הפקדות",
+      "fr": "Total des versements"
     },
     "result.withdrawn": {
-      "he": "סך משיכות"
+      "he": "סך משיכות",
+      "fr": "Total des retraits"
     },
     "run.button": {
-      "he": "חשב רווח כולל"
+      "he": "חשב רווח כולל",
+      "fr": "Calculer le gain total"
     },
     "save.export": {
-      "he": "שמור סיפור לקובץ"
+      "he": "שמור סיפור לקובץ",
+      "fr": "Enregistrer le parcours dans un fichier"
     },
     "save.heading": {
-      "he": "שמירה וטעינה"
+      "he": "שמירה וטעינה",
+      "fr": "Enregistrer et charger"
     },
     "save.hint": {
-      "he": "הסיפור נשמר לקובץ אצלכם (לא באתר). אפשר לטעון אותו שוב מאוחר יותר, או לפתוח קישור שמכיל את הסיפור אחרי הסימן # (החלק הזה לא נשלח לשרת)."
+      "he": "הסיפור נשמר לקובץ אצלכם (לא באתר). אפשר לטעון אותו שוב מאוחר יותר, או לפתוח קישור שמכיל את הסיפור אחרי הסימן # (החלק הזה לא נשלח לשרת).",
+      "fr": "Le parcours est enregistré dans un fichier sur votre appareil, pas sur le site. Vous pouvez le recharger plus tard ou ouvrir un lien contenant le parcours après le signe # (cette partie n'est pas envoyée au serveur)."
     },
     "save.import": {
-      "he": "טעינה מקובץ"
+      "he": "טעינה מקובץ",
+      "fr": "Charger un fichier"
     },
     "scope.actual": {
-      "he": "בפועל"
+      "he": "בפועל",
+      "fr": "Réel"
     },
     "scope.actual_only": {
-      "he": "בפועל בלבד"
+      "he": "בפועל בלבד",
+      "fr": "Réel uniquement"
     },
     "scope.both": {
-      "he": "משותף: בפועל ומה אם"
+      "he": "משותף: בפועל ומה אם",
+      "fr": "Commun aux scénarios réel et hypothétique"
     },
     "scope.label": {
-      "he": "חל על"
+      "he": "חל על",
+      "fr": "S'applique à"
     },
     "scope.whatif": {
-      "he": "מה אם"
+      "he": "מה אם",
+      "fr": "Hypothétique"
     },
     "scope.whatif_only": {
-      "he": "מה אם בלבד"
+      "he": "מה אם בלבד",
+      "fr": "Hypothétique uniquement"
     },
     "status.example_loaded": {
-      "he": "נטענה דוגמה: הציר מתפצל: בפועל הכסף נשאר בביטוח, ובמה אם עובר לגמל ב-2015. לחצו חשב."
+      "he": "נטענה דוגמה: הציר מתפצל: בפועל הכסף נשאר בביטוח, ובמה אם עובר לגמל ב-2015. לחצו חשב.",
+      "fr": "Exemple chargé : la chronologie se sépare. Dans le scénario réel, l'épargne reste en assurance ; dans le scénario hypothétique, elle passe dans un fonds d'épargne retraite en 2015. Lancez le calcul."
     },
     "status.forked": {
-      "he": "הציר פוצל. מימין בפועל ומשמאל מה אם: שנו את הצד של \"מה אם\" (מסלול, תאריך מעבר) ולחצו חשב."
+      "he": "הציר פוצל. מימין בפועל ומשמאל מה אם: שנו את הצד של \"מה אם\" (מסלול, תאריך מעבר) ולחצו חשב.",
+      "fr": "Chronologie séparée en deux scénarios, réel et hypothétique. Modifiez le côté hypothétique (support, date du transfert), puis lancez le calcul."
     },
     "status.unforked": {
-      "he": "הפיצול בוטל. נשמר הצד של \"בפועל\"."
+      "he": "הפיצול בוטל. נשמר הצד של \"בפועל\".",
+      "fr": "Séparation annulée. Le scénario réel a été conservé."
     },
     "timeline.add": {
-      "he": "הוסף אירוע"
+      "he": "הוסף אירוע",
+      "fr": "Ajouter un événement"
     },
     "timeline.add_actual": {
-      "he": "הוסף אירוע לבפועל"
+      "he": "הוסף אירוע לבפועל",
+      "fr": "Ajouter au scénario réel"
     },
     "timeline.add_whatif": {
-      "he": "הוסף אירוע למה אם"
+      "he": "הוסף אירוע למה אם",
+      "fr": "Ajouter au scénario hypothétique"
     },
     "timeline.end": {
-      "he": "סיום החישוב"
+      "he": "סיום החישוב",
+      "fr": "Fin du calcul"
     },
     "timeline.example": {
-      "he": "טען דוגמה"
+      "he": "טען דוגמה",
+      "fr": "Charger un exemple"
     },
     "timeline.fork": {
-      "he": "⑂ פצל את הציר (תרחיש מקביל)"
+      "he": "⑂ פצל את הציר (תרחיש מקביל)",
+      "fr": "⑂ Séparer la chronologie (scénario parallèle)"
     },
     "timeline.fork_line": {
-      "he": "⑂ מכאן הציר מתפצל"
+      "he": "⑂ מכאן הציר מתפצל",
+      "fr": "⑂ La chronologie se sépare ici"
     },
     "timeline.heading": {
-      "he": "ציר הזמן"
+      "he": "ציר הזמן",
+      "fr": "Chronologie"
     },
     "timeline.hint": {
-      "he": "בנו את הסיפור מלמעלה למטה. כדי להשוות, לחצו \"⑂ פצל\" (בסוף הציר או על אירוע מסוים): מנקודת הפיצול יוצגו שני צדדים, \"בפועל\" ו\"מה אם\", כל אחד עם האירועים שלו. התוצאה משווה בין שני הצדדים."
+      "he": "בנו את הסיפור מלמעלה למטה. כדי להשוות, לחצו \"⑂ פצל\" (בסוף הציר או על אירוע מסוים): מנקודת הפיצול יוצגו שני צדדים, \"בפועל\" ו\"מה אם\", כל אחד עם האירועים שלו. התוצאה משווה בין שני הצדדים.",
+      "fr": "Construisez le parcours de haut en bas. Pour comparer, cliquez sur « ⑂ Séparer » à la fin de la chronologie ou sur un événement : deux côtés apparaissent à partir de ce point, réel et hypothétique, chacun avec ses événements. Le résultat compare les deux côtés."
     },
     "timeline.unfork": {
-      "he": "בטל פיצול"
+      "he": "בטל פיצול",
+      "fr": "Annuler la séparation"
     },
     "ui.language": {
-      "he": "שפה"
+      "he": "שפה",
+      "fr": "Langue"
     },
     "verify.fund_id": {
-      "he": "קופה {id} - "
+      "he": "קופה {id} - ",
+      "fr": "Fonds {id} - "
     },
     "verify.hint_live": {
-      "he": "בנוסף מוצגת בכל שורה השוואה חיה מול נתוני התשואה החודשית הרשמיים ב-data.gov.il (רשות שוק ההון). התשואה המצטברת שם מחושבת כאן באתר מהחודשים הרשמיים — אין פרסום רשמי של תשואה מצטברת לתקופה חופשית — וההשוואה בודקת שהמאגר המקומי של האתר עדכני ועקבי מול המקור; היא אינה בדיקה בלתי תלויה של נוסחת החישוב."
+      "he": "בנוסף מוצגת בכל שורה השוואה חיה מול נתוני התשואה החודשית הרשמיים ב-data.gov.il (רשות שוק ההון). התשואה המצטברת שם מחושבת כאן באתר מהחודשים הרשמיים — אין פרסום רשמי של תשואה מצטברת לתקופה חופשית — וההשוואה בודקת שהמאגר המקומי של האתר עדכני ועקבי מול המקור; היא אינה בדיקה בלתי תלויה של נוסחת החישוב.",
+      "fr": "Chaque ligne présente aussi une comparaison en direct avec les rendements mensuels officiels de data.gov.il (Autorité du marché des capitaux). Le rendement cumulé est calculé ici à partir des mois officiels : il n'existe pas de publication officielle du rendement cumulé pour une période libre. La comparaison vérifie que les données locales sont à jour et cohérentes avec la source ; ce n'est pas une vérification indépendante de la formule de calcul."
     },
     "verify.hint_manual": {
-      "he": "באתרים הרשמיים אי אפשר לשחזר רצף של מעברי מסלול, אבל אפשר לבדוק את התשואה של כל מסלול בנפרד. לכל מסלול בסיפור רשומות למטה השנים שבהן הכסף שהה בו, עם קישור: בחרו שם את המסלול ואת התקופה (בגמל-נט מינימום 12 חודשים, אז קטע קצר יותר ידרוש חלון רחב יותר). שימו לב: שם התשואה מוצגת מצטברת על התקופה, אין פירוט חודשי."
+      "he": "באתרים הרשמיים אי אפשר לשחזר רצף של מעברי מסלול, אבל אפשר לבדוק את התשואה של כל מסלול בנפרד. לכל מסלול בסיפור רשומות למטה השנים שבהן הכסף שהה בו, עם קישור: בחרו שם את המסלול ואת התקופה (בגמל-נט מינימום 12 חודשים, אז קטע קצר יותר ידרוש חלון רחב יותר). שימו לב: שם התשואה מוצגת מצטברת על התקופה, אין פירוט חודשי.",
+      "fr": "Les sites officiels ne permettent pas de reconstituer une succession de changements de supports, mais chaque support peut être vérifié séparément. Les périodes pendant lesquelles l'épargne est restée sur chaque support figurent ci-dessous, avec un lien : sélectionnez le support et la période sur le site officiel. Gemel-Net exige au moins 12 mois, donc une période plus courte nécessite une fenêtre plus large. Attention : le rendement y est cumulé sur la période, sans détail mensuel."
     },
     "verify.not_found": {
-      "he": "{fund}, {period} (המסלול לא נמצא בנתוני האתר)"
+      "he": "{fund}, {period} (המסלול לא נמצא בנתוני האתר)",
+      "fr": "{fund}, {period} (support absent des données du site)"
     },
     "verify.short_note": {
-      "he": " (קטע של פחות מ-12 חודשים: בגמל-נט תצטרכו לבחור חלון רחב יותר)"
+      "he": " (קטע של פחות מ-12 חודשים: בגמל-נט תצטרכו לבחור חלון רחב יותר)",
+      "fr": " (Période inférieure à 12 mois : choisissez une fenêtre plus large sur Gemel-Net.)"
     },
     "verify.site_gemel": {
-      "he": "גמל-נט"
+      "he": "גמל-נט",
+      "fr": "Gemel-Net"
     },
     "verify.site_insurance": {
-      "he": "ביטוח-נט"
+      "he": "ביטוח-נט",
+      "fr": "Bituach-Net"
     },
     "verify.title": {
-      "he": "בדיקה מול גמל-נט וביטוח-נט"
+      "he": "בדיקה מול גמל-נט וביטוח-נט",
+      "fr": "Vérification avec Gemel-Net et Bituach-Net"
     },
     "worker.model_bad_json": {
-      "he": "המודל לא החזיר JSON תקין"
+      "he": "המודל לא החזיר JSON תקין",
+      "fr": "Le modèle n'a pas renvoyé de JSON valide"
     },
     "worker.no_final": {
-      "he": "המודל לא הגיע לתשובה סופית"
+      "he": "המודל לא הגיע לתשובה סופית",
+      "fr": "Le modèle n'est pas parvenu à une réponse finale"
     },
     "worker.rate_limited": {
-      "he": "יותר מדי בקשות, נסו שוב בעוד שעה"
+      "he": "יותר מדי בקשות, נסו שוב בעוד שעה",
+      "fr": "Trop de demandes, réessayez dans une heure"
     },
     "worker.story_invalid": {
-      "he": "הסיפור לא עבר אימות: {details}"
+      "he": "הסיפור לא עבר אימות: {details}",
+      "fr": "Le parcours n'a pas passé la validation : {details}"
     },
     "worker.text_length": {
-      "he": "הטקסט ריק או ארוך מ-{max} תווים"
+      "he": "הטקסט ריק או ארוך מ-{max} תווים",
+      "fr": "Le texte est vide ou dépasse {max} caractères"
+    },
+    "ui.machine_draft": {
+      "he": "תרגום מכונה, טרם נבדק על ידי דובר/ת שפת אם.",
+      "fr": "Traduction automatique, pas encore relue par un locuteur natif."
     }
   }
 }

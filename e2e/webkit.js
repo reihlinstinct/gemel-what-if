@@ -12,6 +12,7 @@ const { fragment, fixtureFragment, serve, domProbe, uiTour, assertResult, assert
   try {
     const { webkit } = require("playwright-webkit");
     browser = await webkit.launch();
+    await require("./language").verify(browser);
     const page = await browser.newPage();
     await page.goto(base + "index.html#story=" + fragment, { waitUntil: "load" });
     await page.waitForSelector("#timeline .card", { timeout: 15000 });
