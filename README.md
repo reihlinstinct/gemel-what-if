@@ -141,3 +141,11 @@ Text sent to the AI endpoint leaves the browser and is processed by Cloudflare W
 Live Worker: https://gemel-what-if.reihlinstinct.workers.dev (remote MCP connector URL: `https://gemel-what-if.reihlinstinct.workers.dev/mcp`). The site's "בנה עם AI" button calls `/api/story`.
 
 Provider and caps: the AI endpoint uses Google Gemini (`gemini-2.5-flash`, key stored only as the Worker secret `GEMINI_API_KEY`) with at most 100 Gemini calls per day in total (counter in KV, no story data stored) and 5 requests per hour per IP; when the cap is reached or Gemini errors, it falls back to Cloudflare Workers AI. Text typed into the box is sent to Google, so the site warns users not to include names or ID numbers.
+
+## Accessibility engineering gate
+
+The [accessibility statement](ACCESSIBILITY.md) records evidence and manual gaps.
+A pinned shared axe/Playwright action tests local synthetic previews in both
+catalog languages, desktop/mobile widths and Chromium/WebKit. Calculation and
+open-statement states get additional scans. Passing automation is not a full
+SI 5568 or WCAG conformance claim; see issue #109 for the pilot.

@@ -603,6 +603,34 @@
     "ui.machine_draft": {
       "he": "תרגום מכונה, טרם נבדק על ידי דובר/ת שפת אם.",
       "fr": "Traduction automatique, pas encore relue par un locuteur natif."
+    },
+    "footer.accessibility": {
+      "he": "נגישות",
+      "fr": "Accessibilité"
+    },
+    "a11y.target": {
+      "he": "המטרה שלנו היא ממשק נגיש לפי ת\"י 5568 ברמת AA, עם בדיקות אוטומטיות נוספות לפי WCAG 2.2. אין כאן הצהרה שהושלמה בדיקת עמידה מלאה בתקן.",
+      "fr": "Notre objectif est un service accessible selon SI 5568, niveau AA, avec des tests automatisés supplémentaires WCAG 2.2. Il ne s'agit pas d'une certification de conformité."
+    },
+    "a11y.adjustments": {
+      "he": "הממשק משתמש בכותרות, תוויות לשדות, הפעלה במקלדת וסימון מיקוד, ותומך בכיווני הטקסט של השפות שבבורר. תיקנו את ניגודיות מקרא התרשים. בדיקות אוטומטיות רצות על נתונים סינתטיים ב-Chromium וב-WebKit, ברוחב מחשב וטלפון, גם לאחר חישוב.",
+      "fr": "Le site utilise des titres, des étiquettes de champs, la navigation au clavier et les directions de texte des langues du sélecteur. Le contraste de la légende du graphique a été corrigé. Les tests automatiques utilisent des données fictives avec Chromium et WebKit, sur des largeurs ordinateur et mobile, y compris après le calcul."
+    },
+    "a11y.limits": {
+      "he": "בדיקות אוטומטיות אינן תחליף לבדיקה ידנית. טרם הושלמה בדיקה מלאה בקוראי מסך ובמכשירי טלפון אמיתיים. תוצאות שהכלי אינו יכול להכריע בהן דורשות בדיקה ידנית. התרגום לצרפתית הוא טיוטת תרגום מכונה.",
+      "fr": "Les tests manuels complets avec lecteurs d'écran et sur téléphones réels restent à effectuer. Les résultats indéterminés demandent une vérification manuelle. Un test automatique réussi ne prouve pas la conformité. Traduction française automatique, non révisée."
+    },
+    "a11y.feedback": {
+      "he": "דיווח על בעיית נגישות ב-GitHub Issues",
+      "fr": "Signaler un problème d'accessibilité sur GitHub Issues"
+    },
+    "a11y.privacy": {
+      "he": "כדאי לציין באיזה מסך ופעולה נתקעתם ובאיזה דפדפן או כלי עזר השתמשתם. אין לפרסם מידע אישי. עודכן: 11.11.2026.",
+      "fr": "Indiquez l'écran et l'action concernés, ainsi que le navigateur ou l'outil d'assistance utilisé. Ne publiez pas de données personnelles. Mise à jour : 11 novembre 2026."
+    },
+    "a11y.email": {
+      "he": "בקשות נגישות במייל",
+      "fr": "Demandes d'accessibilité par e-mail"
     }
   }
 }
