@@ -30,6 +30,6 @@ French UI and statement text remain a machine draft.
 
 ## Feedback
 
-Report a barrier and reproducible steps in [the pilot tracking issue](https://github.com/reihlinstinct/gemel-what-if/issues/109).
+Report a barrier and reproducible steps in [the repository Issues page](https://github.com/reihlinstinct/gemel-what-if/issues).
 For accessibility requests, email [reihlinstinct@gmail.com](mailto:reihlinstinct@gmail.com).
 No phone contact is published. Do not include personal or financial data. Last updated: 2026-11-11.

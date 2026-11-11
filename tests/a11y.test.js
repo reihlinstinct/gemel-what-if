@@ -27,3 +27,19 @@ test("accessibility statement is in the interface and explains manual gaps", () 
   assert.equal(new URL(feedback).origin, "https://github.com");
   assert.equal(new URL(feedback).pathname, "/reihlinstinct/gemel-what-if/issues");
 });
+
+
+test("published accessibility feedback stays open after the pilot closes", () => {
+  const expected = "https://github.com/reihlinstinct/gemel-what-if/issues";
+  const markdown = read("ACCESSIBILITY.md");
+  const hrefs = [...markdown.matchAll(/\]\((https:\/\/[^)]+)\)/g)].map(match => match[1]);
+  assert.ok(hrefs.includes(expected));
+  for (const href of hrefs) {
+    const url = new URL(href);
+    if (url.origin === "https://github.com") {
+      assert.equal(url.pathname, "/reihlinstinct/gemel-what-if/issues");
+      assert.equal(url.search, "");
+      assert.equal(url.hash, "");
+    }
+  }
+});
