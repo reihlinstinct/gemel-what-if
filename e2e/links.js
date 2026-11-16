@@ -6,6 +6,13 @@ const path = require("node:path");
 const files = [path.join(__dirname, "../docs/index.html"), path.join(__dirname, "../README.md")];
 const urls = new Set();
 for (const f of files) for (const m of fs.readFileSync(f, "utf8").matchAll(/https?:\/\/[^\s"'<>)\]]+/g)) urls.add(m[0].replace(/[.,;]+$/, ""));
+// Bare origins (e.g. https://static.cloudflareinsights.com) are preconnect /
+// dns-prefetch hints, not fetchable documents; the CDN may 522 on "/". Skip them.
+for (const u of [...urls]) {
+  try {
+    if (new URL(u).pathname === "/") urls.delete(u);
+  } catch { urls.delete(u); } // unparsable leftovers from the regex scrape
+}
 (async () => {
   let bad = 0;
   for (const u of urls) {
