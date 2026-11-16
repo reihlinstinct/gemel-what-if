@@ -1,0 +1,423 @@
+/* Core "what if" engine. Pure functions, no DOM, runs in browsers and Node. */
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.WhatIf = factory();
+})(typeof self !== "undefined" ? self : this, function () {
+  "use strict";
+
+  // "2012-03" | "2012-03-15" | 201203 -> months index (year*12 + month-1)
+  function toIndex(value) {
+    if (typeof value === "number") return Math.floor(value / 100) * 12 + (value % 100) - 1;
+    const m = /^(\d{4})-(\d{2})/.exec(String(value));
+    if (!m) throw new Error("Bad month: " + value);
+    return Number(m[1]) * 12 + Number(m[2]) - 1;
+  }
+
+  function toLabel(index) {
+    const y = Math.floor(index / 12);
+    const m = (index % 12) + 1;
+    return y + "-" + String(m).padStart(2, "0");
+  }
+
+  /** Monthly yield (%) of a fund in a month index, or undefined when not reported. */
+  function yieldAt(fund, index) {
+    const first = toIndex(fund.start);
+    const value = fund.y[index - first];
+    return value === null || value === undefined ? undefined : value;
+  }
+
+  function dataRange(fund) {
+    return [toIndex(fund.start), toIndex(fund.start) + fund.y.length - 1];
+  }
+
+  /** Deposits per month index from a story. Deposits arrive at the start of the month. */
+  function depositSchedule(story, endIndex) {
+    const map = new Map();
+    const add = (i, amount) => map.set(i, (map.get(i) || 0) + amount);
+    for (const d of story.deposits || []) {
+      if (d.monthly !== undefined) {
+        const from = toIndex(d.from);
+        const to = Math.min(d.to ? toIndex(d.to) : endIndex, endIndex);
+        for (let i = from; i <= to; i++) add(i, d.monthly);
+      } else if (d.amount !== undefined) {
+        add(toIndex(d.date), d.amount);
+      }
+    }
+    return map;
+  }
+
+  /**
+   * Run a story.
+   * story = {
+   *   start: "2002-01", end?: "2026-09",
+   *   deposits: [{from,to?,monthly} | {date,amount}],
+   *   phases: [{from, fundId}]   // which fund holds the money from that month
+   * }
+   * funds: Map(id -> fund). Missing data in a month counts as 0% and is reported.
+   */
+  function simulate(story, funds, latest) {
+    const startIndex = toIndex(story.start);
+    const endIndex = toIndex(story.end || latest);
+    if (endIndex < startIndex) throw new Error("end before start");
+    const phases = (story.phases || [])
+      .map((p) => ({
+        from: toIndex(p.from),
+        fundId: p.fundId,
+        feeAdjPct: p.feeAdjPct || 0,
+        depositFeePct: p.depositFeePct || 0,
+        exitCostPct: p.exitCostPct || 0,
+      }))
+      .sort((a, b) => a.from - b.from);
+    if (!phases.length || phases[0].from > startIndex) {
+      throw new Error("A phase must cover the start month");
+    }
+    const deposits = depositSchedule(story, endIndex);
+    // Optional management fees (off unless the story has fee events): fee on each deposit (percent of
+    // the deposit) and yearly fee on accumulated savings (percent, applied monthly as 1/12).
+    const feeSteps = (story.fees || [])
+      .map((f) => ({ from: toIndex(f.from), deposit: Number(f.depositPct) || 0, savings: Number(f.savingsPct) || 0 }))
+      .sort((a, b) => a.from - b.from);
+    const series = [];
+    const warnings = { missingMonths: 0, unknownFunds: [] };
+    let balance = 0;
+    let paid = 0;
+    let withdrawn = 0;
+    const flows = [];
+    let previous = null;
+    for (let i = startIndex; i <= endIndex; i++) {
+      let phase = phases[0];
+      for (const p of phases) if (p.from <= i) phase = p;
+      const fund = funds.get(phase.fundId);
+      if (previous && phase !== previous && phase.exitCostPct) {
+        balance *= 1 - phase.exitCostPct / 100; // one-time cost of moving
+      }
+      previous = phase;
+      const dep = deposits.get(i) || 0;
+      let fee = { deposit: 0, savings: 0 };
+      for (const f of feeSteps) if (f.from <= i) fee = f;
+      // Deposit fees: the phase fee (track average, per start/switch) stacks with any "fees" event,
+      // mirroring the savings side (feeAdjPct + fee.savings). Withdrawals (dep < 0) are never charged.
+      balance += dep > 0 ? dep * (1 - (fee.deposit + phase.depositFeePct) / 100) : dep;
+      if (dep >= 0) paid += dep;
+      else withdrawn -= dep;
+      if (dep) flows.push([i - startIndex, dep]);
+      let y;
+      if (!fund) {
+        if (!warnings.unknownFunds.includes(phase.fundId)) warnings.unknownFunds.push(phase.fundId);
+      } else {
+        y = yieldAt(fund, i);
+      }
+      if (y === undefined) warnings.missingMonths++;
+      // feeAdjPct is an extra yearly fee (percentage points, may be negative) spread over months.
+      balance *= 1 + ((y || 0) - phase.feeAdjPct / 12) / 100;
+      balance *= 1 - fee.savings / 12 / 100;
+      series.push({ month: toLabel(i), fundId: phase.fundId, balance, paid, withdrawn });
+    }
+    const months = endIndex - startIndex + 1;
+    return {
+      series,
+      finalFundId: phase_last(phases, endIndex).fundId,
+      final: balance,
+      paid,
+      withdrawn,
+      gain: balance + withdrawn - paid,
+      annualized: annualizedReturn(flows, balance, months),
+      warnings,
+    };
+  }
+
+  var SWITCH_TYPES = ["transfer", "product", "track"];
+
+  /**
+   * Turn an ordered timeline into a story for simulate().
+   * timeline = { end?, events: [
+   *   {type:"start", date, fundKey, amount?, feeAdjPct?, depositFeePct?},
+   *   {type:"deposit", date, amount},
+   *   {type:"monthly", from, to?, amount},
+   *   {type:"withdraw", date, amount},
+   *   {type:"fees", date, depositPct?, savingsPct?}   // optional management fees from that date
+   *   {type:"transfer"|"product"|"track", date, fundKey, exitCostPct?, feeAdjPct?, depositFeePct?}
+   * ] }
+   * Every event may carry scope: "both" (default), "actual" or "whatif".
+   */
+  function timelineToStory(timeline, scope) {
+    const events = (timeline.events || []).filter((e) => !e.scope || e.scope === "both" || e.scope === scope);
+    const start = events.find((e) => e.type === "start");
+    if (!start) throw new Error("Missing start event");
+    const deposits = [];
+    const switches = [];
+    const fees = [];
+    if (start.amount > 0) deposits.push({ date: start.date, amount: Number(start.amount) });
+    for (const e of events) {
+      if (e.type === "deposit") deposits.push({ date: e.date, amount: Number(e.amount) });
+      else if (e.type === "withdraw") deposits.push({ date: e.date, amount: -Number(e.amount) });
+      else if (e.type === "monthly") deposits.push({ from: e.from, to: e.to || undefined, monthly: Number(e.amount) });
+      else if (e.type === "fees") fees.push({ from: e.date, depositPct: e.depositPct, savingsPct: e.savingsPct });
+      else if (SWITCH_TYPES.includes(e.type)) {
+        switches.push({ date: e.date, to: e.fundKey, exitCostPct: e.exitCostPct, feeAdjPct: e.feeAdjPct, depositFeePct: e.depositFeePct });
+      }
+    }
+    if (!deposits.length) throw new Error("No deposits");
+    return {
+      start: start.date,
+      end: timeline.end || undefined,
+      deposits,
+      phases: phasesFromSwitches(start.date, start.fundKey, switches, start.feeAdjPct, start.depositFeePct),
+      fees,
+    };
+  }
+
+  /** Run the whole timeline twice (actual / what-if scopes) and compare total profit. */
+  function runTimeline(timeline, funds, latest) {
+    const actual = simulate(timelineToStory(timeline, "actual"), funds, latest);
+    const whatIf = simulate(timelineToStory(timeline, "whatif"), funds, latest);
+    return {
+      actual,
+      whatIf,
+      diff: whatIf.final - actual.final,
+      diffPercent: actual.final ? (whatIf.final / actual.final - 1) * 100 : null,
+      phasesActual: timelineToStory(timeline, "actual").phases,
+      phasesWhatIf: timelineToStory(timeline, "whatif").phases,
+    };
+  }
+
+  function phase_last(phases, index) {
+    let phase = phases[0];
+    for (const p of phases) if (p.from <= index) phase = p;
+    return phase;
+  }
+
+  /** Money-weighted annual return (monthly IRR compounded), by bisection. null if undefined. */
+  function annualizedReturn(flows, finalValue, months) {
+    if (!flows.length) return null;
+    // value at end of month `months` (balance already includes the last month's yield)
+    const npv = (r) =>
+      flows.reduce((s, [t, a]) => s + a * Math.pow(1 + r, months - t), 0) - finalValue;
+    let lo = -0.5;
+    let hi = 0.5;
+    if (npv(lo) * npv(hi) > 0) return null;
+    for (let k = 0; k < 200; k++) {
+      const mid = (lo + hi) / 2;
+      if (npv(lo) * npv(mid) <= 0) hi = mid;
+      else lo = mid;
+    }
+    const r = (lo + hi) / 2;
+    return Math.pow(1 + r, 12) - 1;
+  }
+
+  /** Replace the fund of every phase and rerun: "what if it had been in X the whole time". */
+  function withFund(story, fundId) {
+    return Object.assign({}, story, {
+      phases: [{ from: story.start, fundId }],
+    });
+  }
+
+  /**
+   * Build phases from a start track and switch events [{date, from?, to}].
+   * If a switch names `from`, it must match the track held at that date.
+   */
+  function phasesFromSwitches(start, startFund, switches, startFeeAdjPct, startDepositFeePct) {
+    const phases = [{ from: start, fundId: startFund, feeAdjPct: Number(startFeeAdjPct) || 0, depositFeePct: Number(startDepositFeePct) || 0 }];
+    const sorted = (switches || []).slice().sort((a, b) => toIndex(a.date) - toIndex(b.date));
+    let current = startFund;
+    for (const sw of sorted) {
+      if (sw.from !== undefined && sw.from !== null && sw.from !== current) {
+        throw new Error("Switch on " + sw.date + " says from " + sw.from + " but track held is " + current);
+      }
+      phases.push({
+        from: sw.date,
+        fundId: sw.to,
+        feeAdjPct: Number(sw.feeAdjPct) || 0,
+        depositFeePct: Number(sw.depositFeePct) || 0,
+        exitCostPct: Number(sw.exitCostPct) || 0,
+      });
+      current = sw.to;
+    }
+    return phases;
+  }
+
+  /** Run the actual path and a what-if path over the same deposits and compare. */
+  function compare(base, actualPhases, whatIfPhases, funds, latest) {
+    const actual = simulate(Object.assign({}, base, { phases: actualPhases }), funds, latest);
+    const whatIf = simulate(Object.assign({}, base, { phases: whatIfPhases }), funds, latest);
+    return {
+      actual,
+      whatIf,
+      diff: whatIf.final - actual.final,
+      diffPercent: actual.final ? (whatIf.final / actual.final - 1) * 100 : null,
+    };
+  }
+
+  function indexFunds(data) {
+    return new Map(data.funds.map((f) => [f.key !== undefined ? f.key : f.id, f]));
+  }
+
+  /** Grow a balance with no deposits at an assumed yearly return (percent) for N months. */
+  function projectBalance(balance, months, annualPct) {
+    if (!months || months <= 0) return balance;
+    return balance * Math.pow(1 + (annualPct || 0) / 100, months / 12);
+  }
+
+  /**
+   * Monthly annuity estimate = balance / coefficient. The coefficient is the capital needed
+   * per 1 NIS of monthly annuity (for example 200). Money in an insurance-policy track is
+   * assumed to keep the policy's guaranteed coefficient if one is given; money in any other
+   * product gets the market coefficient. Returns null when no usable coefficient exists.
+   */
+  function annuityEstimate(result, funds, opts) {
+    const fund = funds.get(result.finalFundId);
+    const insurance = fund && fund.src === "insurance";
+    const balance = projectBalance(result.final, opts.monthsToRetirement, opts.assumedAnnualPct);
+    let coefficient = insurance && opts.guaranteedCoeff > 0 ? opts.guaranteedCoeff : opts.marketCoeff;
+    let basis = insurance && opts.guaranteedCoeff > 0 ? "guaranteed" : "market";
+    if (!(coefficient > 0)) return null;
+    return { balance, coefficient, basis, monthly: balance / coefficient };
+  }
+
+
+  /**
+   * Verification periods for a phase list: one {fundId, from, to} row per run of months the money
+   * spent in the same track, for cross-checking returns on Gemel-Net / Insurance-Net, which cannot
+   * replay a sequence of track switches. `from` accepts any toIndex-able form; `end` likewise.
+   * Labels are "YYYY-MM"; adjacent phases into the same fund are merged; empty periods are dropped.
+   */
+  function phasePeriods(phases, end) {
+    const sorted = (phases || [])
+      .map((p) => ({ from: toIndex(p.from), fundId: p.fundId }))
+      .sort((a, b) => a.from - b.from);
+    const merged = [];
+    for (const p of sorted) {
+      const last = merged[merged.length - 1];
+      if (last && last.fundId === p.fundId) continue;
+      merged.push(p);
+    }
+    const endIndex = toIndex(end);
+    const periods = [];
+    for (let i = 0; i < merged.length; i++) {
+      const to = i + 1 < merged.length ? merged[i + 1].from - 1 : endIndex;
+      if (to < merged[i].from) continue;
+      periods.push({ fundId: merged[i].fundId, from: toLabel(merged[i].from), to: toLabel(to), months: to - merged[i].from + 1 });
+    }
+    return periods;
+  }
+
+  /** Plain-language list of things the model does not capture when the product changes. */
+  function productChangeNotes(phases, funds) {
+    const notes = [];
+    const srcOf = (p) => (funds.get(p.fundId) || {}).src;
+    for (let i = 1; i < phases.length; i++) {
+      const a = srcOf(phases[i - 1]);
+      const b = srcOf(phases[i]);
+      if (a && b && a !== b) {
+        notes.push({ date: String(phases[i].from), from: a, to: b });
+      }
+    }
+    return notes;
+  }
+
+  /** Text search over fund id/name/corporation. */
+  var ALIASES = { clal: "כלל", meitav: "מיטב", migdal: "מגדל", harel: "הראל", phoenix: "הפניקס", menora: "מנורה", altshuler: "אלטשולר", analyst: "אנליסט", psagot: "פסגות", ayalon: "איילון", more: "מור", infinity: "אינפיניטי", ibi: "איי.בי.אי" };
+  var GENERIC = ["ביטוח", "מנהלים", "קרן", "קופת", "גמל", "השתלמות", "פוליסה", "מסלול", "insurance", "managers", "gemel", "fund", "track"];
+
+  function searchFunds(data, query, limit) {
+    const q = String(query).trim().toLowerCase();
+    if (!q) return [];
+    const parts = q.split(/\s+/).map((p) => ALIASES[p] || p);
+    const hayOf = (f) => (f.id + " " + (f.key || "") + " " + f.name + " " + (f.corp || "") + " " + (f.cls || "")).toLowerCase();
+    const order = (a, b) => (b.end - a.end) || ((b.assets || 0) - (a.assets || 0));
+    let hits = data.funds.filter((f) => { const hay = hayOf(f); return parts.every((p) => hay.includes(p)); });
+    if (!hits.length) {
+      // relaxed: rank by how many query words match, ignoring generic words when there are specific ones
+      const specific = parts.filter((p) => !GENERIC.includes(p));
+      const use = specific.length ? specific : parts;
+      const scored = data.funds
+        .map((f) => { const hay = hayOf(f); const words = hay.split(/[^\p{L}\p{N}]+/u); return { f, n: use.reduce((t, p) => t + (words.includes(p) ? 2 : hay.includes(p) ? 1 : 0), 0) }; })
+        .filter((x) => x.n > 0);
+      const best = scored.reduce((m, x) => Math.max(m, x.n), 0);
+      hits = scored.filter((x) => x.n === best).map((x) => x.f);
+    }
+    hits.sort(order);
+    return hits.slice(0, limit || 30);
+  }
+
+
+  /**
+   * Official open-data sources (Capital Market Authority datasets on data.gov.il) for the live
+   * consistency check of the site's local data copy. Each source lists its datastore resources in
+   * chronological order; `until` is the last covered month label ("YYYY-MM"), null = still updated.
+   * Keep in sync with scripts/fetch_data.py.
+   */
+  const OFFICIAL_SOURCES = {
+    gemel: {
+      dataset: "https://data.gov.il/dataset/gemelnet",
+      api: "https://data.gov.il/api/3/action/datastore_search",
+      resources: [
+        { until: "2022-12", id: "91c849ed-ddc4-472b-bd09-0f5486cea35c" },
+        { until: "2023-12", id: "2016d770-f094-4a2e-983e-797c26479720" },
+        { until: null, id: "a30dcbea-a1d2-482c-ae29-8f781f5025fb" },
+      ],
+    },
+    insurance: {
+      dataset: "https://data.gov.il/dataset/insurance",
+      api: "https://data.gov.il/api/3/action/datastore_search",
+      resources: [
+        { until: "2022-12", id: "584e6b69-174f-46c9-b8db-03925b4c68c6" },
+        { until: "2023-12", id: "672090ba-7893-4496-a07c-dc7e822cbf18" },
+        { until: null, id: "c6c62cc7-fe02-4b18-8f3e-813abfbb4647" },
+      ],
+    },
+  };
+
+  /** Official datastore resource ids overlapping [from, to] ("YYYY-MM" labels), in order. */
+  function officialResources(src, from, to) {
+    const s = OFFICIAL_SOURCES[src] || OFFICIAL_SOURCES.gemel;
+    const a = toIndex(from);
+    const b = toIndex(to);
+    const out = [];
+    let prevEnd = -Infinity;
+    for (const r of s.resources) {
+      const end = r.until === null ? Infinity : toIndex(r.until);
+      if (b > prevEnd && a <= end) out.push(r.id);
+      prevEnd = end;
+    }
+    return out;
+  }
+
+  /** Compounded cumulative return (fraction) from monthly yields in percent, in order. */
+  function cumulativeYield(monthlyPct) {
+    let acc = 1;
+    for (const m of monthlyPct) acc *= 1 + m / 100;
+    return acc - 1;
+  }
+
+  /** Official API URL returning one fund's raw monthly rows in one resource (prefilled). */
+  function officialRowsUrl(src, resourceId, fundId) {
+    const s = OFFICIAL_SOURCES[src] || OFFICIAL_SOURCES.gemel;
+    return s.api + "?resource_id=" + resourceId + "&limit=1000&filters=" + encodeURIComponent(JSON.stringify({ FUND_ID: String(fundId) }));
+  }
+
+  /** YYYYMM (number) of a month index. */
+  function periodOf(index) {
+    return Math.floor(index / 12) * 100 + (index % 12) + 1;
+  }
+
+  /**
+   * The site-local cumulative return (fraction) of a fund over [from, to] (labels or indexes),
+   * counting unreported months as 0% exactly like simulate(). `missing` counts unreported months
+   * so callers never claim a match on incomplete local coverage.
+   */
+  function localCumulative(fund, from, to) {
+    const a = typeof from === "number" ? from : toIndex(from);
+    const b = typeof to === "number" ? to : toIndex(to);
+    const months = [];
+    let missing = 0;
+    for (let i = a; i <= b; i++) {
+      const y = yieldAt(fund, i);
+      if (y === undefined) missing++;
+      months.push(y || 0);
+    }
+    return { value: cumulativeYield(months), missing, months: months.length };
+  }
+
+  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline, phasePeriods, OFFICIAL_SOURCES, officialResources, officialRowsUrl, cumulativeYield, localCumulative, periodOf };
+});
