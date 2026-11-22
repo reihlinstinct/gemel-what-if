@@ -9,7 +9,7 @@ const { createCore } = require("./core.js");
 
 const DATA = JSON.parse(fs.readFileSync(path.join(__dirname, "../docs/data/funds.json"), "utf8"));
 const pension = JSON.parse(fs.readFileSync(path.join(__dirname, "../docs/data/pension.json"), "utf8"));
-const core = createCore({ ...DATA, funds: DATA.funds.concat(pension) });
+const core = createCore(require("../docs/catalog.js").assemble(DATA, pension));
 
 if (require.main === module) {
   const rl = readline.createInterface({ input: process.stdin });

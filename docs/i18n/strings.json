@@ -677,8 +677,12 @@
       "fr": "Le relevé est distinct. Le calcul n’est pas calibré sur son solde. L’ajustement ne modifie ni le graphique ni le taux annualisé brut. Estimation, pas reconstitution exacte ni recommandation d’investissement."
     },
     "statement.private_language": {
-      "he": "זהו סיפור פרטי. כדי לא להכניס את הנתונים לכתובת, שמרו לקובץ, החליפו שפה בחלון חדש וטענו את הקובץ שם.",
-      "fr": "Ce récit est privé. Pour éviter de mettre les données dans l’adresse, exportez le fichier, changez la langue dans une nouvelle fenêtre puis importez le fichier."
+      "he": "נמנעה הוספת נתונים מקומיים לכתובת. קישור שכבר כולל את הסיפור עדיין קריא לכל מי שמחזיק בו. להחלפת שפה, שמרו לקובץ, פתחו חלון חדש וטענו שם את הקובץ.",
+      "fr": "Les données locales ne seront pas ajoutées à l'adresse. Un lien contenant déjà le récit reste lisible par toute personne qui le possède. Pour changer de langue, exportez le fichier et importez-le dans une nouvelle fenêtre."
+    },
+    "error.data_load": {
+      "he": "לא ניתן לטעון מאגר נתונים מלא ותקין. לא בוצע חישוב. נסו לטעון את העמוד מחדש.",
+      "fr": "Impossible de charger un catalogue complet et valide. Aucun calcul n'a été effectué. Rechargez la page."
     }
   }
 }

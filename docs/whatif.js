@@ -167,8 +167,27 @@
     };
   }
 
+  // Adding a later-reporting product must not extend legacy undated stories.
+  // For a new mixed-product story, stop at the earlier source group's latest month.
+  function defaultEnd(timeline, funds, latest) {
+    if (timeline.end) return timeline.end;
+    const groups = new Set((timeline.events || []).filter(e => e.fundKey).map(e => e.fundKey.startsWith("p:") ? "pension" : "legacy"));
+    if (!groups.size) groups.add("legacy");
+    const ends = [];
+    for (const group of groups) {
+      let end = 0;
+      for (const f of funds.values()) {
+        if ((f.key || "").startsWith("p:") !== (group === "pension")) continue;
+        end = Math.max(end, f.end || periodOf(dataRange(f)[1]));
+      }
+      ends.push(end || Number(latest));
+    }
+    return Math.min(Number(latest), ...ends);
+  }
+
   /** Run the whole timeline twice (actual / what-if scopes) and compare total profit. */
   function runTimeline(timeline, funds, latest) {
+    latest = defaultEnd(timeline, funds, latest);
     const actual = simulate(timelineToStory(timeline, "actual"), funds, latest);
     const whatIf = simulate(timelineToStory(timeline, "whatif"), funds, latest);
     return {
@@ -428,5 +447,5 @@
     return { value: cumulativeYield(months), missing, months: months.length };
   }
 
-  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline, phasePeriods, OFFICIAL_SOURCES, officialResources, officialRowsUrl, cumulativeYield, localCumulative, periodOf };
+  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline, defaultEnd, phasePeriods, OFFICIAL_SOURCES, officialResources, officialRowsUrl, cumulativeYield, localCumulative, periodOf };
 });

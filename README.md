@@ -27,9 +27,14 @@ Monthly yields come from the Capital Market Authority's open data: [Gemel-Net](h
 (provident funds, hishtalmut, pension-type gemel) and [Insurance-Net](https://data.gov.il/dataset/insurance)
 (insurance-policy tracks, classes 1990-1991, 1992-2003 and from 2004), plus
 [PensionNet](https://data.gov.il/he/datasets/cma/pensia-net/6d47d6b5-cb08-488b-b333-f1e717b1e1bd)
-(pension investment tracks), 1999 to today. `scripts/fetch_data.py` downloads all three sources and writes
+(pension investment tracks). The Gemel/insurance series extend back to 1999 where reported;
+the bundled PensionNet series begin in October 2011. Individual track coverage varies. `scripts/fetch_data.py` downloads all three sources and writes
 `docs/data/funds.json` plus the lossless `docs/data/pension.json` array shard. Browser, MCP and Worker
-concatenate their fund arrays into the same catalog; each file stays below the existing 2 MiB guard.
+validate and assemble their fund arrays into the same catalog; each file stays below the existing 2 MiB guard.
+A generated `data/catalog.json` digest manifest lets the browser reject missing, invalid or mixed-version
+shards instead of calculating with a partial catalog. Failed initialization is visible and disables calculation.
+Undated legacy Gemel/insurance stories keep the latest legacy month, even when pension reports later.
+New undated mixed-product stories use the earlier source-group endpoint; explicit end dates are unchanged.
 There is one dense monthly-yield series per track, keyed `g:<id>` for gemel, `i:<id>` for insurance and
 `p:<id>` for pension. Data is public and aggregated; no personal data is stored in this repo.
 
@@ -39,11 +44,14 @@ python3 scripts/fetch_data.py   # refresh the data
 
 ## Private statement imports
 
-Use the existing **Load from file** input for private JSON stories. Set `private: true`
-to prevent language changes from embedding the story in the URL. Export, change
+Use the existing **Load from file** input for private JSON stories. Recognized local `context`
+is treated as private automatically; `private: true` also protects stories without context.
+Language changes and MCP link generation will not re-encode these stories. Export, change
 language in a new window and import again instead. No private data belongs in a
 repository, issue, screenshot artifact or shared story URL. Imported stories are
-not uploaded; live verification sends only public fund IDs to data.gov.il.
+not uploaded; live verification sends only public fund IDs to data.gov.il. This is not access control:
+a story already present in a full URL remains readable by anyone holding that URL. Blocking later
+serialization does not revoke an already shared link or erase browser history.
 
 An optional `context` object accepts `label`, `notes` (an array of strings),
 `statementBalance` (number) and `endAdjustment` (signed number). The label and

@@ -5,6 +5,7 @@
  * data file and the engine, and returns links whose story lives in the URL fragment. */
 "use strict";
 const W = require("../docs/whatif.js");
+const S = require("../docs/statement.js");
 
 function createCore(DATA) {
   const FUNDS = W.indexFunds(DATA);
@@ -61,7 +62,7 @@ function createCore(DATA) {
   }
 
   function link(story, base) {
-    if (story && story.private === true) throw new Error("Private stories must use local file import, not a story URL.");
+    if (story && (story.private === true || S.normalize(story.context))) throw new Error("Private stories must use local file import, not a story URL.");
     const bytes = new TextEncoder().encode(JSON.stringify(story));
     let bin = "";
     for (const b of bytes) bin += String.fromCharCode(b);
@@ -81,10 +82,10 @@ function createCore(DATA) {
       run: (a) => validate(a.story),
     },
     build_story_link: {
-      description: "Validate a story and return a link that opens the site with the story in the URL fragment (the fragment is never sent to a server). Treat the link as private.",
+      description: "Validate a story and return a link that opens the site with the story in the URL fragment (the fragment is never sent to a server). Anyone holding the full link can read its inputs; it is not access controlled.",
       inputSchema: { type: "object", properties: { story: STORY_SCHEMA, baseUrl: { type: "string" } }, required: ["story"] },
       run: (a) => {
-        if (a.story && a.story.private === true) {
+        if (a.story && (a.story.private === true || S.normalize(a.story.context))) {
           return { errors: ["Private stories must use local file import, not a story URL."], warnings: [] };
         }
         const v = validate(a.story);

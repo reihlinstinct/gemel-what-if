@@ -25,7 +25,7 @@ class BuildTests(unittest.TestCase):
             actual = json.loads(out.read_text())
             actual["funds"] += json.loads(out.with_name("pension.json").read_text())
             self.assertEqual(actual, expected)
-            for name in ["funds.json", "pension.json"]:
+            for name in ["funds.json", "pension.json", "catalog.json"]:
                 self.assertEqual((Path(tmp) / name).read_bytes(), (root / name).read_bytes())
                 self.assertLessEqual((Path(tmp) / name).stat().st_size, 2_097_152)
 

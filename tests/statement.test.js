@@ -30,3 +30,9 @@ test("synthetic pension comparison does not resolve to overlapping gemel ID", ()
   const r=W.runTimeline({end:"2020-01",events:[{type:"start",date:"2020-01",fundKey:"p:1",amount:100},{type:"track",date:"2020-01",fundKey:"p:2",scope:"whatif"}]},W.indexFunds(data),202001);
   assert.equal(r.actual.final,101);assert.equal(r.whatIf.final,102);assert.equal(r.diff,1);
 });
+
+
+test("arrays and empty objects are not local statement context", () => {
+  assert.equal(S.normalize([]), null);
+  assert.equal(S.normalize({}), null);
+});

@@ -6,6 +6,7 @@ Only public, aggregated fund data is read. Standard library only.
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
 import urllib.parse
 import urllib.request
@@ -150,6 +151,10 @@ def write_catalog(data: dict, out: Path | None = None) -> None:
         if len(encoded.encode("utf-8")) > 2_097_152:
             raise ValueError(f"catalog shard exceeds the existing file cap: {path.name}")
         encoded_shards.append((path, encoded))
+    manifest = {"version": 1, "count": len(data["funds"]), "latest": data["latest"],
+                "sha256": {name: hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+                           for name, (_, encoded) in zip(["funds", "pension"], encoded_shards)}}
+    encoded_shards.append((out.with_name("catalog.json"), json.dumps(manifest, separators=(",", ":"))))
     out.parent.mkdir(parents=True, exist_ok=True)
     for path, encoded in encoded_shards:
         path.write_text(encoded, encoding="utf-8")

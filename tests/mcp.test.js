@@ -55,3 +55,12 @@ test("private story link generation is rejected instead of encoding financial in
   assert.ok(out.errors[0].includes("local file import"));
   assert.strictEqual(out.url, undefined);
 });
+
+
+test("unmarked local context cannot enter either MCP story-link route", () => {
+  const contextual = { ...story, context: { notes: ["Synthetic local note"] } };
+  assert.throws(() => link(contextual), /local file import/);
+  const res = handle({ jsonrpc: "2.0", id: 91, method: "tools/call", params: { name: "build_story_link", arguments: { story: contextual } } });
+  assert.strictEqual(res.result.isError, true);
+  assert.strictEqual(JSON.parse(res.result.content[0].text).url, undefined);
+});

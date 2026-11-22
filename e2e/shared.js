@@ -57,6 +57,11 @@ function serve({ offline = false, port = 0 } = {}) {
     let url = req.url.split("?")[0].split("#")[0];
     if (url.startsWith("/fixture/")) {
       url = url.slice("/fixture".length);
+      if (url === "/data/catalog.json") {
+        const digest = value => require("node:crypto").createHash("sha256").update(JSON.stringify(value)).digest("hex");
+        res.writeHead(200, { "content-type": "application/json" });
+        return res.end(JSON.stringify({version:1,count:fixtureData.funds.length,latest:fixtureData.latest,sha256:{funds:digest(fixtureData),pension:digest([])}}));
+      }
       if (url === "/data/pension.json") {
         res.writeHead(200, { "content-type": "application/json" });
         return res.end("[]");
@@ -263,7 +268,7 @@ function staticChecks() {
   check(html.includes('<html lang="' + def + '" dir="' + cat.languages[def].dir + '">'), "html lang/dir set (the catalog's default language)");
   check(/<select id="lang"><\/select>/.test(html), "language picker has no options of its own (they come from the catalog)");
   check(/og:image/.test(html) && /rel="icon"/.test(html) && /name="description"/.test(html), "preview, icon and description meta present");
-  for (const f of ["og.png", "favicon.svg", "robots.txt", "sitemap.xml", ".well-known/security.txt", "data/funds.json", "data/pension.json"]) check(fs.existsSync(path.join(root, f)), f + " exists");
+  for (const f of ["og.png", "favicon.svg", "robots.txt", "sitemap.xml", ".well-known/security.txt", "data/funds.json", "data/pension.json", "data/catalog.json", "catalog.js"]) check(fs.existsSync(path.join(root, f)), f + " exists");
 }
 
 module.exports = { root, story, fragment, fixtureFragment, check, serve, domProbe, uiTour, assertResult, assertTour, staticChecks };

@@ -271,7 +271,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   }
 
   function verifyHtml(c) {
-    const endLabel = W.toLabel(W.toIndex($("#end").value || data.latest));
+    const endLabel = W.toLabel(W.toIndex(W.defaultEnd(readTimeline(), funds, data.latest)));
     const periodsA = W.phasePeriods(c.phasesActual, endLabel);
     const periodsB = W.phasePeriods(c.phasesWhatIf, endLabel);
     const same = JSON.stringify(periodsA) === JSON.stringify(periodsB);
@@ -425,11 +425,12 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
 
   function loadTimeline(tl) {
     storyContext = StatementContext.normalize(tl.context);
-    privateStory = tl.private === true;
+    privateStory = tl.private === true || Boolean(storyContext);
     $("#result").textContent = "";
     for (const id of ["#timeline", "#col-actual", "#col-whatif"]) $(id).innerHTML = "";
     $("#fork").hidden = true;
-    $("#end").value = /^\d{4}-\d{2}$/.test(tl.end || "") ? tl.end + "-01" : tl.end || "";
+    const end = tl.end || W.toLabel(W.toIndex(W.defaultEnd(tl, funds, data.latest)));
+    $("#end").value = /^\d{4}-\d{2}$/.test(end) ? end + "-01" : end;
     for (const e of tl.events) addCard(e.type, e);
     const a = tl.annuity || {};
     $("#coef-guar").value = a.guaranteed || "";
@@ -477,13 +478,17 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     location.href = location.pathname + "?" + q + hash;
   };
 
-  Promise.all([fetch("i18n/strings.json").then((r) => r.json()), fetch("data/funds.json").then((r) => r.json()), fetch("data/pension.json").then((r) => r.json())]).then(([catalog, base, pension]) => {
-    const d = { ...base, funds: base.funds.concat(pension) };
+  const languageReady = fetch("i18n/strings.json", { cache: "no-cache" }).then(r => {
+    if (!r.ok) throw new Error("Language catalog HTTP " + r.status);
+    return r.json();
+  }).then(catalog => {
     L = I18n.create(catalog, I18n.langFromSearch(catalog, location.search));
     I18n.apply(L, document, pickLanguage);
+  });
+  Promise.all([languageReady, FundCatalog.load(window.fetch.bind(window), window.crypto && window.crypto.subtle)]).then(([, d]) => {
     data = d;
     funds = W.indexFunds(d);
-    $("#end").value = W.toLabel(W.toIndex(d.latest)) + "-01";
+    $("#end").value = W.toLabel(W.toIndex(W.defaultEnd({ events: [] }, funds, d.latest))) + "-01";
     $("#data-info").textContent = t("data.info", { latest: W.toLabel(W.toIndex(d.latest)), count: d.funds.length });
     let loaded = false;
     try {
@@ -535,5 +540,12 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     };
     $("#export").onclick = () => { try { exportStory(); } catch (e) { $("#error").textContent = e.message; } };
     $("#import").onchange = (e) => e.target.files[0] && e.target.files[0].text().then((txt) => loadTimeline(JSON.parse(txt))).catch((x) => { $("#error").textContent = t("error.bad_file", { msg: errText(x) }); });
+  }).catch(() => {
+    $("#timeline").textContent = "";
+    $("#result").textContent = "";
+    $("#data-info").textContent = "";
+    $("#load-error").hidden = false;
+    $("#error").textContent = L ? t("error.data_load") : $("#load-error").textContent;
+    for (const control of document.querySelectorAll("main button, main input, main textarea, main select, #lang")) control.disabled = true;
   });
 })();
