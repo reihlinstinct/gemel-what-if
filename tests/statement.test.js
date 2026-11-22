@@ -19,6 +19,7 @@ test("pension source is namespaced and has every official resource boundary", ()
   assert.equal(W.officialResources("pension","2022-12","2023-01").length,2);
   assert.equal(W.officialResources("pension","2024-01","2024-02")[0],"6d47d6b5-cb08-488b-b333-f1e717b1e1bd");
   const data=JSON.parse(fs.readFileSync("docs/data/funds.json"));
+  data.funds = data.funds.concat(JSON.parse(fs.readFileSync("docs/data/pension.json")));
   const pens=data.funds.filter(x=>x.src==="pension");
   assert.ok(pens.length>100);
   for(const f of pens) assert.equal(f.key,"p:"+f.id);

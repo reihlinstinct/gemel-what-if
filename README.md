@@ -27,8 +27,11 @@ Monthly yields come from the Capital Market Authority's open data: [Gemel-Net](h
 (provident funds, hishtalmut, pension-type gemel) and [Insurance-Net](https://data.gov.il/dataset/insurance)
 (insurance-policy tracks, classes 1990-1991, 1992-2003 and from 2004), plus
 [PensionNet](https://data.gov.il/he/datasets/cma/pensia-net/6d47d6b5-cb08-488b-b333-f1e717b1e1bd)
-(pension investment tracks), 1999 to today. `scripts/fetch_data.py` downloads all three sources and writes `docs/data/funds.json`
-(one dense monthly-yield series per track, keyed `g:<id>` for gemel `i:<id>` for insurance and `p:<id>` for pension). Data is public and aggregated; no personal data is stored in this repo.
+(pension investment tracks), 1999 to today. `scripts/fetch_data.py` downloads all three sources and writes
+`docs/data/funds.json` plus the lossless `docs/data/pension.json` array shard. Browser, MCP and Worker
+concatenate their fund arrays into the same catalog; each file stays below the existing 2 MiB guard.
+There is one dense monthly-yield series per track, keyed `g:<id>` for gemel, `i:<id>` for insurance and
+`p:<id>` for pension. Data is public and aggregated; no personal data is stored in this repo.
 
 ```
 python3 scripts/fetch_data.py   # refresh the data

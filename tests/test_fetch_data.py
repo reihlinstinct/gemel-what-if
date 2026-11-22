@@ -1,5 +1,8 @@
 import sys
+import json
+import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
@@ -11,6 +14,39 @@ def row(fund_id, period, y, name="קרן"):
 
 
 class BuildTests(unittest.TestCase):
+    def test_catalog_shards_round_trip_every_bundled_field_and_series(self):
+        root = Path(__file__).resolve().parent.parent / "docs" / "data"
+        base = json.loads((root / "funds.json").read_text())
+        pension = json.loads((root / "pension.json").read_text())
+        expected = {**base, "funds": base["funds"] + pension}
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "funds.json"
+            fetch_data.write_catalog(expected, out)
+            actual = json.loads(out.read_text())
+            actual["funds"] += json.loads(out.with_name("pension.json").read_text())
+            self.assertEqual(actual, expected)
+            for name in ["funds.json", "pension.json"]:
+                self.assertEqual((Path(tmp) / name).read_bytes(), (root / name).read_bytes())
+                self.assertLessEqual((Path(tmp) / name).stat().st_size, 2_097_152)
+
+    def test_refresh_main_writes_both_shards(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "funds.json"
+            def fake_build(rows, source):
+                return [{"src": source, "end": 202601, "y": [None, 0.123456789]}]
+            with mock.patch.object(fetch_data, "OUT", out), mock.patch.object(fetch_data, "fetch_all", return_value=[]), mock.patch.object(fetch_data, "build", side_effect=fake_build):
+                self.assertEqual(fetch_data.main(), 0)
+            self.assertEqual([f["src"] for f in json.loads(out.read_text())["funds"]], ["gemel", "insurance"])
+            self.assertEqual(json.loads(out.with_name("pension.json").read_text()), [{"src": "pension", "end": 202601, "y": [None, 0.123456789]}])
+
+    def test_oversized_shard_fails_before_writing_either_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "funds.json"
+            with self.assertRaisesRegex(ValueError, "existing file cap"):
+                fetch_data.write_catalog({"funds": [{"src": "pension", "name": "x" * 2_097_152}]}, out)
+            self.assertFalse(out.exists())
+            self.assertFalse(out.with_name("pension.json").exists())
+
     def test_month_index_is_consecutive_across_years(self):
         self.assertEqual(fetch_data.month_index(200201) - fetch_data.month_index(200112), 1)
 

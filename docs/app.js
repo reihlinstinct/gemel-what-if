@@ -477,7 +477,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     location.href = location.pathname + "?" + q + hash;
   };
 
-  Promise.all([fetch("i18n/strings.json").then((r) => r.json()), fetch("data/funds.json").then((r) => r.json())]).then(([catalog, d]) => {
+  Promise.all([fetch("i18n/strings.json").then((r) => r.json()), fetch("data/funds.json").then((r) => r.json()), fetch("data/pension.json").then((r) => r.json())]).then(([catalog, base, pension]) => {
+    const d = { ...base, funds: base.funds.concat(pension) };
     L = I18n.create(catalog, I18n.langFromSearch(catalog, location.search));
     I18n.apply(L, document, pickLanguage);
     data = d;

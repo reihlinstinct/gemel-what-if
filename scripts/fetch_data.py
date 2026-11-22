@@ -134,6 +134,27 @@ def build(rows: list[dict], source: str = "gemel") -> list[dict]:
     return out
 
 
+def write_catalog(data: dict, out: Path | None = None) -> None:
+    """Losslessly shard public data below the per-file cap; consumers concatenate.
+
+    Keep the existing Gemel/insurance catalog shape. Pension records live in a
+    separate array, preserving every field and monthly value without compression
+    dependencies, rounding, deduplication or guard exceptions.
+    """
+    out = out or OUT
+    pension = [f for f in data["funds"] if f["src"] == "pension"]
+    base = {**data, "funds": [f for f in data["funds"] if f["src"] != "pension"]}
+    encoded_shards = []
+    for path, value in [(out, base), (out.with_name("pension.json"), pension)]:
+        encoded = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+        if len(encoded.encode("utf-8")) > 2_097_152:
+            raise ValueError(f"catalog shard exceeds the existing file cap: {path.name}")
+        encoded_shards.append((path, encoded))
+    out.parent.mkdir(parents=True, exist_ok=True)
+    for path, encoded in encoded_shards:
+        path.write_text(encoded, encoding="utf-8")
+
+
 def main() -> int:
     funds: list[dict] = []
     for source, cfg in SOURCES.items():
@@ -148,8 +169,7 @@ def main() -> int:
         "latest": max(f["end"] for f in funds),
         "funds": funds,
     }
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    write_catalog(data)
     print(f"wrote {OUT} ({len(data['funds'])} funds, latest {data['latest']})", file=sys.stderr)
     return 0
 

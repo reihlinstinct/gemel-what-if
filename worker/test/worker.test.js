@@ -4,6 +4,7 @@ import fs from "node:fs";
 import { createHandler } from "../src/handler.js";
 
 const data = JSON.parse(fs.readFileSync(new URL("../../docs/data/funds.json", import.meta.url)));
+data.funds = data.funds.concat(JSON.parse(fs.readFileSync(new URL("../../docs/data/pension.json", import.meta.url))));
 const catalog = JSON.parse(fs.readFileSync(new URL("../../docs/i18n/strings.json", import.meta.url)));
 const ORIGIN = "https://reihlinstinct.github.io";
 const GOOD = { end: "2013-12-01", events: [{ type: "start", date: "2005-06-01", fundKey: "i:259012" }, { type: "monthly", from: "2005-06-01", to: "2011-06-01", amount: 750 }] };

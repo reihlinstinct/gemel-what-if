@@ -8,7 +8,8 @@ const readline = require("node:readline");
 const { createCore } = require("./core.js");
 
 const DATA = JSON.parse(fs.readFileSync(path.join(__dirname, "../docs/data/funds.json"), "utf8"));
-const core = createCore(DATA);
+const pension = JSON.parse(fs.readFileSync(path.join(__dirname, "../docs/data/pension.json"), "utf8"));
+const core = createCore({ ...DATA, funds: DATA.funds.concat(pension) });
 
 if (require.main === module) {
   const rl = readline.createInterface({ input: process.stdin });
