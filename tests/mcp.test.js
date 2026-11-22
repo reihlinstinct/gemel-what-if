@@ -44,3 +44,14 @@ test("fees event validates and lowers the computed result", () => {
   const run = (s) => JSON.parse(handle({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "compute_story", arguments: { story: s } } }).result.content[0].text);
   assert.ok(run(withFees).whatIf.finalValue < run(story).whatIf.finalValue);
 });
+
+test("private story link generation is rejected instead of encoding financial inputs", () => {
+  const privateStory = { ...story, private: true };
+  assert.throws(() => link(privateStory), /local file import/);
+  const res = handle({ jsonrpc: "2.0", id: 90, method: "tools/call",
+    params: { name: "build_story_link", arguments: { story: privateStory } } });
+  assert.strictEqual(res.result.isError, true);
+  const out = JSON.parse(res.result.content[0].text);
+  assert.ok(out.errors[0].includes("local file import"));
+  assert.strictEqual(out.url, undefined);
+});

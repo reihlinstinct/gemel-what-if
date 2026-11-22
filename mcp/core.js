@@ -18,9 +18,9 @@ function createCore(DATA) {
     description:
       "Timeline story. events: one {type:'start', date:'YYYY-MM', fundKey, amount?, feeAdjPct?, depositFeePct?} first, then deposit {date, amount}, " +
       "monthly {from, to?, amount}, withdraw {date, amount}, transfer|product|track {date, fundKey, exitCostPct?, feeAdjPct?, depositFeePct?}, fees {date, depositPct?, savingsPct?} (optional management fees, off by default; savingsPct is yearly; feeAdjPct is a yearly savings fee and depositFeePct a deposit fee, both per phase from the start or a switch). " +
-      "Any event may carry scope: both|actual|whatif. fundKey comes from search_tracks (g:<id> gemel, i:<id> insurance). " +
+      "Any event may carry scope: both|actual|whatif. fundKey comes from search_tracks (g:<id> gemel, i:<id> insurance, p:<id> pension). " +
       "Optional annuity {guaranteed, market, months, rate} (strings).",
-    properties: { end: { type: "string" }, events: { type: "array", items: { type: "object" } }, annuity: { type: "object" } },
+    properties: { private: { type: "boolean", description: "Keep financial inputs out of generated URLs; use local import." }, end: { type: "string" }, events: { type: "array", items: { type: "object" } }, annuity: { type: "object" } },
     required: ["events"],
   };
 
@@ -61,6 +61,7 @@ function createCore(DATA) {
   }
 
   function link(story, base) {
+    if (story && story.private === true) throw new Error("Private stories must use local file import, not a story URL.");
     const bytes = new TextEncoder().encode(JSON.stringify(story));
     let bin = "";
     for (const b of bytes) bin += String.fromCharCode(b);
@@ -83,6 +84,9 @@ function createCore(DATA) {
       description: "Validate a story and return a link that opens the site with the story in the URL fragment (the fragment is never sent to a server). Treat the link as private.",
       inputSchema: { type: "object", properties: { story: STORY_SCHEMA, baseUrl: { type: "string" } }, required: ["story"] },
       run: (a) => {
+        if (a.story && a.story.private === true) {
+          return { errors: ["Private stories must use local file import, not a story URL."], warnings: [] };
+        }
         const v = validate(a.story);
         if (v.errors.length) return v;
         return { url: link(a.story, a.baseUrl), warnings: v.warnings };

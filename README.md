@@ -25,12 +25,31 @@ the search aliases, the AI prompt and the MCP tool descriptions.
 
 Monthly yields come from the Capital Market Authority's open data: [Gemel-Net](https://data.gov.il/dataset/gemelnet)
 (provident funds, hishtalmut, pension-type gemel) and [Insurance-Net](https://data.gov.il/dataset/insurance)
-(insurance-policy tracks, classes 1990-1991, 1992-2003 and from 2004), 1999 to today. `scripts/fetch_data.py` downloads both datasets and writes `docs/data/funds.json`
-(one dense monthly-yield series per track, keyed `g:<id>` for gemel and `i:<id>` for insurance). Data is public and aggregated; no personal data is stored in this repo.
+(insurance-policy tracks, classes 1990-1991, 1992-2003 and from 2004), plus
+[PensionNet](https://data.gov.il/he/datasets/cma/pensia-net/6d47d6b5-cb08-488b-b333-f1e717b1e1bd)
+(pension investment tracks), 1999 to today. `scripts/fetch_data.py` downloads all three sources and writes `docs/data/funds.json`
+(one dense monthly-yield series per track, keyed `g:<id>` for gemel `i:<id>` for insurance and `p:<id>` for pension). Data is public and aggregated; no personal data is stored in this repo.
 
 ```
 python3 scripts/fetch_data.py   # refresh the data
 ```
+
+## Private statement imports
+
+Use the existing **Load from file** input for private JSON stories. Set `private: true`
+to prevent language changes from embedding the story in the URL. Export, change
+language in a new window and import again instead. No private data belongs in a
+repository, issue, screenshot artifact or shared story URL. Imported stories are
+not uploaded; live verification sends only public fund IDs to data.gov.il.
+
+An optional `context` object accepts `label`, `notes` (an array of strings),
+`statementBalance` (number) and `endAdjustment` (signed number). The label and
+notes render as plain text. The original statement balance stays separate from
+both modeled values. A shared adjustment is applied only to the separate final
+summary, not the engine, chart or annualized gross return. The baseline-to-statement
+residual is displayed, not silently corrected. Charge timing and demographic
+adjustments remain assumptions, not exact account reconstruction. See the
+[design and acceptance criteria](tools/design/pensionnet.md).
 
 ## Fees
 

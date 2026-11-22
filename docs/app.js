@@ -6,6 +6,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   let L = null; // catalog helpers for the active language (docs/i18n.js)
   const t = (k, p) => L.t(k, p);
   let funds = null;
+  let storyContext = null;
+  let privateStory = false;
   const $ = (s, r) => (r || document).querySelector(s);
   const fmt = (n) => Math.round(n).toLocaleString(L.locale());
   const pct = (n) => (n === null || n === undefined ? "-" : (n * 100).toFixed(2) + "%");
@@ -44,7 +46,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       for (const f of W.searchFunds(data, input.value, 40)) {
         const o = document.createElement("option");
         o.value = f.key;
-        o.textContent = (f.src === "insurance" ? t("fund.src_insurance") : t("fund.src_gemel")) + " " + f.id + " | " + f.name + " | " + (f.corp || "") + " (" + f.start + "-" + f.end + ")";
+        o.textContent = (f.src === "pension" ? t("fund.src_pension") : f.src === "insurance" ? t("fund.src_insurance") : t("fund.src_gemel")) + " " + f.id + " | " + f.name + " | " + (f.corp || "") + " (" + f.start + "-" + f.end + ")";
         select.append(o);
       }
     };
@@ -219,7 +221,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       if ((e.type === "start" || SWITCHES.includes(e.type)) && !e.fundKey) throw new Error(t("error.missing_fund", { type: TYPES[e.type] ? typeLabel(e.type) : undefined }));
       if (["deposit", "monthly", "withdraw"].includes(e.type) && !e.amount) throw new Error(t("error.missing_amount"));
     }
-    return { end: $("#end").value || undefined, events, annuity: annuityInputs() };
+    return { end: $("#end").value || undefined, events, annuity: annuityInputs(),
+      ...(storyContext ? { context: storyContext } : {}), ...(privateStory ? { private: true } : {}) };
   }
 
   function annuityInputs() {
@@ -246,6 +249,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   // row per track+period with the exact fund and period to select there. Verified 2026-10-23:
   // gemelTsuot.aspx ignores query-string parameters and renders via a session ReportViewer.
   const VERIFY_SITES = {
+    pension: { name: "verify.site_pension", url: "https://pensyanet.cma.gov.il/Home/What" },
     gemel: { name: "verify.site_gemel", url: "https://gemelnet.cma.gov.il/views/gemelTsuot.aspx" },
     insurance: { name: "verify.site_insurance", url: "https://bituachnet.cma.gov.il/bituachTsuotUI/Tsuot/UI/bituachTsuotUI.aspx" },
   };
@@ -258,9 +262,9 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       const period = '<span dir="ltr">' + mmYYYY(p.from) + " - " + mmYYYY(p.to) + "</span>";
       if (!f) return "<li>" + t("verify.not_found", { fund: p.fundId, period }) + "</li>";
       const site = VERIFY_SITES[f.src] || VERIFY_SITES.gemel;
-      const idPart = f.src === "gemel" ? t("verify.fund_id", { id: f.id }) : "";
+      const idPart = f.src !== "insurance" ? t("verify.fund_id", { id: f.id }) : "";
       const meta = f.src === "insurance" ? " (" + (f.corp || "") + ", " + (f.cls || "") + ")" : "";
-      const shortNote = f.src === "gemel" && p.months < 12 ? t("verify.short_note") : "";
+      const shortNote = f.src !== "insurance" && p.months < 12 ? t("verify.short_note") : "";
       const offv = ' <span class="offv" data-key="' + p.fundId + '" data-from="' + p.from + '" data-to="' + p.to + '">' + t("official.loading") + "</span>";
       return '<li><a href="' + site.url + '" target="_blank" rel="noopener">' + t(site.name) + "</a>: " + idPart + f.name + meta + ", " + period + shortNote + offv + "</li>";
     });
@@ -372,7 +376,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
         ? '<div class="warn"><b>' + t("notes.title") + "</b><ul>" + [1, 2, 3, 4].map((n) => "<li>" + t("notes.item" + n) + "</li>").join("") + "</ul></div>"
         : "";
       $("#result").innerHTML =
-        head2 +
+        (storyContext ? "<h3>" + t("statement.gross") + "</h3>" : "") + head2 +
         "<tr><td>" + t("result.paid") + "</td><td>" + fmt(c.actual.paid) + " ₪</td><td>" + fmt(c.whatIf.paid) + " ₪</td></tr>" +
         "<tr><td>" + t("result.withdrawn") + "</td><td>" + fmt(c.actual.withdrawn) + " ₪</td><td>" + fmt(c.whatIf.withdrawn) + " ₪</td></tr>" +
         "<tr><td>" + t("result.final") + "</td><td>" + fmt(c.actual.final) + " ₪</td><td>" + fmt(c.whatIf.final) + " ₪</td></tr>" +
@@ -382,10 +386,32 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
         chart(c.actual, c.whatIf) + annuityHtml + notesHtml +
         (warn ? '<p class="warn">' + t("result.missing_months", { n: warn }) + "</p>" : "") +
         verifyHtml(c);
+        renderStatement(c);
         enhanceOfficial();
     } catch (e) {
       $("#error").textContent = e.message;
     }
+  }
+
+  // Imported prose uses textContent, never HTML. Public fund identifiers alone are sent by
+  // enhanceOfficial; balances, reference data and notes stay in this browser.
+  function renderStatement(result) {
+    if (!storyContext) return;
+    const box = document.createElement("section");
+    box.className = "warn";
+    box.id = "statement-reference";
+    const add = (tag, text) => { const el = document.createElement(tag); el.textContent = text; box.append(el); };
+    add("h3", storyContext.label || t("statement.title"));
+    for (const note of storyContext.notes || []) add("p", note);
+    const summary = StatementContext.summarize(storyContext, result);
+    if (summary) {
+      const labels = { statement: "statement.statement", adjustment: "statement.adjustment",
+        actual: "statement.actual", whatIf: "statement.whatIf",
+        difference: "statement.difference", residual: "statement.residual" };
+      for (const [key, label] of Object.entries(labels)) add("p", t(label, { value: fmt(summary[key]) }));
+      add("p", t("statement.caveat"));
+    }
+    $("#result").prepend(box);
   }
 
   const EXAMPLE = {
@@ -398,6 +424,9 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   };
 
   function loadTimeline(tl) {
+    storyContext = StatementContext.normalize(tl.context);
+    privateStory = tl.private === true;
+    $("#result").textContent = "";
     for (const id of ["#timeline", "#col-actual", "#col-whatif"]) $(id).innerHTML = "";
     $("#fork").hidden = true;
     $("#end").value = /^\d{4}-\d{2}$/.test(tl.end || "") ? tl.end + "-01" : tl.end || "";
@@ -436,6 +465,11 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   };
   // Switching language reloads with ?lang=<code>; the story rides along in the fragment (never sent).
   const pickLanguage = (code) => {
+    if (privateStory) {
+      $("#error").textContent = t("statement.private_language");
+      $("#lang").value = L.lang();
+      return;
+    }
     let hash = location.hash;
     try { hash = "#story=" + toFragment(readTimeline()); } catch (e) { /* incomplete story: keep the current fragment */ }
     const q = new URLSearchParams(location.search);

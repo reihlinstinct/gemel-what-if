@@ -170,7 +170,7 @@ test("every key used exists in the catalog, and every catalog key is used", () =
   const worker = read("worker/src/handler.js");
   const used = new Set();
   for (const m of app.matchAll(/\bt\("([\w.]+)"[,)]/g)) used.add(m[1]);
-  for (const m of app.matchAll(/"((?:event|verify)\.\w+)"/g)) used.add(m[1]); // TYPES values and site names, read through t()
+  for (const m of app.matchAll(/"((?:event|verify|statement)\.\w+)"/g)) used.add(m[1]); // TYPES values and site names, read through t()
   for (const n of [1, 2, 3, 4]) used.add("notes.item" + n); // app.js: [1, 2, 3, 4].map((n) => t("notes.item" + n))
   for (const t of tagged.concat(attrTagged)) used.add(t.key);
   for (const m of worker.matchAll(/\b(?:fail|errorBody)\("(\w+)"/g)) used.add("worker." + m[1]);

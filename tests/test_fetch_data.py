@@ -26,6 +26,15 @@ class BuildTests(unittest.TestCase):
         self.assertEqual(out[0]["name"], "שם")
         self.assertEqual(out[0]["y"], [0.5])
 
+    def test_pension_source_keeps_namespace_and_missing_months(self):
+        rows = [row(7, 202001, 1.0), row(7, 202003, 2.0)]
+        rows[0]["PARENT_COMPANY_NAME"] = "Synthetic pension"
+        rows[1]["PARENT_COMPANY_NAME"] = "Synthetic pension"
+        fund = fetch_data.build(rows, "pension")[0]
+        self.assertEqual((fund["key"], fund["src"]), ("p:7", "pension"))
+        self.assertEqual(fund["corp"], "Synthetic pension")
+        self.assertEqual(fund["y"], [1.0, None, 2.0])
+
     def test_insurance_source_uses_its_own_key_and_corp_column(self):
         r = row(7, 200201, 1.0)
         r["PARENT_COMPANY_NAME"] = "חברה"

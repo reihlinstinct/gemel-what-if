@@ -357,6 +357,15 @@
         { until: null, id: "a30dcbea-a1d2-482c-ae29-8f781f5025fb" },
       ],
     },
+    pension: {
+      dataset: "https://data.gov.il/he/datasets/cma/pensia-net/6d47d6b5-cb08-488b-b333-f1e717b1e1bd",
+      api: "https://data.gov.il/api/3/action/datastore_search",
+      resources: [
+        { until: "2022-12", id: "a66926f3-e396-4984-a4db-75486751c2f7" },
+        { until: "2023-12", id: "4694d5a7-5284-4f3d-a2cb-5887f43fb55e" },
+        { until: null, id: "6d47d6b5-cb08-488b-b333-f1e717b1e1bd" },
+      ],
+    },
     insurance: {
       dataset: "https://data.gov.il/dataset/insurance",
       api: "https://data.gov.il/api/3/action/datastore_search",

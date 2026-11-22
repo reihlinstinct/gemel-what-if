@@ -24,6 +24,16 @@ SOURCES = {
             "2024-now": "a30dcbea-a1d2-482c-ae29-8f781f5025fb",
         },
     },
+    "pension": {
+        "prefix": "p",
+        "dataset": "https://data.gov.il/he/datasets/cma/pensia-net/6d47d6b5-cb08-488b-b333-f1e717b1e1bd",
+        "corp_field": "PARENT_COMPANY_NAME",
+        "resources": {
+            "1999-2022": "a66926f3-e396-4984-a4db-75486751c2f7",
+            "2023": "4694d5a7-5284-4f3d-a2cb-5887f43fb55e",
+            "2024-now": "6d47d6b5-cb08-488b-b333-f1e717b1e1bd",
+        },
+    },
     "insurance": {
         "prefix": "i",
         "dataset": "https://data.gov.il/dataset/insurance",
