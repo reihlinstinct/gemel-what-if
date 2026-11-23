@@ -167,8 +167,39 @@
     };
   }
 
+  // Adding a later-reporting product must not extend legacy undated stories.
+  // For a new mixed-product story, stop at the earlier source group's latest month.
+  function defaultEnd(timeline, funds, latest) {
+    if (timeline.end) return timeline.end;
+    if (!Array.isArray(timeline.events) || timeline.events.some(e => !e || typeof e !== "object" || (e.fundKey !== undefined && typeof e.fundKey !== "string"))) throw new Error("Invalid timeline events or fund key");
+    const groups = new Set(timeline.events.filter(e => e.fundKey).map(e => e.fundKey.startsWith("p:") ? "pension" : "legacy"));
+    if (!groups.size) groups.add("legacy");
+    const ends = [];
+    for (const group of groups) {
+      let end = 0;
+      for (const f of funds.values()) {
+        if ((f.key || "").startsWith("p:") !== (group === "pension")) continue;
+        end = Math.max(end, f.end || periodOf(dataRange(f)[1]));
+      }
+      ends.push(end || Number(latest));
+    }
+    return Math.min(Number(latest), ...ends);
+  }
+
+  // A deterministic value snapshot catches stale edits. It is not a signature or
+  // proof of human identity; callers can intentionally construct metadata.
+  function selectionSnapshot(event) {
+    const values = {};
+    for (const key of Object.keys(event).sort()) {
+      if (!["aiGenerated", "selectionReviewRequired", "selectionReviewedValues"].includes(key) && event[key] !== undefined) values[key] = event[key];
+    }
+    return JSON.stringify(values);
+  }
+
   /** Run the whole timeline twice (actual / what-if scopes) and compare total profit. */
   function runTimeline(timeline, funds, latest) {
+    if ((timeline.events || []).some(e => e && (e.selectionReviewRequired === true || e.aiGenerated === true && (e.selectionReviewRequired !== false || e.selectionReviewedValues !== selectionSnapshot(e))))) throw new Error("Confirm each AI event's date and track before calculating");
+    latest = defaultEnd(timeline, funds, latest);
     const actual = simulate(timelineToStory(timeline, "actual"), funds, latest);
     const whatIf = simulate(timelineToStory(timeline, "whatif"), funds, latest);
     return {
@@ -319,24 +350,48 @@
   var ALIASES = { clal: "כלל", meitav: "מיטב", migdal: "מגדל", harel: "הראל", phoenix: "הפניקס", menora: "מנורה", altshuler: "אלטשולר", analyst: "אנליסט", psagot: "פסגות", ayalon: "איילון", more: "מור", infinity: "אינפיניטי", ibi: "איי.בי.אי" };
   var GENERIC = ["ביטוח", "מנהלים", "קרן", "קופת", "גמל", "השתלמות", "פוליסה", "מסלול", "insurance", "managers", "gemel", "fund", "track"];
 
+  function canonicalName(value) {
+    return String(value || "").normalize("NFKC").trim().toLowerCase().replace(/\s+/gu, " ").replace(/\s*[-־–—]\s*/gu, "-");
+  }
   function searchFunds(data, query, limit) {
     const q = String(query).trim().toLowerCase();
     if (!q) return [];
-    const parts = q.split(/\s+/).map((p) => ALIASES[p] || p);
-    const hayOf = (f) => (f.id + " " + (f.key || "") + " " + f.name + " " + (f.corp || "") + " " + (f.cls || "")).toLowerCase();
-    const order = (a, b) => (b.end - a.end) || ((b.assets || 0) - (a.assets || 0));
-    let hits = data.funds.filter((f) => { const hay = hayOf(f); return parts.every((p) => hay.includes(p)); });
-    if (!hits.length) {
-      // relaxed: rank by how many query words match, ignoring generic words when there are specific ones
-      const specific = parts.filter((p) => !GENERIC.includes(p));
-      const use = specific.length ? specific : parts;
-      const scored = data.funds
-        .map((f) => { const hay = hayOf(f); const words = hay.split(/[^\p{L}\p{N}]+/u); return { f, n: use.reduce((t, p) => t + (words.includes(p) ? 2 : hay.includes(p) ? 1 : 0), 0) }; })
-        .filter((x) => x.n > 0);
-      const best = scored.reduce((m, x) => Math.max(m, x.n), 0);
-      hits = scored.filter((x) => x.n === best).map((x) => x.f);
+    const normalize = text => String(text || "").toLowerCase().replace(/(?<![\p{L}\p{N}])(?:איי?[.\s,־-]*בי[.\s,־-]*איי?|i[.\s,־-]+b[.\s,־-]+i)(?![\p{L}\p{N}])\.?/gu, "ibi");
+    const words = text => normalize(text).split(/[^\p{L}\p{N}:]+/u).filter(Boolean);
+    const parts = words(q).map(p => p === "ibi" ? "ibi" : ALIASES[p] || p);
+    const exactKey = data.funds.filter(f => String(f.key || "").toLowerCase() === q);
+    if (exactKey.length) return exactKey.slice(0, limit || 30);
+    const wantsPension = parts.some(p => ["פנסיה", "פנסיוני", "pension"].includes(p));
+    const explicitInsurance = parts.some(p => ["ביטוח", "פוליסה", "insurance"].includes(p));
+    if (wantsPension && explicitInsurance) return [];
+    const exact = data.funds.filter(f => canonicalName(f.name) === canonicalName(q));
+    if (exact.length) return exact.slice(0, limit || 30);
+    const companies = new Set(Object.values(ALIASES).map(normalize));
+    const companyTerms = parts.filter(p => companies.has(p));
+    const wantsInsurance = explicitInsurance || !wantsPension && parts.some(p => ["מנהלים", "managers"].includes(p));
+    const wantsHishtalmut = parts.some(p => ["השתלמות", "hishtalmut"].includes(p));
+    const wantsGemel = parts.some(p => ["גמל", "gemel"].includes(p));
+    const descriptors = new Set(GENERIC.concat(["פנסיה", "פנסיוני", "pension", "hishtalmut"]));
+    const specific = parts.filter(p => !descriptors.has(p));
+    const hits = data.funds.filter(f => {
+      const src = f.src || (String(f.key).startsWith("i:") ? "insurance" : String(f.key).startsWith("p:") ? "pension" : "gemel");
+      if (wantsInsurance && src !== "insurance" || wantsPension && src !== "pension" || (wantsGemel || wantsHishtalmut) && src !== "gemel") return false;
+      const hay = normalize(f.id + " " + (f.key || "") + " " + f.name + " " + (f.corp || "") + " " + (f.cls || ""));
+      const companyWords = words((f.corp || "") + " " + f.name);
+      if (!companyTerms.every(p => companyWords.includes(p))) return false;
+      if (wantsHishtalmut && !words(f.name + " " + (f.cls || "")).includes("השתלמות")) return false;
+      // Product/company constraints never disappear during relaxed matching.
+      return specific.every(p => companyTerms.includes(p) || hay.includes(p));
+    });
+    // Recency is useful within a product, never evidence that a company-only query
+    // identifies that product. Resolution must separately require a unique match.
+    hits.sort((a,b) => (b.end-a.end) || ((b.assets || 0)-(a.assets || 0)));
+    if (!wantsInsurance && !wantsPension && !wantsGemel && !wantsHishtalmut) {
+      const groups = ["gemel", "insurance", "pension"].map(src => hits.filter(f => (f.src || (String(f.key).startsWith("i:") ? "insurance" : String(f.key).startsWith("p:") ? "pension" : "gemel")) === src));
+      const diverse = [];
+      for (let i=0; diverse.length<hits.length; i++) for (const group of groups) if (group[i]) diverse.push(group[i]);
+      return diverse.slice(0, limit || 30);
     }
-    hits.sort(order);
     return hits.slice(0, limit || 30);
   }
 
@@ -355,6 +410,15 @@
         { until: "2022-12", id: "91c849ed-ddc4-472b-bd09-0f5486cea35c" },
         { until: "2023-12", id: "2016d770-f094-4a2e-983e-797c26479720" },
         { until: null, id: "a30dcbea-a1d2-482c-ae29-8f781f5025fb" },
+      ],
+    },
+    pension: {
+      dataset: "https://data.gov.il/he/datasets/cma/pensia-net/6d47d6b5-cb08-488b-b333-f1e717b1e1bd",
+      api: "https://data.gov.il/api/3/action/datastore_search",
+      resources: [
+        { until: "2022-12", id: "a66926f3-e396-4984-a4db-75486751c2f7" },
+        { until: "2023-12", id: "4694d5a7-5284-4f3d-a2cb-5887f43fb55e" },
+        { until: null, id: "6d47d6b5-cb08-488b-b333-f1e717b1e1bd" },
       ],
     },
     insurance: {
@@ -419,5 +483,5 @@
     return { value: cumulativeYield(months), missing, months: months.length };
   }
 
-  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline, phasePeriods, OFFICIAL_SOURCES, officialResources, officialRowsUrl, cumulativeYield, localCumulative, periodOf };
+  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, canonicalName, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline, defaultEnd, selectionSnapshot, phasePeriods, OFFICIAL_SOURCES, officialResources, officialRowsUrl, cumulativeYield, localCumulative, periodOf };
 });

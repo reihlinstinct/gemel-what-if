@@ -5,6 +5,9 @@
  * data file and the engine, and returns links whose story lives in the URL fragment. */
 "use strict";
 const W = require("../docs/whatif.js");
+// URL generation is stricter than display normalization: unknown context can
+// still contain local report text, so never serialize any supplied context.
+const localStory = story => story && (story.private === true || story.context !== undefined && story.context !== null);
 
 function createCore(DATA) {
   const FUNDS = W.indexFunds(DATA);
@@ -18,13 +21,13 @@ function createCore(DATA) {
     description:
       "Timeline story. events: one {type:'start', date:'YYYY-MM', fundKey, amount?, feeAdjPct?, depositFeePct?} first, then deposit {date, amount}, " +
       "monthly {from, to?, amount}, withdraw {date, amount}, transfer|product|track {date, fundKey, exitCostPct?, feeAdjPct?, depositFeePct?}, fees {date, depositPct?, savingsPct?} (optional management fees, off by default; savingsPct is yearly; feeAdjPct is a yearly savings fee and depositFeePct a deposit fee, both per phase from the start or a switch). " +
-      "Any event may carry scope: both|actual|whatif. fundKey comes from search_tracks (g:<id> gemel, i:<id> insurance). " +
+      "Any event may carry scope: both|actual|whatif. fundKey comes from search_tracks (g:<id> gemel, i:<id> insurance, p:<id> pension). " +
       "Optional annuity {guaranteed, market, months, rate} (strings).",
-    properties: { end: { type: "string" }, events: { type: "array", items: { type: "object" } }, annuity: { type: "object" } },
+    properties: { private: { type: "boolean", description: "Keep financial inputs out of generated URLs; use local import." }, end: { type: "string" }, events: { type: "array", items: { type: "object" } }, annuity: { type: "object" } },
     required: ["events"],
   };
 
-  function validate(story) {
+  function validate(story, proposal = false) {
     const errors = [];
     const warnings = [];
     if (!story || !Array.isArray(story.events)) return { errors: ["events must be an array"], warnings };
@@ -52,7 +55,7 @@ function createCore(DATA) {
     });
     if (!errors.length) {
       try {
-        W.runTimeline(story, FUNDS, DATA.latest);
+        W.runTimeline(proposal ? { ...story, events: story.events.map(e => { const copy = { ...e }; delete copy.selectionReviewRequired; delete copy.aiGenerated; return copy; }) } : story, FUNDS, DATA.latest);
       } catch (err) {
         errors.push(String(err.message));
       }
@@ -61,6 +64,7 @@ function createCore(DATA) {
   }
 
   function link(story, base) {
+    if (localStory(story)) throw new Error("Private stories must use local file import, not a story URL.");
     const bytes = new TextEncoder().encode(JSON.stringify(story));
     let bin = "";
     for (const b of bytes) bin += String.fromCharCode(b);
@@ -80,9 +84,12 @@ function createCore(DATA) {
       run: (a) => validate(a.story),
     },
     build_story_link: {
-      description: "Validate a story and return a link that opens the site with the story in the URL fragment (the fragment is never sent to a server). Treat the link as private.",
+      description: "Validate a story and return a link that opens the site with the story in the URL fragment (the fragment is never sent to a server). Anyone holding the full link can read its inputs; it is not access controlled.",
       inputSchema: { type: "object", properties: { story: STORY_SCHEMA, baseUrl: { type: "string" } }, required: ["story"] },
       run: (a) => {
+        if (localStory(a.story)) {
+          return { errors: ["Private stories must use local file import, not a story URL."], warnings: [] };
+        }
         const v = validate(a.story);
         if (v.errors.length) return v;
         return { url: link(a.story, a.baseUrl), warnings: v.warnings };
@@ -127,7 +134,7 @@ function createCore(DATA) {
   }
 
 
-  return { handle, validate, link, TOOLS };
+  return { handle, validate, validateProposal: story => validate(story, true), link, TOOLS };
 }
 
 module.exports = { createCore };

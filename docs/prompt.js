@@ -1,9 +1,9 @@
 /* Free-text story helper: builds a prompt for any AI chat, and turns the JSON it returns into a timeline.
  * Pure functions (browser global StoryPrompt, or require() in tests). Nothing is sent anywhere. */
 (function (root, factory) {
-  if (typeof module === "object" && module.exports) module.exports = factory();
-  else root.StoryPrompt = factory();
-})(typeof self !== "undefined" ? self : this, function () {
+  if (typeof module === "object" && module.exports) module.exports = factory(require("./whatif.js"));
+  else root.StoryPrompt = factory(root.WhatIf);
+})(typeof self !== "undefined" ? self : this, function (W) {
   "use strict";
 
   var INSTRUCTIONS = [
@@ -44,7 +44,7 @@
 
   /**
    * Replace fundName with a fundKey using searchFn(name) -> array of {key,name}. Returns {story, resolved, missing}.
-   * The best match is used; the caller shows it so the person can correct it.
+   * Only a unique match is used. Ambiguous names remain unselected for the person to resolve.
    */
   function resolveFunds(story, searchFn) {
     var resolved = [];
@@ -53,7 +53,7 @@
       var copy = Object.assign({}, e);
       if (copy.fundName && !copy.fundKey) {
         var hits = searchFn(copy.fundName) || [];
-        if (hits.length) {
+        if (hits.length === 1) {
           copy.fundKey = hits[0].key;
           resolved.push({ asked: copy.fundName, got: hits[0].name, key: hits[0].key });
         } else missing.push(copy.fundName);
@@ -64,5 +64,42 @@
     return { story: Object.assign({}, story, { events: events }), resolved: resolved, missing: missing };
   }
 
-  return { buildPrompt: buildPrompt, extractJson: extractJson, resolveFunds: resolveFunds };
+  function groundGenerated(story, text, funds) {
+    if (!story || !Array.isArray(story.events)) throw new Error("Invalid timeline events");
+    const original = W.canonicalName(text);
+    const bounded = (value, allowPrefix) => {
+      const needle = W.canonicalName(value);
+      if (!needle) return false;
+      let at = original.indexOf(needle);
+      while (at >= 0) {
+        const before = original[at-1] || " ";
+        const prefix = allowPrefix && /[בל]/u.test(before) && !/[\p{L}\p{N}:]/u.test(original[at-2] || " ");
+        if ((!/[\p{L}\p{N}:]/u.test(before) || prefix) && !/[\p{L}\p{N}:]/u.test(original[at+needle.length] || " ")) return true;
+        at = original.indexOf(needle, at+1);
+      }
+      return false;
+    };
+    return Object.assign({}, story, {events:story.events.map(e => {
+      if (!e || typeof e !== "object") throw new Error("Invalid timeline event");
+      const copy = Object.assign({}, e);
+      if (copy.fundKey !== undefined) {
+        const f = funds.get(copy.fundKey);
+        const name = f && W.canonicalName(f.name);
+        const unique = name && Array.from(funds.values()).filter(other => W.canonicalName(other.name) === name).length === 1;
+        if (typeof copy.fundKey !== "string" || !bounded(copy.fundKey, false) && !(unique && bounded(f.name, true))) delete copy.fundKey;
+      }
+      if (copy.fundName && (typeof copy.fundName !== "string" || !bounded(copy.fundName, true))) delete copy.fundName;
+      return copy;
+    })});
+  }
+
+  function requireSelectionReview(story) {
+    if (!story || !Array.isArray(story.events)) throw new Error("Invalid timeline events");
+    return Object.assign({}, story, {events:story.events.map(e => {
+      const copy = Object.assign({}, e);
+      if (["start", "transfer", "product", "track"].includes(copy.type)) { copy.aiGenerated = true; copy.selectionReviewRequired = true; }
+      return copy;
+    })});
+  }
+  return { buildPrompt: buildPrompt, extractJson: extractJson, resolveFunds: resolveFunds, groundGenerated: groundGenerated, requireSelectionReview: requireSelectionReview };
 });

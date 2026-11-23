@@ -6,6 +6,7 @@ Only public, aggregated fund data is read. Standard library only.
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
 import urllib.parse
 import urllib.request
@@ -22,6 +23,16 @@ SOURCES = {
             "1999-2022": "91c849ed-ddc4-472b-bd09-0f5486cea35c",
             "2023": "2016d770-f094-4a2e-983e-797c26479720",
             "2024-now": "a30dcbea-a1d2-482c-ae29-8f781f5025fb",
+        },
+    },
+    "pension": {
+        "prefix": "p",
+        "dataset": "https://data.gov.il/he/datasets/cma/pensia-net/6d47d6b5-cb08-488b-b333-f1e717b1e1bd",
+        "corp_field": "PARENT_COMPANY_NAME",
+        "resources": {
+            "1999-2022": "a66926f3-e396-4984-a4db-75486751c2f7",
+            "2023": "4694d5a7-5284-4f3d-a2cb-5887f43fb55e",
+            "2024-now": "6d47d6b5-cb08-488b-b333-f1e717b1e1bd",
         },
     },
     "insurance": {
@@ -124,6 +135,31 @@ def build(rows: list[dict], source: str = "gemel") -> list[dict]:
     return out
 
 
+def write_catalog(data: dict, out: Path | None = None) -> None:
+    """Losslessly shard public data below the per-file cap; consumers concatenate.
+
+    Keep the existing Gemel/insurance catalog shape. Pension records live in a
+    separate array, preserving every field and monthly value without compression
+    dependencies, rounding, deduplication or guard exceptions.
+    """
+    out = out or OUT
+    pension = [f for f in data["funds"] if f["src"] == "pension"]
+    base = {**data, "funds": [f for f in data["funds"] if f["src"] != "pension"]}
+    encoded_shards = []
+    for path, value in [(out, base), (out.with_name("pension.json"), pension)]:
+        encoded = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+        if len(encoded.encode("utf-8")) > 2_097_152:
+            raise ValueError(f"catalog shard exceeds the existing file cap: {path.name}")
+        encoded_shards.append((path, encoded))
+    manifest = {"version": 1, "count": len(data["funds"]), "latest": data["latest"],
+                "sha256": {name: hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+                           for name, (_, encoded) in zip(["funds", "pension"], encoded_shards)}}
+    encoded_shards.append((out.with_name("catalog.json"), json.dumps(manifest, separators=(",", ":"))))
+    out.parent.mkdir(parents=True, exist_ok=True)
+    for path, encoded in encoded_shards:
+        path.write_text(encoded, encoding="utf-8")
+
+
 def main() -> int:
     funds: list[dict] = []
     for source, cfg in SOURCES.items():
@@ -138,8 +174,7 @@ def main() -> int:
         "latest": max(f["end"] for f in funds),
         "funds": funds,
     }
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    write_catalog(data)
     print(f"wrote {OUT} ({len(data['funds'])} funds, latest {data['latest']})", file=sys.stderr)
     return 0
 

@@ -6,6 +6,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   let L = null; // catalog helpers for the active language (docs/i18n.js)
   const t = (k, p) => L.t(k, p);
   let funds = null;
+  let storyContext = null;
+  let privateStory = false;
   const $ = (s, r) => (r || document).querySelector(s);
   const fmt = (n) => Math.round(n).toLocaleString(L.locale());
   const pct = (n) => (n === null || n === undefined ? "-" : (n * 100).toFixed(2) + "%");
@@ -44,7 +46,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       for (const f of W.searchFunds(data, input.value, 40)) {
         const o = document.createElement("option");
         o.value = f.key;
-        o.textContent = (f.src === "insurance" ? t("fund.src_insurance") : t("fund.src_gemel")) + " " + f.id + " | " + f.name + " | " + (f.corp || "") + " (" + f.start + "-" + f.end + ")";
+        o.textContent = (f.src === "pension" ? t("fund.src_pension") : f.src === "insurance" ? t("fund.src_insurance") : t("fund.src_gemel")) + " " + f.id + " | " + f.name + " | " + (f.corp || "") + " (" + f.start + "-" + f.end + ")";
         select.append(o);
       }
     };
@@ -73,7 +75,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       const depIn = card && card.querySelector(".pdepfee");
       if (fromUser && depIn && !depIn.dataset.manual && f && f.dfee !== null && f.dfee !== undefined) depIn.value = f.dfee;
     };
-    input.addEventListener("input", () => { show(); choose(true); });
+    input.addEventListener("input", () => { show(); if (select.options.length !== 1) select.selectedIndex = -1; choose(select.options.length === 1); });
     select.addEventListener("change", () => choose(true));
     el.setFund = (key) => {
       const f = funds.get(key);
@@ -167,6 +169,23 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       if (v) fill(card, v);
     };
     render(type, values);
+    if (values && (values.aiGenerated === true || values.selectionReviewRequired === true)) {
+      const label = document.createElement("label");
+      label.className = "warn selection-review";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      const text = document.createElement("span");
+      text.textContent = t("selection.confirm");
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) checkbox.dataset.reviewedValues = W.selectionSnapshot(readEvent(card));
+        else delete checkbox.dataset.reviewedValues;
+      });
+      label.append(checkbox, text);
+      card.append(label);
+      const invalidate = event => { if (event.target !== checkbox) { checkbox.checked = false; delete checkbox.dataset.reviewedValues; } $("#result").textContent = ""; };
+      card.addEventListener("input", invalidate);
+      card.addEventListener("change", invalidate);
+    }
     const sc = $(".scope", card);
     const BADGES = { both: "", actual: t("scope.actual"), whatif: t("scope.whatif") };
     const paint = () => {
@@ -201,6 +220,12 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const type = card.dataset.type;
     const num = (s) => Number($(s, card).value) || 0;
     const e = { type };
+    const review = $(".selection-review input", card);
+    if (review) {
+      e.aiGenerated = true;
+      e.selectionReviewRequired = !review.checked;
+      if (review.checked) e.selectionReviewedValues = review.dataset.reviewedValues;
+    }
     e.scope = $(".scope", card).value;
     if (type === "monthly") { e.from = $(".from", card).value; e.to = $(".to", card).value || undefined; e.amount = num(".amount"); }
     else { e.date = $(".date", card).value; }
@@ -219,7 +244,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       if ((e.type === "start" || SWITCHES.includes(e.type)) && !e.fundKey) throw new Error(t("error.missing_fund", { type: TYPES[e.type] ? typeLabel(e.type) : undefined }));
       if (["deposit", "monthly", "withdraw"].includes(e.type) && !e.amount) throw new Error(t("error.missing_amount"));
     }
-    return { end: $("#end").value || undefined, events, annuity: annuityInputs() };
+    return { end: $("#end").value || undefined, events, annuity: annuityInputs(),
+      ...(storyContext ? { context: storyContext } : {}), ...(privateStory ? { private: true } : {}) };
   }
 
   function annuityInputs() {
@@ -246,6 +272,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   // row per track+period with the exact fund and period to select there. Verified 2026-10-23:
   // gemelTsuot.aspx ignores query-string parameters and renders via a session ReportViewer.
   const VERIFY_SITES = {
+    pension: { name: "verify.site_pension", url: "https://pensyanet.cma.gov.il/Home/What" },
     gemel: { name: "verify.site_gemel", url: "https://gemelnet.cma.gov.il/views/gemelTsuot.aspx" },
     insurance: { name: "verify.site_insurance", url: "https://bituachnet.cma.gov.il/bituachTsuotUI/Tsuot/UI/bituachTsuotUI.aspx" },
   };
@@ -258,16 +285,16 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       const period = '<span dir="ltr">' + mmYYYY(p.from) + " - " + mmYYYY(p.to) + "</span>";
       if (!f) return "<li>" + t("verify.not_found", { fund: p.fundId, period }) + "</li>";
       const site = VERIFY_SITES[f.src] || VERIFY_SITES.gemel;
-      const idPart = f.src === "gemel" ? t("verify.fund_id", { id: f.id }) : "";
+      const idPart = f.src !== "insurance" ? t("verify.fund_id", { id: f.id }) : "";
       const meta = f.src === "insurance" ? " (" + (f.corp || "") + ", " + (f.cls || "") + ")" : "";
-      const shortNote = f.src === "gemel" && p.months < 12 ? t("verify.short_note") : "";
+      const shortNote = f.src !== "insurance" && p.months < 12 ? t("verify.short_note") : "";
       const offv = ' <span class="offv" data-key="' + p.fundId + '" data-from="' + p.from + '" data-to="' + p.to + '">' + t("official.loading") + "</span>";
       return '<li><a href="' + site.url + '" target="_blank" rel="noopener">' + t(site.name) + "</a>: " + idPart + f.name + meta + ", " + period + shortNote + offv + "</li>";
     });
   }
 
   function verifyHtml(c) {
-    const endLabel = W.toLabel(W.toIndex($("#end").value || data.latest));
+    const endLabel = W.toLabel(W.toIndex(W.defaultEnd(readTimeline(), funds, data.latest)));
     const periodsA = W.phasePeriods(c.phasesActual, endLabel);
     const periodsB = W.phasePeriods(c.phasesWhatIf, endLabel);
     const same = JSON.stringify(periodsA) === JSON.stringify(periodsB);
@@ -350,8 +377,10 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
 
   function run() {
     $("#error").textContent = "";
+    $("#result").textContent = "";
     try {
       const tl = readTimeline();
+      if (tl.events.some(e => e.selectionReviewRequired === true)) throw new Error(t("selection.pending"));
       const c = W.runTimeline(tl, funds, data.latest);
       const warn = c.actual.warnings.missingMonths + c.whatIf.warnings.missingMonths;
       const cls = c.diff >= 0 ? "pos" : "neg";
@@ -372,7 +401,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
         ? '<div class="warn"><b>' + t("notes.title") + "</b><ul>" + [1, 2, 3, 4].map((n) => "<li>" + t("notes.item" + n) + "</li>").join("") + "</ul></div>"
         : "";
       $("#result").innerHTML =
-        head2 +
+        (storyContext ? "<h3>" + t("statement.gross") + "</h3>" : "") + head2 +
         "<tr><td>" + t("result.paid") + "</td><td>" + fmt(c.actual.paid) + " ₪</td><td>" + fmt(c.whatIf.paid) + " ₪</td></tr>" +
         "<tr><td>" + t("result.withdrawn") + "</td><td>" + fmt(c.actual.withdrawn) + " ₪</td><td>" + fmt(c.whatIf.withdrawn) + " ₪</td></tr>" +
         "<tr><td>" + t("result.final") + "</td><td>" + fmt(c.actual.final) + " ₪</td><td>" + fmt(c.whatIf.final) + " ₪</td></tr>" +
@@ -382,10 +411,32 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
         chart(c.actual, c.whatIf) + annuityHtml + notesHtml +
         (warn ? '<p class="warn">' + t("result.missing_months", { n: warn }) + "</p>" : "") +
         verifyHtml(c);
+        renderStatement(c);
         enhanceOfficial();
     } catch (e) {
       $("#error").textContent = e.message;
     }
+  }
+
+  // Imported prose uses textContent, never HTML. Public fund identifiers alone are sent by
+  // enhanceOfficial; balances, reference data and notes stay in this browser.
+  function renderStatement(result) {
+    if (!storyContext) return;
+    const box = document.createElement("section");
+    box.className = "warn";
+    box.id = "statement-reference";
+    const add = (tag, text) => { const el = document.createElement(tag); el.textContent = text; box.append(el); };
+    add("h3", storyContext.label || t("statement.title"));
+    for (const note of storyContext.notes || []) add("p", note);
+    const summary = StatementContext.summarize(storyContext, result);
+    if (summary) {
+      const labels = { statement: "statement.statement", adjustment: "statement.adjustment",
+        actual: "statement.actual", whatIf: "statement.whatIf",
+        difference: "statement.difference", residual: "statement.residual" };
+      for (const [key, label] of Object.entries(labels)) add("p", t(label, { value: fmt(summary[key]) }));
+      add("p", t("statement.caveat"));
+    }
+    $("#result").prepend(box);
   }
 
   const EXAMPLE = {
@@ -398,9 +449,14 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   };
 
   function loadTimeline(tl) {
+    if (!tl || !Array.isArray(tl.events) || tl.events.some(e => !e || typeof e !== "object" || typeof e.type !== "string" || (e.fundKey !== undefined && typeof e.fundKey !== "string"))) throw new Error("Invalid timeline events or fund key");
+    storyContext = StatementContext.normalize(tl.context);
+    privateStory = tl.private === true || Boolean(storyContext);
+    $("#result").textContent = "";
     for (const id of ["#timeline", "#col-actual", "#col-whatif"]) $(id).innerHTML = "";
     $("#fork").hidden = true;
-    $("#end").value = /^\d{4}-\d{2}$/.test(tl.end || "") ? tl.end + "-01" : tl.end || "";
+    const end = tl.end || W.toLabel(W.toIndex(W.defaultEnd(tl, funds, data.latest)));
+    $("#end").value = /^\d{4}-\d{2}$/.test(end) ? end + "-01" : end;
     for (const e of tl.events) addCard(e.type, e);
     const a = tl.annuity || {};
     $("#coef-guar").value = a.guaranteed || "";
@@ -436,6 +492,11 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   };
   // Switching language reloads with ?lang=<code>; the story rides along in the fragment (never sent).
   const pickLanguage = (code) => {
+    if (privateStory) {
+      $("#error").textContent = t("statement.private_language");
+      $("#lang").value = L.lang();
+      return;
+    }
     let hash = location.hash;
     try { hash = "#story=" + toFragment(readTimeline()); } catch (e) { /* incomplete story: keep the current fragment */ }
     const q = new URLSearchParams(location.search);
@@ -443,12 +504,17 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     location.href = location.pathname + "?" + q + hash;
   };
 
-  Promise.all([fetch("i18n/strings.json").then((r) => r.json()), fetch("data/funds.json").then((r) => r.json())]).then(([catalog, d]) => {
+  const languageReady = fetch("i18n/strings.json", { cache: "no-cache" }).then(r => {
+    if (!r.ok) throw new Error("Language catalog HTTP " + r.status);
+    return r.json();
+  }).then(catalog => {
     L = I18n.create(catalog, I18n.langFromSearch(catalog, location.search));
     I18n.apply(L, document, pickLanguage);
+  });
+  Promise.all([languageReady, FundCatalog.load(window.fetch.bind(window), window.crypto && window.crypto.subtle)]).then(([, d]) => {
     data = d;
     funds = W.indexFunds(d);
-    $("#end").value = W.toLabel(W.toIndex(d.latest)) + "-01";
+    $("#end").value = W.toLabel(W.toIndex(W.defaultEnd({ events: [] }, funds, d.latest))) + "-01";
     $("#data-info").textContent = t("data.info", { latest: W.toLabel(W.toIndex(d.latest)), count: d.funds.length });
     let loaded = false;
     try {
@@ -477,7 +543,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
         const res = await fetch(WORKER_URL + "/api/story", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text }) });
         const body = await res.json();
         if (!res.ok) throw new Error(workerError(body) || t("ai.http_error", { status: res.status }));
-        loadTimeline(body.story);
+        loadTimeline(StoryPrompt.requireSelectionReview(body.story));
         $("#ai-status").textContent = t("ai.loaded", { notes: (body.warnings || []).length ? t("ai.notes", { list: body.warnings.join("; ") }) : "" });
         $("#error").textContent = "";
       } catch (e) { $("#ai-status").textContent = t("ai.failed", { msg: errText(e) }); }
@@ -491,8 +557,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     };
     $("#load-reply").onclick = () => {
       try {
-        const r = StoryPrompt.resolveFunds(StoryPrompt.extractJson($("#ai-reply").value), (name) => W.searchFunds(data, name, 3));
-        loadTimeline(r.story);
+        const r = StoryPrompt.resolveFunds(StoryPrompt.groundGenerated(StoryPrompt.extractJson($("#ai-reply").value), $("#story-text").value, funds), (name) => W.searchFunds(data, name, 3));
+        loadTimeline(StoryPrompt.requireSelectionReview(r.story));
         const lines = r.resolved.map((x) => "\"" + x.asked + "\" -> " + x.got);
         $("#ai-status").textContent = t("reply.loaded", { lines: lines.join("; ") || "-", missing: r.missing.length ? t("reply.missing", { list: r.missing.join(", ") }) : "" });
         $("#error").textContent = "";
@@ -500,5 +566,12 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     };
     $("#export").onclick = () => { try { exportStory(); } catch (e) { $("#error").textContent = e.message; } };
     $("#import").onchange = (e) => e.target.files[0] && e.target.files[0].text().then((txt) => loadTimeline(JSON.parse(txt))).catch((x) => { $("#error").textContent = t("error.bad_file", { msg: errText(x) }); });
+  }).catch(() => {
+    $("#timeline").textContent = "";
+    $("#result").textContent = "";
+    $("#data-info").textContent = "";
+    $("#load-error").hidden = false;
+    $("#error").textContent = L ? t("error.data_load") : $("#load-error").textContent;
+    for (const control of document.querySelectorAll("main button, main input, main textarea, main select, #lang")) control.disabled = true;
   });
 })();

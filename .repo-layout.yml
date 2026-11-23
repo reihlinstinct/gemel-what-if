@@ -69,7 +69,8 @@
     },
     "tools": {
       "allow": [
-        "*.py"
+        "*.py",
+        "*.md"
       ]
     },
     "worker": {

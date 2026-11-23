@@ -44,3 +44,34 @@ test("fees event validates and lowers the computed result", () => {
   const run = (s) => JSON.parse(handle({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "compute_story", arguments: { story: s } } }).result.content[0].text);
   assert.ok(run(withFees).whatIf.finalValue < run(story).whatIf.finalValue);
 });
+
+test("private story link generation is rejected instead of encoding financial inputs", () => {
+  const privateStory = { ...story, private: true };
+  assert.throws(() => link(privateStory), /local file import/);
+  const res = handle({ jsonrpc: "2.0", id: 90, method: "tools/call",
+    params: { name: "build_story_link", arguments: { story: privateStory } } });
+  assert.strictEqual(res.result.isError, true);
+  const out = JSON.parse(res.result.content[0].text);
+  assert.ok(out.errors[0].includes("local file import"));
+  assert.strictEqual(out.url, undefined);
+});
+
+
+test("unmarked local context cannot enter either MCP story-link route", () => {
+  const contextual = { ...story, context: { notes: ["Synthetic local note"] } };
+  assert.throws(() => link(contextual), /local file import/);
+  const res = handle({ jsonrpc: "2.0", id: 91, method: "tools/call", params: { name: "build_story_link", arguments: { story: contextual } } });
+  assert.strictEqual(res.result.isError, true);
+  assert.strictEqual(JSON.parse(res.result.content[0].text).url, undefined);
+});
+
+test("both link routes refuse every supplied context, including unsupported raw report fields", () => {
+  for (const context of [{rawStatement:"SYNTHETIC_ONLY"},{nested:{raw:"SYNTHETIC_ONLY"}},["SYNTHETIC_ONLY"],"SYNTHETIC_ONLY",{},[],"",0,false]) {
+    const candidate={...story,context};
+    assert.throws(()=>link(candidate),/local file import/);
+    const response=handle({jsonrpc:"2.0",id:201,method:"tools/call",params:{name:"build_story_link",arguments:{story:candidate}}});
+    assert.strictEqual(response.result.isError,true);
+    assert.strictEqual(JSON.parse(response.result.content[0].text).url,undefined);
+  }
+  for(const candidate of [story,{...story,context:null}])assert.ok(link(candidate).includes("#story="));
+});

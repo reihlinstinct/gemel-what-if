@@ -253,8 +253,8 @@
       "fr": "Code source"
     },
     "footer.source": {
-      "he": "מקור הנתונים: <a href=\"https://data.gov.il/dataset/gemelnet\">גמל-נט</a> ו<a href=\"https://data.gov.il/dataset/insurance\">ביטוח-נט</a>, רשות שוק ההון (data.gov.il).",
-      "fr": "Source des données : <a href=\"https://data.gov.il/dataset/gemelnet\">Gemel-Net</a> et <a href=\"https://data.gov.il/dataset/insurance\">Bituach-Net</a>, Autorité du marché des capitaux (data.gov.il)."
+      "he": "מקור הנתונים: <a href=\"https://data.gov.il/dataset/gemelnet\">גמל-נט</a> ו<a href=\"https://data.gov.il/dataset/insurance\">ביטוח-נט</a> ו<a href=\"https://data.gov.il/he/datasets/cma/pensia-net/6d47d6b5-cb08-488b-b333-f1e717b1e1bd\">פנסיה־נט</a>, רשות שוק ההון (data.gov.il).",
+      "fr": "Source des données : <a href=\"https://data.gov.il/dataset/gemelnet\">Gemel-Net</a> et <a href=\"https://data.gov.il/dataset/insurance\">Bituach-Net</a>, <a href=\"https://data.gov.il/he/datasets/cma/pensia-net/6d47d6b5-cb08-488b-b333-f1e717b1e1bd\">Pension-Net</a>, Autorité du marché des capitaux (data.gov.il)."
     },
     "fund.chosen": {
       "he": "✓ נבחר: {name}",
@@ -631,6 +631,66 @@
     "a11y.email": {
       "he": "בקשות נגישות במייל",
       "fr": "Demandes d'accessibilité par e-mail"
+    },
+    "fund.src_pension": {
+      "he": "פנסיה",
+      "fr": "Retraite"
+    },
+    "verify.site_pension": {
+      "he": "פנסיה־נט",
+      "fr": "Pension-Net"
+    },
+    "statement.gross": {
+      "he": "תוצאות מודל לפני התאמת סוף תקופה",
+      "fr": "Résultats avant ajustement de fin de période"
+    },
+    "statement.title": {
+      "he": "נתון מדוח ואומדן נפרד",
+      "fr": "Référence du relevé et estimation distincte"
+    },
+    "statement.statement": {
+      "he": "יתרה בדוח המקור: {value} ₪",
+      "fr": "Solde du relevé source : {value} ₪"
+    },
+    "statement.adjustment": {
+      "he": "התאמת סוף תקופה משותפת לשני המודלים: {value} ₪",
+      "fr": "Ajustement final identique des deux modèles : {value} ₪"
+    },
+    "statement.actual": {
+      "he": "אומדן מסלול הבסיס לאחר ההתאמה: {value} ₪",
+      "fr": "Estimation du parcours de base après ajustement : {value} ₪"
+    },
+    "statement.whatIf": {
+      "he": "אומדן החלופה לאחר ההתאמה: {value} ₪",
+      "fr": "Estimation de l’alternative après ajustement : {value} ₪"
+    },
+    "statement.difference": {
+      "he": "הפרש בין שני אומדני המודל: {value} ₪",
+      "fr": "Écart entre les deux estimations : {value} ₪"
+    },
+    "statement.residual": {
+      "he": "פער אומדן הבסיס לעומת דוח המקור: {value} ₪",
+      "fr": "Écart du modèle de base par rapport au relevé : {value} ₪"
+    },
+    "statement.caveat": {
+      "he": "הדוח מוצג בנפרד. החישוב לא כויל ליתרה שבו. ההתאמה אינה משנה את הגרף או התשואה השנתית של המודל ברוטו. זהו אומדן, לא שחזור מדויק ולא המלצה לשנות השקעה.",
+      "fr": "Le relevé est distinct. Le calcul n’est pas calibré sur son solde. L’ajustement ne modifie ni le graphique ni le taux annualisé brut. Estimation, pas reconstitution exacte ni recommandation d’investissement."
+    },
+    "statement.private_language": {
+      "he": "נמנעה הוספת נתונים מקומיים לכתובת. קישור שכבר כולל את הסיפור עדיין קריא לכל מי שמחזיק בו. להחלפת שפה, שמרו לקובץ, פתחו חלון חדש וטענו שם את הקובץ.",
+      "fr": "Les données locales ne seront pas ajoutées à l'adresse. Un lien contenant déjà le récit reste lisible par toute personne qui le possède. Pour changer de langue, exportez le fichier et importez-le dans une nouvelle fenêtre."
+    },
+    "error.data_load": {
+      "he": "לא ניתן לטעון מאגר נתונים מלא ותקין. לא בוצע חישוב. נסו לטעון את העמוד מחדש.",
+      "fr": "Impossible de charger un catalogue complet et valide. Aucun calcul n'a été effectué. Rechargez la page."
+    },
+    "selection.confirm": {
+      "he": "בדקתי שהמסלול והתאריך באירוע הזה תואמים לסיפור המקורי.",
+      "fr": "J'ai vérifié que le fonds et la date de cet événement correspondent au récit original."
+    },
+    "selection.pending": {
+      "he": "לפני חישוב, בדקו ואשרו בכל אירוע AI את המסלול ואת התאריך מול הסיפור המקורי.",
+      "fr": "Avant le calcul, vérifiez et confirmez le fonds et la date de chaque événement IA par rapport au récit original."
     }
   }
 }

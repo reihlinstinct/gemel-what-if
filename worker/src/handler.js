@@ -15,7 +15,7 @@ const HOURLY_LIMIT = 5;
 const SYSTEM = [
   prompt.buildPrompt("").replace(/\n\nStory:\n$/, ""),
   "You have tools: search_tracks (find the real fundKey for a fund or track name), validate_story, build_story_link.",
-  "Workflow: call search_tracks once per fund the person names, with a SHORT query: the company name in Hebrew (e.g. כלל, מיטב, מגדל) plus one track word at most. Use the returned fundKey in the events (g:... gemel, i:... insurance); if search finds nothing keep fundName. Use at most 4 tool calls, then answer with ONLY the final JSON object (no validate loop needed; the server validates).",
+  "Workflow: call search_tracks once per fund the person names, with a SHORT query: the company name in Hebrew (e.g. כלל, מיטב, מגדל) plus one track word at most. Do not select a key from ranked search results. Preserve the exact company, product and track words from the person as fundName. Only use fundKey when that exact key or exact full catalog track name appears in the original text. Ambiguous names require the person to select a track; never guess a product. Keys are g:... gemel, i:... insurance, p:... pension. Use at most 4 tool calls, then answer with ONLY the final JSON object (no validate loop needed; the server validates).",
   'Example output: {"end":"2026-09-01","events":[{"type":"start","date":"2005-06-01","fundKey":"i:259012"},{"type":"monthly","from":"2005-06-01","to":"2011-06-01","amount":750},{"type":"product","date":"2015-03-01","fundKey":"g:761","scope":"actual"}]}',
 ].join("\n");
 
@@ -115,12 +115,13 @@ export function createHandler({ data, ai, catalog = null, gemini = null, caps = 
         continue;
       }
       let story;
-      try { story = prompt.resolveFunds(prompt.extractJson(out), (n) => whatif.searchFunds(data, n, 3)); } catch (e) {
+      try { story = prompt.resolveFunds(prompt.groundGenerated(prompt.extractJson(out), text, whatif.indexFunds(data)), (n) => whatif.searchFunds(data, n, 3)); } catch (e) {
         if (retries++ >= MAX_RETRIES) throw fail("model_bad_json");
         contents.push({ role: "user", parts: [{ text: "Invalid JSON: " + e.message + ". Reply with ONLY the JSON object." }] });
         continue;
       }
-      const v = mcp.validate(story.story);
+      story.story = prompt.requireSelectionReview(story.story);
+      const v = mcp.validateProposal(story.story);
       if (!v.errors.length) return { story: story.story, resolved: story.resolved, warnings: v.warnings };
       if (retries++ >= MAX_RETRIES) throw fail("story_invalid", { details: v.errors.slice(0, 3).join("; ") });
       contents.push({ role: "user", parts: [{ text: "Validation errors: " + v.errors.join("; ") + ". Fix them and reply with ONLY the corrected JSON object." }] });
@@ -151,13 +152,14 @@ export function createHandler({ data, ai, catalog = null, gemini = null, caps = 
       }
       let story;
       try {
-        story = prompt.resolveFunds(prompt.extractJson(res.response), (n) => whatif.searchFunds(data, n, 3));
+        story = prompt.resolveFunds(prompt.groundGenerated(prompt.extractJson(res.response), text, whatif.indexFunds(data)), (n) => whatif.searchFunds(data, n, 3));
       } catch (e) {
         if (retries++ >= MAX_RETRIES) throw fail("model_bad_json");
         messages.push({ role: "assistant", content: String(res.response || "") }, { role: "user", content: "Invalid JSON: " + e.message + ". Reply with ONLY the JSON object." });
         continue;
       }
-      const v = mcp.validate(story.story);
+      story.story = prompt.requireSelectionReview(story.story);
+      const v = mcp.validateProposal(story.story);
       if (!v.errors.length) return { story: story.story, resolved: story.resolved, warnings: v.warnings };
       if (retries++ >= MAX_RETRIES) throw fail("story_invalid", { details: v.errors.slice(0, 3).join("; ") });
       messages.push({ role: "assistant", content: JSON.stringify(story.story) }, { role: "user", content: "Validation errors: " + v.errors.join("; ") + ". Fix them and reply with ONLY the corrected JSON object." });

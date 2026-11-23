@@ -57,6 +57,15 @@ function serve({ offline = false, port = 0 } = {}) {
     let url = req.url.split("?")[0].split("#")[0];
     if (url.startsWith("/fixture/")) {
       url = url.slice("/fixture".length);
+      if (url === "/data/catalog.json") {
+        const digest = value => require("node:crypto").createHash("sha256").update(JSON.stringify(value)).digest("hex");
+        res.writeHead(200, { "content-type": "application/json" });
+        return res.end(JSON.stringify({version:1,count:fixtureData.funds.length,latest:fixtureData.latest,sha256:{funds:digest(fixtureData),pension:digest([])}}));
+      }
+      if (url === "/data/pension.json") {
+        res.writeHead(200, { "content-type": "application/json" });
+        return res.end("[]");
+      }
       if (url === "/data/funds.json") {
         res.writeHead(200, { "content-type": "application/json" });
         return res.end(JSON.stringify(fixtureData));
@@ -96,7 +105,8 @@ function domProbe(d) {
   const aiClosedDefault = aiSection.open === false;
   aiSection.querySelector("summary").click();
   const aiOpensOnDemand = aiSection.open === true;
-  q("#ai-reply").value = 'ok {"events":[{"type":"start","date":"2005-01-01","fundName":"הראל קרן"},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';
+  q("#story-text").value = "i:259012";
+  q("#ai-reply").value = 'ok {"events":[{"type":"start","date":"2005-01-01","fundKey":"i:259012"},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';
   q("#load-reply").click();
   const aiCards = d.querySelectorAll(".card").length;
   const aiStatus = q("#ai-status").textContent;
@@ -118,11 +128,13 @@ function domProbe(d) {
   }
   const depHint = ((q(".card .feeavg") || {}).textContent || "");
   const depKind = depHint.includes("מהפקדה ממוצעים רשמיים") ? "depavg" : (depHint.includes("אין נתון דמי ניהול מהפקדה") ? "depnone" : "depmissing");
-  q("#ai-reply").value = 'ok {"events":[{"type":"start","date":"2005-01-01","fundName":"הראל קרן","depositFeePct":0.7},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';
+  q("#story-text").value = "i:259012";
+  q("#ai-reply").value = 'ok {"events":[{"type":"start","date":"2005-01-01","fundKey":"i:259012","depositFeePct":0.7},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';
   q("#load-reply").click();
   const depRestored = (q(".card .pdepfee") || {}).value || "";
   const depManual = (q(".card .pdepfee") || {}).dataset.manual || "";
   q("#story-text").value = "x";
+  for (const box of d.querySelectorAll(".selection-review input")) box.click();
   q("#run").click();
   const unnamed = [...d.querySelectorAll("input,select,textarea")].filter((e) => !(e.closest("label") || e.getAttribute("aria-label") || (e.id && d.querySelector('label[for="' + e.id + '"]')))).length;
   return unnamed + "#" + q("#error").textContent + "|" + aiCards + "|" + aiStatus.slice(0, 5) + "|" + q("#result").innerText.replace(/\s+/g, " ") + "|" + [...d.querySelectorAll("#result a")].map((x) => x.getAttribute("href")).join(",") + "@" + d.querySelectorAll("#result .offv").length + "^" + feeVal + "^" + feeHint.slice(0, 30) + "^" + depVal + "^" + depKind + "^" + depRestored + "^" + depManual + "~" + aiClosedDefault + "~" + aiOpensOnDemand;
@@ -206,6 +218,7 @@ function uiTour(d) {
   setVal(q("#ai-reply"), "no json here");
   click("#load-reply");
   snap("reply: no json", q("#ai-status"));
+  setVal(q("#story-text"), "בדיקה כללי קרן שלא קיימת");
   setVal(q("#ai-reply"), '{"events":[{"type":"start","date":"2018-01-01","fundName":"בדיקה כללי"},{"type":"track","date":"2019-01-01","fundName":"קרן שלא קיימת"}]}');
   click("#load-reply");
   snap("reply: loaded", q("#ai-status"));
@@ -225,7 +238,7 @@ function assertResult(dom) {
   check(unnamed === "0", "every form control has an accessible name (" + unnamed + " without)");
   check(err === "", "no error shown");
   check(cards === "2", "pasted AI reply replaced the timeline (2 cards)");
-  check(aiStatus === "נטען.", "AI reply resolved the fund name");
+  check(aiStatus === "נטען.", "pasted explicit key survives import");
   check(/6,000/.test(text) && /רווח כולל/.test(text), "result shows deposits and total profit");
   check(/בדיקה מול גמל-נט וביטוח-נט/.test(text) && /01\/2005 - /.test(text), "result ends with per-track verification rows");
   check(/cma\.gov\.il/.test(links || ""), "verification rows link to the official comparison system");
@@ -259,7 +272,7 @@ function staticChecks() {
   check(html.includes('<html lang="' + def + '" dir="' + cat.languages[def].dir + '">'), "html lang/dir set (the catalog's default language)");
   check(/<select id="lang"><\/select>/.test(html), "language picker has no options of its own (they come from the catalog)");
   check(/og:image/.test(html) && /rel="icon"/.test(html) && /name="description"/.test(html), "preview, icon and description meta present");
-  for (const f of ["og.png", "favicon.svg", "robots.txt", "sitemap.xml", ".well-known/security.txt", "data/funds.json"]) check(fs.existsSync(path.join(root, f)), f + " exists");
+  for (const f of ["og.png", "favicon.svg", "robots.txt", "sitemap.xml", ".well-known/security.txt", "data/funds.json", "data/pension.json", "data/catalog.json", "catalog.js"]) check(fs.existsSync(path.join(root, f)), f + " exists");
 }
 
 module.exports = { root, story, fragment, fixtureFragment, check, serve, domProbe, uiTour, assertResult, assertTour, staticChecks };

@@ -5,6 +5,8 @@ const path = require("node:path");
 
 const data = JSON.parse(fs.readFileSync(path.join(__dirname, "../docs/data/funds.json"), "utf8"));
 
+data.funds = data.funds.concat(JSON.parse(fs.readFileSync(path.join(__dirname, "../docs/data/pension.json"), "utf8")));
+
 test("bundled data has the expected shape", () => {
   assert.ok(data.funds.length > 500);
   assert.ok(data.latest >= 202401);
