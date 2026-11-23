@@ -64,3 +64,14 @@ test("unmarked local context cannot enter either MCP story-link route", () => {
   assert.strictEqual(res.result.isError, true);
   assert.strictEqual(JSON.parse(res.result.content[0].text).url, undefined);
 });
+
+test("both link routes refuse every supplied context, including unsupported raw report fields", () => {
+  for (const context of [{rawStatement:"SYNTHETIC_ONLY"},{nested:{raw:"SYNTHETIC_ONLY"}},["SYNTHETIC_ONLY"],"SYNTHETIC_ONLY",{},[],"",0,false]) {
+    const candidate={...story,context};
+    assert.throws(()=>link(candidate),/local file import/);
+    const response=handle({jsonrpc:"2.0",id:201,method:"tools/call",params:{name:"build_story_link",arguments:{story:candidate}}});
+    assert.strictEqual(response.result.isError,true);
+    assert.strictEqual(JSON.parse(response.result.content[0].text).url,undefined);
+  }
+  for(const candidate of [story,{...story,context:null}])assert.ok(link(candidate).includes("#story="));
+});

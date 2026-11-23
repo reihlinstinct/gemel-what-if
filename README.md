@@ -72,7 +72,8 @@ an explicit review boundary, not a claim that mention-matching proves chronology
 
 Use the existing **Load from file** input for private JSON stories. Recognized local `context`
 is treated as private automatically; `private: true` also protects stories without context.
-Language changes and MCP link generation will not re-encode these stories. Export, change
+Language changes will not re-encode recognized local context. MCP link generation rejects any
+supplied non-null context, including unsupported fields, rather than serializing unknown report text. Export, change
 language in a new window and import again instead. No private data belongs in a
 repository, issue, screenshot artifact or shared story URL. Imported stories are
 not uploaded; live verification sends only public fund IDs to data.gov.il. This is not access control:
