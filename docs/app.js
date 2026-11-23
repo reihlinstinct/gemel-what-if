@@ -516,14 +516,24 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     funds = W.indexFunds(d);
     $("#end").value = W.toLabel(W.toIndex(W.defaultEnd({ events: [] }, funds, d.latest))) + "-01";
     $("#data-info").textContent = t("data.info", { latest: W.toLabel(W.toIndex(d.latest)), count: d.funds.length });
-    let loaded = false;
-    try {
-      const tl = fromFragment();
-      if (tl && Array.isArray(tl.events)) { loadTimeline(tl); loaded = true; }
-    } catch (e) {
-      $("#error").textContent = t("error.bad_link", { msg: errText(e) });
-    }
-    if (!loaded) addCard("start");
+    const loadFragment = () => {
+      if (!location.hash.startsWith("#story=")) return false;
+      // A new URL must not keep displaying a previous story's calculation.
+      $("#result").textContent = "";
+      try {
+        const tl = fromFragment();
+        loadTimeline(tl);
+        $("#error").textContent = "";
+        return true;
+      } catch (e) {
+        $("#error").textContent = t("error.bad_link", { msg: errText(e) });
+        return false;
+      }
+    };
+    if (!loadFragment()) addCard("start");
+    // Fragment-only navigation does not reload this document. Handle incoming
+    // story links and browser Back/Forward after the catalog is ready.
+    window.addEventListener("hashchange", loadFragment);
     $("#add-event").onclick = () => addCard("deposit");
     $("#fork-btn").onclick = () => forkFrom(null);
     $("#unfork-btn").onclick = unfork;
