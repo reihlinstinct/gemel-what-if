@@ -135,3 +135,15 @@ test("Gemini wrong-product ranked key is rejected before returning a story, incl
   assert.strictEqual((await response.json()).code,"story_invalid");
   assert.strictEqual(calls,3);
 });
+
+test("both Worker model paths mark reversed AI assignments as event-review proposals", async () => {
+  const reversed={end:"2026-06",events:[{type:"start",date:"2026-01",fundKey:"p:2155",amount:1000},{type:"track",date:"2026-02",fundKey:"i:259012"}]};
+  for(const geminiMode of [false,true]){
+    const ai={run:async()=>({response:JSON.stringify(reversed)})};
+    const opts={data,ai};
+    if(geminiMode)Object.assign(opts,{gemini:"synthetic",caps:{get:async()=>"0",put:async()=>{}},fetchImpl:async()=>new Response(JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify(reversed)}]}}]}))});
+    const response=await createHandler(opts)(post("/api/story",{text:"Started i:259012, then switched to p:2155"},{origin:ORIGIN}));
+    assert.strictEqual(response.status,200);
+    const body=await response.json();assert(body.story.events.every(e=>e.selectionReviewRequired===true));
+  }
+});

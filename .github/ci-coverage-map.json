@@ -134,6 +134,13 @@
       "checks": [
         "test"
       ]
+    },
+    {
+      "pattern": "e2e/confirmation.js",
+      "checks": [
+        "e2e",
+        "e2e-webkit"
+      ]
     }
   ]
 }

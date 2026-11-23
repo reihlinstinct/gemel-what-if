@@ -683,6 +683,14 @@
     "error.data_load": {
       "he": "לא ניתן לטעון מאגר נתונים מלא ותקין. לא בוצע חישוב. נסו לטעון את העמוד מחדש.",
       "fr": "Impossible de charger un catalogue complet et valide. Aucun calcul n'a été effectué. Rechargez la page."
+    },
+    "selection.confirm": {
+      "he": "בדקתי שהמסלול והתאריך באירוע הזה תואמים לסיפור המקורי.",
+      "fr": "J'ai vérifié que le fonds et la date de cet événement correspondent au récit original."
+    },
+    "selection.pending": {
+      "he": "לפני חישוב, בדקו ואשרו בכל אירוע AI את המסלול ואת התאריך מול הסיפור המקורי.",
+      "fr": "Avant le calcul, vérifiez et confirmez le fonds et la date de chaque événement IA par rapport au récit original."
     }
   }
 }

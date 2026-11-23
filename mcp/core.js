@@ -25,7 +25,7 @@ function createCore(DATA) {
     required: ["events"],
   };
 
-  function validate(story) {
+  function validate(story, proposal = false) {
     const errors = [];
     const warnings = [];
     if (!story || !Array.isArray(story.events)) return { errors: ["events must be an array"], warnings };
@@ -53,7 +53,7 @@ function createCore(DATA) {
     });
     if (!errors.length) {
       try {
-        W.runTimeline(story, FUNDS, DATA.latest);
+        W.runTimeline(proposal ? { ...story, events: story.events.map(e => { const copy = { ...e }; delete copy.selectionReviewRequired; return copy; }) } : story, FUNDS, DATA.latest);
       } catch (err) {
         errors.push(String(err.message));
       }
@@ -132,7 +132,7 @@ function createCore(DATA) {
   }
 
 
-  return { handle, validate, link, TOOLS };
+  return { handle, validate, validateProposal: story => validate(story, true), link, TOOLS };
 }
 
 module.exports = { createCore };

@@ -134,6 +134,7 @@ function domProbe(d) {
   const depRestored = (q(".card .pdepfee") || {}).value || "";
   const depManual = (q(".card .pdepfee") || {}).dataset.manual || "";
   q("#story-text").value = "x";
+  for (const box of d.querySelectorAll(".selection-review input")) box.click();
   q("#run").click();
   const unnamed = [...d.querySelectorAll("input,select,textarea")].filter((e) => !(e.closest("label") || e.getAttribute("aria-label") || (e.id && d.querySelector('label[for="' + e.id + '"]')))).length;
   return unnamed + "#" + q("#error").textContent + "|" + aiCards + "|" + aiStatus.slice(0, 5) + "|" + q("#result").innerText.replace(/\s+/g, " ") + "|" + [...d.querySelectorAll("#result a")].map((x) => x.getAttribute("href")).join(",") + "@" + d.querySelectorAll("#result .offv").length + "^" + feeVal + "^" + feeHint.slice(0, 30) + "^" + depVal + "^" + depKind + "^" + depRestored + "^" + depManual + "~" + aiClosedDefault + "~" + aiOpensOnDemand;

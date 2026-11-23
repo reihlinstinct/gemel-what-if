@@ -120,7 +120,8 @@ export function createHandler({ data, ai, catalog = null, gemini = null, caps = 
         contents.push({ role: "user", parts: [{ text: "Invalid JSON: " + e.message + ". Reply with ONLY the JSON object." }] });
         continue;
       }
-      const v = mcp.validate(story.story);
+      story.story = prompt.requireSelectionReview(story.story);
+      const v = mcp.validateProposal(story.story);
       if (!v.errors.length) return { story: story.story, resolved: story.resolved, warnings: v.warnings };
       if (retries++ >= MAX_RETRIES) throw fail("story_invalid", { details: v.errors.slice(0, 3).join("; ") });
       contents.push({ role: "user", parts: [{ text: "Validation errors: " + v.errors.join("; ") + ". Fix them and reply with ONLY the corrected JSON object." }] });
@@ -157,7 +158,8 @@ export function createHandler({ data, ai, catalog = null, gemini = null, caps = 
         messages.push({ role: "assistant", content: String(res.response || "") }, { role: "user", content: "Invalid JSON: " + e.message + ". Reply with ONLY the JSON object." });
         continue;
       }
-      const v = mcp.validate(story.story);
+      story.story = prompt.requireSelectionReview(story.story);
+      const v = mcp.validateProposal(story.story);
       if (!v.errors.length) return { story: story.story, resolved: story.resolved, warnings: v.warnings };
       if (retries++ >= MAX_RETRIES) throw fail("story_invalid", { details: v.errors.slice(0, 3).join("; ") });
       messages.push({ role: "assistant", content: JSON.stringify(story.story) }, { role: "user", content: "Validation errors: " + v.errors.join("; ") + ". Fix them and reply with ONLY the corrected JSON object." });

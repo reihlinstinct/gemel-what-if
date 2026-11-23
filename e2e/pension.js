@@ -35,6 +35,7 @@ async function verify(browser) {
  check(await page.locator("#statement-reference").count()===0,"a new import clears stale modeled results and prior statement reference");
  } finally { await page.close(); server.close(); }
  await require("./catalog.js").verify(browser);
+ await require("./confirmation.js").verify(browser);
 }
 module.exports = {verify};
 if(require.main===module) (async()=>{let browser;try {

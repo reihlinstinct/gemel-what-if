@@ -56,6 +56,13 @@ legacy products behind the newest source. Both Worker and browser pasted-AI path
 text provenance. A single attached Hebrew ב or ל prefix is accepted for a unique full name;
 ambiguous names still require an explicit track key or manual selection.
 
+AI-generated fund assignments are proposals, not verified event-to-source bindings. Every generated
+start/transfer/product/track event requires its own date-and-track confirmation before calculation.
+Both Worker output and pasted AI replies carry this requirement. Editing that event clears its
+confirmation. Exported unconfirmed proposals remain blocked in the engine and MCP; manual or
+previously confirmed explicit-key stories do not acquire a new confirmation requirement. This is
+an explicit review boundary, not a claim that mention-matching proves chronology.
+
 ## Private statement imports
 
 Use the existing **Load from file** input for private JSON stories. Recognized local `context`

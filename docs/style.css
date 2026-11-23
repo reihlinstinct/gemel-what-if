@@ -87,3 +87,6 @@ a{color:#0b4fb3}
 .card .scope-l{display:none!important}
 /* Longer translated labels must shrink inside the mobile scenario columns. */
 .col{min-width:0;overflow-wrap:anywhere}
+.selection-review{display:flex;align-items:flex-start;gap:.6rem;margin:.8rem 0 0;line-height:1.5}
+.selection-review input[type=checkbox]{width:24px;height:24px;min-height:24px;flex:0 0 24px;padding:0;margin:.1rem 0 0}
+.selection-review span{min-width:0;overflow-wrap:anywhere}

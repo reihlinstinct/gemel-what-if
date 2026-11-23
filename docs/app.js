@@ -169,6 +169,19 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       if (v) fill(card, v);
     };
     render(type, values);
+    if (values && values.selectionReviewRequired === true) {
+      const label = document.createElement("label");
+      label.className = "warn selection-review";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      const text = document.createElement("span");
+      text.textContent = t("selection.confirm");
+      label.append(checkbox, text);
+      card.append(label);
+      const invalidate = event => { if (event.target !== checkbox) checkbox.checked = false; $("#result").textContent = ""; };
+      card.addEventListener("input", invalidate);
+      card.addEventListener("change", invalidate);
+    }
     const sc = $(".scope", card);
     const BADGES = { both: "", actual: t("scope.actual"), whatif: t("scope.whatif") };
     const paint = () => {
@@ -203,6 +216,8 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const type = card.dataset.type;
     const num = (s) => Number($(s, card).value) || 0;
     const e = { type };
+    const review = $(".selection-review input", card);
+    if (review && !review.checked) e.selectionReviewRequired = true;
     e.scope = $(".scope", card).value;
     if (type === "monthly") { e.from = $(".from", card).value; e.to = $(".to", card).value || undefined; e.amount = num(".amount"); }
     else { e.date = $(".date", card).value; }
@@ -354,8 +369,10 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
 
   function run() {
     $("#error").textContent = "";
+    $("#result").textContent = "";
     try {
       const tl = readTimeline();
+      if (tl.events.some(e => e.selectionReviewRequired === true)) throw new Error(t("selection.pending"));
       const c = W.runTimeline(tl, funds, data.latest);
       const warn = c.actual.warnings.missingMonths + c.whatIf.warnings.missingMonths;
       const cls = c.diff >= 0 ? "pos" : "neg";
@@ -518,7 +535,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
         const res = await fetch(WORKER_URL + "/api/story", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text }) });
         const body = await res.json();
         if (!res.ok) throw new Error(workerError(body) || t("ai.http_error", { status: res.status }));
-        loadTimeline(body.story);
+        loadTimeline(StoryPrompt.requireSelectionReview(body.story));
         $("#ai-status").textContent = t("ai.loaded", { notes: (body.warnings || []).length ? t("ai.notes", { list: body.warnings.join("; ") }) : "" });
         $("#error").textContent = "";
       } catch (e) { $("#ai-status").textContent = t("ai.failed", { msg: errText(e) }); }
@@ -533,7 +550,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     $("#load-reply").onclick = () => {
       try {
         const r = StoryPrompt.resolveFunds(StoryPrompt.groundGenerated(StoryPrompt.extractJson($("#ai-reply").value), $("#story-text").value, funds), (name) => W.searchFunds(data, name, 3));
-        loadTimeline(r.story);
+        loadTimeline(StoryPrompt.requireSelectionReview(r.story));
         const lines = r.resolved.map((x) => "\"" + x.asked + "\" -> " + x.got);
         $("#ai-status").textContent = t("reply.loaded", { lines: lines.join("; ") || "-", missing: r.missing.length ? t("reply.missing", { list: r.missing.join(", ") }) : "" });
         $("#error").textContent = "";

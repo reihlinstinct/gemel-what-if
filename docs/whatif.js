@@ -188,6 +188,7 @@
 
   /** Run the whole timeline twice (actual / what-if scopes) and compare total profit. */
   function runTimeline(timeline, funds, latest) {
+    if ((timeline.events || []).some(e => e && e.selectionReviewRequired === true)) throw new Error("Confirm each AI event's date and track before calculating");
     latest = defaultEnd(timeline, funds, latest);
     const actual = simulate(timelineToStory(timeline, "actual"), funds, latest);
     const whatIf = simulate(timelineToStory(timeline, "whatif"), funds, latest);
@@ -350,12 +351,14 @@
     const parts = words(q).map(p => p === "ibi" ? "ibi" : ALIASES[p] || p);
     const exactKey = data.funds.filter(f => String(f.key || "").toLowerCase() === q);
     if (exactKey.length) return exactKey.slice(0, limit || 30);
+    const wantsPension = parts.some(p => ["פנסיה", "פנסיוני", "pension"].includes(p));
+    const explicitInsurance = parts.some(p => ["ביטוח", "פוליסה", "insurance"].includes(p));
+    if (wantsPension && explicitInsurance) return [];
     const exact = data.funds.filter(f => canonicalName(f.name) === canonicalName(q));
     if (exact.length) return exact.slice(0, limit || 30);
     const companies = new Set(Object.values(ALIASES).map(normalize));
     const companyTerms = parts.filter(p => companies.has(p));
-    const wantsPension = parts.some(p => ["פנסיה", "פנסיוני", "pension"].includes(p));
-    const wantsInsurance = !wantsPension && parts.some(p => ["ביטוח", "מנהלים", "פוליסה", "insurance", "managers"].includes(p));
+    const wantsInsurance = explicitInsurance || !wantsPension && parts.some(p => ["מנהלים", "managers"].includes(p));
     const wantsHishtalmut = parts.some(p => ["השתלמות", "hishtalmut"].includes(p));
     const wantsGemel = parts.some(p => ["גמל", "gemel"].includes(p));
     const descriptors = new Set(GENERIC.concat(["פנסיה", "פנסיוני", "pension", "hishtalmut"]));
