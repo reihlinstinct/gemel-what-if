@@ -186,9 +186,19 @@
     return Math.min(Number(latest), ...ends);
   }
 
+  // A deterministic value snapshot catches stale edits. It is not a signature or
+  // proof of human identity; callers can intentionally construct metadata.
+  function selectionSnapshot(event) {
+    const values = {};
+    for (const key of Object.keys(event).sort()) {
+      if (!["aiGenerated", "selectionReviewRequired", "selectionReviewedValues"].includes(key) && event[key] !== undefined) values[key] = event[key];
+    }
+    return JSON.stringify(values);
+  }
+
   /** Run the whole timeline twice (actual / what-if scopes) and compare total profit. */
   function runTimeline(timeline, funds, latest) {
-    if ((timeline.events || []).some(e => e && (e.selectionReviewRequired === true || e.aiGenerated === true && e.selectionReviewRequired !== false))) throw new Error("Confirm each AI event's date and track before calculating");
+    if ((timeline.events || []).some(e => e && (e.selectionReviewRequired === true || e.aiGenerated === true && (e.selectionReviewRequired !== false || e.selectionReviewedValues !== selectionSnapshot(e))))) throw new Error("Confirm each AI event's date and track before calculating");
     latest = defaultEnd(timeline, funds, latest);
     const actual = simulate(timelineToStory(timeline, "actual"), funds, latest);
     const whatIf = simulate(timelineToStory(timeline, "whatif"), funds, latest);
@@ -473,5 +483,5 @@
     return { value: cumulativeYield(months), missing, months: months.length };
   }
 
-  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, canonicalName, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline, defaultEnd, phasePeriods, OFFICIAL_SOURCES, officialResources, officialRowsUrl, cumulativeYield, localCumulative, periodOf };
+  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, canonicalName, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline, defaultEnd, selectionSnapshot, phasePeriods, OFFICIAL_SOURCES, officialResources, officialRowsUrl, cumulativeYield, localCumulative, periodOf };
 });

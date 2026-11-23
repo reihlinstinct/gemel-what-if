@@ -176,9 +176,13 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       checkbox.type = "checkbox";
       const text = document.createElement("span");
       text.textContent = t("selection.confirm");
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) checkbox.dataset.reviewedValues = W.selectionSnapshot(readEvent(card));
+        else delete checkbox.dataset.reviewedValues;
+      });
       label.append(checkbox, text);
       card.append(label);
-      const invalidate = event => { if (event.target !== checkbox) checkbox.checked = false; $("#result").textContent = ""; };
+      const invalidate = event => { if (event.target !== checkbox) { checkbox.checked = false; delete checkbox.dataset.reviewedValues; } $("#result").textContent = ""; };
       card.addEventListener("input", invalidate);
       card.addEventListener("change", invalidate);
     }
@@ -220,6 +224,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     if (review) {
       e.aiGenerated = true;
       e.selectionReviewRequired = !review.checked;
+      if (review.checked) e.selectionReviewedValues = review.dataset.reviewedValues;
     }
     e.scope = $(".scope", card).value;
     if (type === "monthly") { e.from = $(".from", card).value; e.to = $(".to", card).value || undefined; e.amount = num(".amount"); }

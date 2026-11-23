@@ -10,6 +10,11 @@ async function verify(browser){
   const blocked=async()=>{await p.locator('#run').click();assert.equal(await p.locator('#result table').count(),0);assert((await p.locator('#error').innerText()).length>0);};
   await p.goto(base);await p.waitForSelector('#timeline .card');await importStory(story);await confirm();
   const d=p.waitForEvent('download');await p.locator('#export').click();const dl=await d;const saved=JSON.parse(fs.readFileSync(await dl.path()));assert(saved.events.every(e=>e.aiGenerated===true&&e.selectionReviewRequired===false));
+  const W=require('../docs/whatif.js');
+  const data=require('../docs/catalog.js').assemble(require('../docs/data/funds.json'),require('../docs/data/pension.json'));
+  assert(W.runTimeline(saved,W.indexFunds(data),data.latest).actual.final>0);
+  const edited=JSON.parse(JSON.stringify(saved));edited.events[0].date='2026-02-01';
+  assert.throws(()=>W.runTimeline(edited,W.indexFunds(data),data.latest),/Confirm each AI/);
   await importStory(saved);assert.equal(await p.locator('.selection-review input').count(),2);await p.locator('.card.start .date').fill('2026-01-02');await blocked();await confirm();
   // Unfork and fork reconstruct cards from readEvent; provenance must survive.
   await p.locator('#fork-btn').click();await p.locator('#unfork-btn').click();

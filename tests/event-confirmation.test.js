@@ -22,7 +22,7 @@ test('reversed AI assignments require per-event confirmation even when all keys 
  assert(P.requireSelectionReview(forged).events.every(e=>e.selectionReviewRequired===true));
  const onePending={...proposal,events:proposal.events.map((e,i)=>i?e:{...e,selectionReviewRequired:false})};
  assert.throws(()=>W.runTimeline(onePending,funds,data.latest),/Confirm each AI/);
- const confirmed={...proposal,events:proposal.events.map(e=>{const x={...e};x.selectionReviewRequired=false;return x;})};
+ const confirmed={...proposal,events:proposal.events.map(e=>{const x={...e};x.selectionReviewRequired=false;x.selectionReviewedValues=W.selectionSnapshot(x);return x;})};
  assert.equal(W.runTimeline(confirmed,funds,data.latest).actual.final,W.runTimeline(reversed,funds,data.latest).actual.final);
 });
 
@@ -31,6 +31,21 @@ test('AI origin survives confirmation and cannot lose its confirmation requireme
  const proposal=P.requireSelectionReview(raw);assert.equal(proposal.events[0].aiGenerated,true);
  assert.throws(()=>W.runTimeline({...raw,events:[{...raw.events[0],aiGenerated:true}]},funds,data.latest),/Confirm each AI/);
  const confirmed={...raw,events:[{...raw.events[0],aiGenerated:true,selectionReviewRequired:false}]};
+ confirmed.events[0].selectionReviewedValues=W.selectionSnapshot(confirmed.events[0]);
  assert(W.runTimeline(confirmed,funds,data.latest).actual.final>0);
  assert.deepEqual(core.validateProposal(proposal).errors,[]);
+});
+
+test('ordinary MCP rejects stale confirmation after direct date/fund/fee/scope edits',()=>{
+ const event={type:'start',date:'2026-01',fundKey:'p:2155',amount:1000,aiGenerated:true,selectionReviewRequired:false};
+ event.selectionReviewedValues=W.selectionSnapshot(event);
+ const story={end:'2026-06',events:[event]};
+ assert.deepEqual(core.validate(story).errors,[]);
+ assert(core.TOOLS.compute_story.run({story}).actual.finalValue>0);
+ for(const change of [{date:'2026-02'},{fundKey:'p:2105'},{amount:2000},{depositFeePct:2},{scope:'actual'}]){
+  const edited={...story,events:[{...event,...change}]};
+  assert(core.validate(edited).errors.length>0);
+  assert(core.TOOLS.compute_story.run({story:edited}).errors.length>0);
+  assert.throws(()=>W.runTimeline(edited,funds,data.latest),/Confirm each AI/);
+ }
 });

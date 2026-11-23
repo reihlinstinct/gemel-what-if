@@ -61,7 +61,10 @@ start/transfer/product/track event requires its own date-and-track confirmation 
 Both Worker output and pasted AI replies carry this requirement. Editing that event clears its
 confirmation. AI-origin provenance remains in exports even after confirmation. Reimport, language
 reload and fork/unfork reconstruction reinstate unchecked event confirmations, so a later edit cannot
-lose the review boundary. Exported unconfirmed proposals remain blocked in the engine and MCP; manual or
+lose the review boundary. Confirmed exports also include a deterministic snapshot of the reviewed
+event values. Engine and MCP reject stale confirmation after an external edit to those values.
+This is accidental-edit detection, not tamper-proof authentication of a human confirmation.
+Exported unconfirmed proposals remain blocked in the engine and MCP; manual or
 previously confirmed explicit-key stories do not acquire a new confirmation requirement. This is
 an explicit review boundary, not a claim that mention-matching proves chronology.
 
