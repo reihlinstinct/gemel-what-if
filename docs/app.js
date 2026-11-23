@@ -424,6 +424,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
   };
 
   function loadTimeline(tl) {
+    if (!tl || !Array.isArray(tl.events) || tl.events.some(e => !e || typeof e !== "object" || typeof e.type !== "string" || (e.fundKey !== undefined && typeof e.fundKey !== "string"))) throw new Error("Invalid timeline events or fund key");
     storyContext = StatementContext.normalize(tl.context);
     privateStory = tl.private === true || Boolean(storyContext);
     $("#result").textContent = "";
@@ -531,7 +532,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     };
     $("#load-reply").onclick = () => {
       try {
-        const r = StoryPrompt.resolveFunds(StoryPrompt.extractJson($("#ai-reply").value), (name) => W.searchFunds(data, name, 3));
+        const r = StoryPrompt.resolveFunds(StoryPrompt.groundGenerated(StoryPrompt.extractJson($("#ai-reply").value), $("#story-text").value, funds), (name) => W.searchFunds(data, name, 3));
         loadTimeline(r.story);
         const lines = r.resolved.map((x) => "\"" + x.asked + "\" -> " + x.got);
         $("#ai-status").textContent = t("reply.loaded", { lines: lines.join("; ") || "-", missing: r.missing.length ? t("reply.missing", { list: r.missing.join(", ") }) : "" });

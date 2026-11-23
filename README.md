@@ -50,6 +50,11 @@ otherwise select the intended track explicitly. The picker does not auto-select 
 first result. English company aliases follow the same rules. Explicit valid keys in locally
 imported stories remain unchanged. Generated AI keys require the exact key or exact full track
 name in the original request, so a ranked model guess cannot silently choose another product.
+Names equivalent after whitespace/hyphen normalization remain ambiguous, including legacy/current
+siblings with different fees. Company-only results include matching products rather than hiding
+legacy products behind the newest source. Both Worker and browser pasted-AI paths check original
+text provenance. A single attached Hebrew ב or ל prefix is accepted for a unique full name;
+ambiguous names still require an explicit track key or manual selection.
 
 ## Private statement imports
 
@@ -115,7 +120,8 @@ A story can be loaded from a link of the form `index.html#story=<base64url JSON>
 
 The bottom of the result lists every track the money sat in and the exact years for it, with a link to
 [Gemel-Net](https://gemelnet.cma.gov.il/views/gemelTsuot.aspx) (gemel/hishtalmut tracks, by fund number) or
-[Insurance-Net](https://bituachnet.cma.gov.il/bituachTsuotUI/Tsuot/UI/bituachTsuotUI.aspx) (insurance-policy tracks).
+[Insurance-Net](https://bituachnet.cma.gov.il/bituachTsuotUI/Tsuot/UI/bituachTsuotUI.aspx) (insurance-policy tracks),
+or [PensionNet](https://pensyanet.cma.gov.il/Home/What) (pension tracks).
 Those systems cannot replay a sequence of track switches, so each phase is checked separately. Their reports are
 session-bound (no deep link into a fund+period report; query-string parameters are ignored), so the link opens the
 report page where you pick the fund and period yourself. Gemel-Net's minimum report period is 12 months, so a
@@ -166,7 +172,7 @@ Tools: `search_tracks`, `validate_story`, `build_story_link`, `compute_story`.
 
 ## Free-text story (no server)
 
-The "תיאור חופשי עם AI" section builds a prompt from the person's text. They paste it into any AI chat, then paste the JSON reply back. `docs/prompt.js` extracts the JSON and maps `fundName` to a track by search (shown for review). Nothing is sent by the site.
+The "תיאור חופשי עם AI" section builds a prompt from the person's text. They paste it into any AI chat, then paste the JSON reply back. `docs/prompt.js` extracts the JSON, checks proposed keys/names against the original text, and maps `fundName` only when search gives one unambiguous track. Otherwise the person selects the track explicitly. Nothing is sent by the site.
 
 ## Worker (remote MCP and AI text box)
 

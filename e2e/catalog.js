@@ -7,6 +7,8 @@ const { serve } = require("./shared");
 const catalog = require("../docs/i18n/strings.json");
 async function verify(browser) {
   const {server,base} = await serve({offline:true});
+  const evidence = process.env.E2E_SCREENSHOT_DIR || path.join(require("node:os").tmpdir(), "gemel-pension-"+browser.browserType().name());
+  fs.mkdirSync(evidence,{recursive:true});
   try {
     for (const [name,status,body] of [["404-json",404,"[]"],["503-nonjson",503,"Unavailable"],["200-invalid",200,"{}"],["200-empty",200,"[]"]]) {
       const page = await browser.newPage({viewport:{width:390,height:844}});
@@ -22,7 +24,7 @@ async function verify(browser) {
       assert.deepEqual(errors,[]);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
       if(name==="503-nonjson") {
-        const dir=process.env.E2E_SCREENSHOT_DIR;
+        const dir=evidence;
         if(dir) {fs.mkdirSync(dir,{recursive:true});await page.locator("#load-error").screenshot({path:path.join(dir,"catalog-failure-390.png")});await page.screenshot({path:path.join(dir,"catalog-failure-page-390.png"),fullPage:true});}
       }
       await page.close();
@@ -37,14 +39,30 @@ async function verify(browser) {
     const choices=await picker.locator('option').allTextContents();
     assert(choices.length>1);
     assert(choices.every(text=>/(^|[^\p{L}])כלל([^\p{L}]|$)/u.test(text)));
-    if(process.env.E2E_SCREENSHOT_DIR) {
-      fs.mkdirSync(process.env.E2E_SCREENSHOT_DIR,{recursive:true});
-      await picker.screenshot({path:path.join(process.env.E2E_SCREENSHOT_DIR,'ambiguous-company-picker-390.png')});
+    if(evidence) {
+      fs.mkdirSync(evidence,{recursive:true});
+      await picker.screenshot({path:path.join(evidence,'ambiguous-company-picker-390.png')});
     }
     await page.locator('#run').click();
     assert((await page.locator('#error').innerText()).length>0);
     await picker.locator('input').fill('p:2155');
     assert.equal(await picker.getAttribute('data-fund'),'p:2155');
+    // Browser AI-paste path uses the original story, not fabricated model keys.
+    await page.locator('#ai-section summary').first().click();
+    await page.locator('#ai-section details.adv summary').click();
+    await page.locator('#story-text').fill('כלל');
+    await page.locator('#ai-reply').fill(JSON.stringify({end:'2026-06',events:[{type:'start',date:'2026-01',fundKey:'p:2009',amount:1000}]}));
+    await page.locator('#load-reply').click();
+    assert(!(await page.locator('#timeline .fundpick').first().getAttribute('data-fund')));
+    await page.locator('#story-text').fill('מיטב פנסיה מקיפה לבני 50 ומטה');
+    await page.locator('#ai-reply').fill(JSON.stringify({end:'2026-06',events:[{type:'start',date:'2026-01',fundName:'מיטב פנסיה מקיפה לבני 50 ומטה',amount:1000}]}));
+    await page.locator('#load-reply').click();
+    assert.equal(await page.locator('#timeline .fundpick').first().getAttribute('data-fund'),'p:2155');
+    await page.locator('#story-text').fill('אינפיניטי השתלמות כללי');
+    await page.locator('#ai-reply').fill(JSON.stringify({end:'2026-06',events:[{type:'start',date:'2026-01',fundKey:'g:1083',fundName:'אינפיניטי השתלמות כללי',amount:1000}]}));
+    await page.locator('#load-reply').click();
+    assert(!(await page.locator('#timeline .fundpick').first().getAttribute('data-fund')));
+    if(evidence) await page.locator('#timeline .fundpick').first().screenshot({path:path.join(evidence,'sibling-name-unselected-390.png')});
     const legacy={events:[{type:"start",date:"2026-09",fundKey:"g:103",amount:1000},{type:"monthly",from:"2026-09",amount:100}]};
     await page.locator("#import").setInputFiles({name:"legacy.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(legacy))});
     await page.waitForSelector('#timeline .fundpick[data-fund="g:103"]');
@@ -62,7 +80,7 @@ async function verify(browser) {
     assert.equal(page.url(),before);
     assert(!page.url().includes("story="));
     assert((await page.locator("#error").innerText()).length>0);
-    if(process.env.E2E_SCREENSHOT_DIR) await page.locator("#error").screenshot({path:path.join(process.env.E2E_SCREENSHOT_DIR,"context-no-reencoding-390.png")});
+    if(evidence) await page.locator("#error").screenshot({path:path.join(evidence,"context-no-reencoding-390.png")});
     const download=page.waitForEvent("download");await page.locator("#export").click();
     const dl=await download;assert.equal(JSON.parse(fs.readFileSync(await dl.path())).private,true);
     await page.close();

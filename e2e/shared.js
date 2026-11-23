@@ -105,6 +105,7 @@ function domProbe(d) {
   const aiClosedDefault = aiSection.open === false;
   aiSection.querySelector("summary").click();
   const aiOpensOnDemand = aiSection.open === true;
+  q("#story-text").value = "i:259012";
   q("#ai-reply").value = 'ok {"events":[{"type":"start","date":"2005-01-01","fundKey":"i:259012"},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';
   q("#load-reply").click();
   const aiCards = d.querySelectorAll(".card").length;
@@ -127,6 +128,7 @@ function domProbe(d) {
   }
   const depHint = ((q(".card .feeavg") || {}).textContent || "");
   const depKind = depHint.includes("מהפקדה ממוצעים רשמיים") ? "depavg" : (depHint.includes("אין נתון דמי ניהול מהפקדה") ? "depnone" : "depmissing");
+  q("#story-text").value = "i:259012";
   q("#ai-reply").value = 'ok {"events":[{"type":"start","date":"2005-01-01","fundKey":"i:259012","depositFeePct":0.7},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';
   q("#load-reply").click();
   const depRestored = (q(".card .pdepfee") || {}).value || "";
@@ -215,6 +217,7 @@ function uiTour(d) {
   setVal(q("#ai-reply"), "no json here");
   click("#load-reply");
   snap("reply: no json", q("#ai-status"));
+  setVal(q("#story-text"), "בדיקה כללי קרן שלא קיימת");
   setVal(q("#ai-reply"), '{"events":[{"type":"start","date":"2018-01-01","fundName":"בדיקה כללי"},{"type":"track","date":"2019-01-01","fundName":"קרן שלא קיימת"}]}');
   click("#load-reply");
   snap("reply: loaded", q("#ai-status"));

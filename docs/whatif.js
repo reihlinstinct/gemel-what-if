@@ -171,7 +171,8 @@
   // For a new mixed-product story, stop at the earlier source group's latest month.
   function defaultEnd(timeline, funds, latest) {
     if (timeline.end) return timeline.end;
-    const groups = new Set((timeline.events || []).filter(e => e.fundKey).map(e => e.fundKey.startsWith("p:") ? "pension" : "legacy"));
+    if (!Array.isArray(timeline.events) || timeline.events.some(e => !e || typeof e !== "object" || (e.fundKey !== undefined && typeof e.fundKey !== "string"))) throw new Error("Invalid timeline events or fund key");
+    const groups = new Set(timeline.events.filter(e => e.fundKey).map(e => e.fundKey.startsWith("p:") ? "pension" : "legacy"));
     if (!groups.size) groups.add("legacy");
     const ends = [];
     for (const group of groups) {
@@ -338,18 +339,23 @@
   var ALIASES = { clal: "כלל", meitav: "מיטב", migdal: "מגדל", harel: "הראל", phoenix: "הפניקס", menora: "מנורה", altshuler: "אלטשולר", analyst: "אנליסט", psagot: "פסגות", ayalon: "איילון", more: "מור", infinity: "אינפיניטי", ibi: "איי.בי.אי" };
   var GENERIC = ["ביטוח", "מנהלים", "קרן", "קופת", "גמל", "השתלמות", "פוליסה", "מסלול", "insurance", "managers", "gemel", "fund", "track"];
 
+  function canonicalName(value) {
+    return String(value || "").normalize("NFKC").trim().toLowerCase().replace(/\s+/gu, " ").replace(/\s*[-־–—]\s*/gu, "-");
+  }
   function searchFunds(data, query, limit) {
     const q = String(query).trim().toLowerCase();
     if (!q) return [];
-    const normalize = text => String(text || "").toLowerCase().replace(/(?<![\p{L}\p{N}])(?:איי?)[.\s]+בי[.\s]+איי?(?![\p{L}\p{N}])\.?/gu, "ibi");
+    const normalize = text => String(text || "").toLowerCase().replace(/(?<![\p{L}\p{N}])(?:איי?[.\s,־-]*בי[.\s,־-]*איי?|i[.\s,־-]+b[.\s,־-]+i)(?![\p{L}\p{N}])\.?/gu, "ibi");
     const words = text => normalize(text).split(/[^\p{L}\p{N}:]+/u).filter(Boolean);
     const parts = words(q).map(p => p === "ibi" ? "ibi" : ALIASES[p] || p);
-    const exact = data.funds.filter(f => String(f.key || "").toLowerCase() === q || String(f.name || "").trim().toLowerCase() === q);
+    const exactKey = data.funds.filter(f => String(f.key || "").toLowerCase() === q);
+    if (exactKey.length) return exactKey.slice(0, limit || 30);
+    const exact = data.funds.filter(f => canonicalName(f.name) === canonicalName(q));
     if (exact.length) return exact.slice(0, limit || 30);
     const companies = new Set(Object.values(ALIASES).map(normalize));
     const companyTerms = parts.filter(p => companies.has(p));
-    const wantsInsurance = parts.some(p => ["ביטוח", "מנהלים", "פוליסה", "insurance", "managers"].includes(p));
     const wantsPension = parts.some(p => ["פנסיה", "פנסיוני", "pension"].includes(p));
+    const wantsInsurance = !wantsPension && parts.some(p => ["ביטוח", "מנהלים", "פוליסה", "insurance", "managers"].includes(p));
     const wantsHishtalmut = parts.some(p => ["השתלמות", "hishtalmut"].includes(p));
     const wantsGemel = parts.some(p => ["גמל", "gemel"].includes(p));
     const descriptors = new Set(GENERIC.concat(["פנסיה", "פנסיוני", "pension", "hishtalmut"]));
@@ -367,6 +373,12 @@
     // Recency is useful within a product, never evidence that a company-only query
     // identifies that product. Resolution must separately require a unique match.
     hits.sort((a,b) => (b.end-a.end) || ((b.assets || 0)-(a.assets || 0)));
+    if (!wantsInsurance && !wantsPension && !wantsGemel && !wantsHishtalmut) {
+      const groups = ["gemel", "insurance", "pension"].map(src => hits.filter(f => (f.src || (String(f.key).startsWith("i:") ? "insurance" : String(f.key).startsWith("p:") ? "pension" : "gemel")) === src));
+      const diverse = [];
+      for (let i=0; diverse.length<hits.length; i++) for (const group of groups) if (group[i]) diverse.push(group[i]);
+      return diverse.slice(0, limit || 30);
+    }
     return hits.slice(0, limit || 30);
   }
 
@@ -458,5 +470,5 @@
     return { value: cumulativeYield(months), missing, months: months.length };
   }
 
-  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline, defaultEnd, phasePeriods, OFFICIAL_SOURCES, officialResources, officialRowsUrl, cumulativeYield, localCumulative, periodOf };
+  return { toIndex, toLabel, yieldAt, dataRange, simulate, annualizedReturn, withFund, phasesFromSwitches, compare, indexFunds, searchFunds, canonicalName, projectBalance, annuityEstimate, productChangeNotes, timelineToStory, runTimeline, defaultEnd, phasePeriods, OFFICIAL_SOURCES, officialResources, officialRowsUrl, cumulativeYield, localCumulative, periodOf };
 });

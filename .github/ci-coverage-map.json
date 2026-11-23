@@ -114,6 +114,26 @@
       "checks": [
         "links"
       ]
+    },
+    {
+      "pattern": "e2e/catalog.js",
+      "checks": [
+        "e2e",
+        "e2e-webkit"
+      ]
+    },
+    {
+      "pattern": "e2e/pension.js",
+      "checks": [
+        "e2e",
+        "e2e-webkit"
+      ]
+    },
+    {
+      "pattern": "scripts/fetch_data.py",
+      "checks": [
+        "test"
+      ]
     }
   ]
 }
