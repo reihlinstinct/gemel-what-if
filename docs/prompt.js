@@ -44,7 +44,7 @@
 
   /**
    * Replace fundName with a fundKey using searchFn(name) -> array of {key,name}. Returns {story, resolved, missing}.
-   * The best match is used; the caller shows it so the person can correct it.
+   * Only a unique match is used. Ambiguous names remain unselected for the person to resolve.
    */
   function resolveFunds(story, searchFn) {
     var resolved = [];
@@ -53,7 +53,7 @@
       var copy = Object.assign({}, e);
       if (copy.fundName && !copy.fundKey) {
         var hits = searchFn(copy.fundName) || [];
-        if (hits.length) {
+        if (hits.length === 1) {
           copy.fundKey = hits[0].key;
           resolved.push({ asked: copy.fundName, got: hits[0].name, key: hits[0].key });
         } else missing.push(copy.fundName);
@@ -64,5 +64,21 @@
     return { story: Object.assign({}, story, { events: events }), resolved: resolved, missing: missing };
   }
 
-  return { buildPrompt: buildPrompt, extractJson: extractJson, resolveFunds: resolveFunds };
+  function groundGenerated(story, text, funds) {
+    const original = String(text || "").toLowerCase();
+    const bounded = value => {
+      const at = original.indexOf(String(value).toLowerCase());
+      return at >= 0 && !/[\p{L}\p{N}:]/u.test(original[at-1] || " ") && !/[\p{L}\p{N}:]/u.test(original[at+String(value).length] || " ");
+    };
+    return Object.assign({}, story, {events:(story.events || []).map(e => {
+      const copy = Object.assign({}, e);
+      if (copy.fundKey) {
+        const f = funds.get(copy.fundKey);
+        if (!bounded(copy.fundKey) && !(f && f.name && bounded(f.name))) delete copy.fundKey;
+      }
+      if (copy.fundName && !bounded(copy.fundName)) delete copy.fundName;
+      return copy;
+    })});
+  }
+  return { buildPrompt: buildPrompt, extractJson: extractJson, resolveFunds: resolveFunds, groundGenerated: groundGenerated };
 });

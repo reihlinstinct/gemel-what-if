@@ -42,6 +42,15 @@ There is one dense monthly-yield series per track, keyed `g:<id>` for gemel, `i:
 python3 scripts/fetch_data.py   # refresh the data
 ```
 
+## Track selection
+
+Company names and product words constrain search results. A company name or a broad track
+word is not a unique track selection. Name-only JSON is resolved only when one match remains;
+otherwise select the intended track explicitly. The picker does not auto-select an ambiguous
+first result. English company aliases follow the same rules. Explicit valid keys in locally
+imported stories remain unchanged. Generated AI keys require the exact key or exact full track
+name in the original request, so a ranked model guess cannot silently choose another product.
+
 ## Private statement imports
 
 Use the existing **Load from file** input for private JSON stories. Recognized local `context`

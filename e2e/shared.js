@@ -105,7 +105,7 @@ function domProbe(d) {
   const aiClosedDefault = aiSection.open === false;
   aiSection.querySelector("summary").click();
   const aiOpensOnDemand = aiSection.open === true;
-  q("#ai-reply").value = 'ok {"events":[{"type":"start","date":"2005-01-01","fundName":"הראל קרן"},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';
+  q("#ai-reply").value = 'ok {"events":[{"type":"start","date":"2005-01-01","fundKey":"i:259012"},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';
   q("#load-reply").click();
   const aiCards = d.querySelectorAll(".card").length;
   const aiStatus = q("#ai-status").textContent;
@@ -127,7 +127,7 @@ function domProbe(d) {
   }
   const depHint = ((q(".card .feeavg") || {}).textContent || "");
   const depKind = depHint.includes("מהפקדה ממוצעים רשמיים") ? "depavg" : (depHint.includes("אין נתון דמי ניהול מהפקדה") ? "depnone" : "depmissing");
-  q("#ai-reply").value = 'ok {"events":[{"type":"start","date":"2005-01-01","fundName":"הראל קרן","depositFeePct":0.7},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';
+  q("#ai-reply").value = 'ok {"events":[{"type":"start","date":"2005-01-01","fundKey":"i:259012","depositFeePct":0.7},{"type":"monthly","from":"2005-01-01","to":"2005-12-01","amount":500}]} thanks';
   q("#load-reply").click();
   const depRestored = (q(".card .pdepfee") || {}).value || "";
   const depManual = (q(".card .pdepfee") || {}).dataset.manual || "";
@@ -234,7 +234,7 @@ function assertResult(dom) {
   check(unnamed === "0", "every form control has an accessible name (" + unnamed + " without)");
   check(err === "", "no error shown");
   check(cards === "2", "pasted AI reply replaced the timeline (2 cards)");
-  check(aiStatus === "נטען.", "AI reply resolved the fund name");
+  check(aiStatus === "נטען.", "pasted explicit key survives import");
   check(/6,000/.test(text) && /רווח כולל/.test(text), "result shows deposits and total profit");
   check(/בדיקה מול גמל-נט וביטוח-נט/.test(text) && /01\/2005 - /.test(text), "result ends with per-track verification rows");
   check(/cma\.gov\.il/.test(links || ""), "verification rows link to the official comparison system");

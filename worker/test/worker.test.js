@@ -28,7 +28,7 @@ test("AI endpoint: tool-calling loop, then final JSON validated", async () => {
   const seen = [];
   const ai = { run: async (_m, req) => { seen.push(req.messages.length); return replies.shift(); } };
   const h = createHandler({ data, ai });
-  const res = await h(post("/api/story", { text: "פתחתי ב-2005" }, { origin: ORIGIN }));
+  const res = await h(post("/api/story", { text: "פתחתי ב-2005 i:259012" }, { origin: ORIGIN }));
   assert.strictEqual(res.status, 200);
   assert.deepStrictEqual((await res.json()).story.events[0].fundKey, "i:259012");
   assert.ok(seen[1] > seen[0], "tool result was fed back to the model");
@@ -37,7 +37,7 @@ test("AI endpoint: tool-calling loop, then final JSON validated", async () => {
 test("AI endpoint retries with validation errors, then gives up", async () => {
   let calls = 0;
   const ai = { run: async () => { calls++; return { response: JSON.stringify({ events: [{ type: "start", date: "bad", fundKey: "nope" }] }) }; } };
-  const res = await createHandler({ data, ai })(post("/api/story", { text: "x" }, { origin: ORIGIN }));
+  const res = await createHandler({ data, ai })(post("/api/story", { text: "i:259012" }, { origin: ORIGIN }));
   assert.strictEqual(res.status, 502);
   assert.strictEqual(calls, 3);
 });
@@ -45,10 +45,10 @@ test("AI endpoint retries with validation errors, then gives up", async () => {
 test("AI endpoint: origin check, size limit, rate limit", async () => {
   const ai = { run: async () => ({ response: JSON.stringify(GOOD) }) };
   const h = createHandler({ data, ai });
-  assert.strictEqual((await h(post("/api/story", { text: "x" }, { origin: "https://evil.test" }))).status, 403);
+  assert.strictEqual((await h(post("/api/story", { text: "i:259012" }, { origin: "https://evil.test" }))).status, 403);
   assert.strictEqual((await h(post("/api/story", { text: "x".repeat(3000) }, { origin: ORIGIN }))).status, 400);
   let last;
-  for (let i = 0; i < 11; i++) last = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "1.1.1.1" }));
+  for (let i = 0; i < 11; i++) last = await h(post("/api/story", { text: "i:259012" }, { origin: ORIGIN, "cf-connecting-ip": "1.1.1.1" }));
   assert.strictEqual(last.status, 429);
 });
 
@@ -58,7 +58,7 @@ test("AI endpoint understands OpenAI chat-completion shaped replies", async () =
     { choices: [{ message: { content: JSON.stringify(GOOD) } }] },
   ];
   const ai = { run: async () => replies.shift() };
-  const res = await createHandler({ data, ai })(post("/api/story", { text: "x" }, { origin: ORIGIN }));
+  const res = await createHandler({ data, ai })(post("/api/story", { text: "i:259012" }, { origin: ORIGIN }));
   assert.strictEqual(res.status, 200);
 });
 
@@ -73,16 +73,16 @@ test("Gemini path: function call, final JSON, daily cap, fallback to Workers AI"
   const fetchImpl = async () => { geminiCalls++; const b = seq.shift(); return b ? new Response(JSON.stringify(b)) : new Response("x", { status: 500 }); };
   const ai = { run: async () => ({ response: JSON.stringify(GOOD) }) };
   const h = createHandler({ data, ai, gemini: "k", caps, fetchImpl });
-  const r1 = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "2.2.2.2" }));
+  const r1 = await h(post("/api/story", { text: "i:259012" }, { origin: ORIGIN, "cf-connecting-ip": "2.2.2.2" }));
   assert.strictEqual(r1.status, 200);
   assert.strictEqual(geminiCalls, 2);
   // Gemini failing (500) falls back to Workers AI
-  const r2 = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "3.3.3.3" }));
+  const r2 = await h(post("/api/story", { text: "i:259012" }, { origin: ORIGIN, "cf-connecting-ip": "3.3.3.3" }));
   assert.strictEqual(r2.status, 200);
   // cap reached: Gemini is not called at all
   store.set("gemini:" + new Date().toISOString().slice(0, 10), "100");
   const before = geminiCalls;
-  const r3 = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "4.4.4.4" }));
+  const r3 = await h(post("/api/story", { text: "i:259012" }, { origin: ORIGIN, "cf-connecting-ip": "4.4.4.4" }));
   assert.strictEqual(r3.status, 200);
   assert.strictEqual(geminiCalls, before);
 });
@@ -92,16 +92,46 @@ test("AI endpoint errors: a code for the page, plus the default-language text ex
   const h = createHandler({ data, ai, catalog });
   const long = await h(post("/api/story", { text: "x".repeat(3000) }, { origin: ORIGIN }));
   assert.deepStrictEqual(await long.json(), { error: "הטקסט ריק או ארוך מ-2000 תווים", code: "text_length", params: { max: 2000 } });
-  const bad = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "4.4.4.4" }));
+  const bad = await h(post("/api/story", { text: "i:259012" }, { origin: ORIGIN, "cf-connecting-ip": "4.4.4.4" }));
   assert.strictEqual(bad.status, 502);
   assert.deepStrictEqual(await bad.json(), { error: "המודל לא החזיר JSON תקין", code: "model_bad_json" });
   let last;
-  for (let i = 0; i < 6; i++) last = await h(post("/api/story", { text: "x" }, { origin: ORIGIN, "cf-connecting-ip": "5.5.5.5" }));
+  for (let i = 0; i < 6; i++) last = await h(post("/api/story", { text: "i:259012" }, { origin: ORIGIN, "cf-connecting-ip": "5.5.5.5" }));
   assert.strictEqual(last.status, 429);
   assert.deepStrictEqual(await last.json(), { error: "יותר מדי בקשות, נסו שוב בעוד שעה", code: "rate_limited" });
   const invalid = { run: async () => ({ response: JSON.stringify({ events: [{ type: "start", date: "bad", fundKey: "nope" }] }) }) };
-  const r = await (await createHandler({ data, ai: invalid, catalog })(post("/api/story", { text: "x" }, { origin: ORIGIN }))).json();
+  const r = await (await createHandler({ data, ai: invalid, catalog })(post("/api/story", { text: "i:259012" }, { origin: ORIGIN }))).json();
   assert.strictEqual(r.code, "story_invalid");
   assert.strictEqual(r.error, "הסיפור לא עבר אימות: " + r.params.details);
   assert.ok(r.params.details.length > 0);
+});
+
+test("AI cannot choose a ranked pension key for a company-only or explicit insurance request", async () => {
+  for (const text of ["מיטב", "כלל", "ביטוח מנהלים הראל"]) {
+    const wrong = {...GOOD,events:GOOD.events.map((e,i)=>i ? e : {...e,fundKey:"p:2009",fundName:"מנורה מבטחים פנסיה - כללי"})};
+    const ai={run:async()=>({response:JSON.stringify(wrong)})};
+    const res=await createHandler({data,ai})(post("/api/story",{text},{origin:ORIGIN}));
+    assert.strictEqual(res.status,502,text);
+    const body=await res.json();assert.strictEqual(body.code,"story_invalid");
+  }
+});
+
+test("AI preserves an explicit original pension key instead of blocking valid pension stories", async () => {
+  const good={end:"2026-06",events:[{type:"start",date:"2018-07",fundKey:"p:2155",amount:1000}]};
+  const ai={run:async()=>({response:JSON.stringify(good)})};
+  const res=await createHandler({data,ai})(post("/api/story",{text:"p:2155"},{origin:ORIGIN}));
+  assert.strictEqual(res.status,200);
+  assert.strictEqual((await res.json()).story.events[0].fundKey,"p:2155");
+});
+
+test("Gemini wrong-product ranked key is rejected before returning a story, including fallback", async () => {
+  const wrong={...GOOD,events:GOOD.events.map((e,i)=>i?e:{...e,fundKey:"p:2009",fundName:"מנורה מבטחים פנסיה - כללי"})};
+  let calls=0;
+  const fetchImpl=async()=>{calls++;return new Response(JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify(wrong)}]}}]}));};
+  const ai={run:async()=>({response:JSON.stringify(wrong)})};
+  const caps={get:async()=>"0",put:async()=>{}};
+  const response=await createHandler({data,ai,gemini:"synthetic",caps,fetchImpl})(post("/api/story",{text:"כלל"},{origin:ORIGIN}));
+  assert.strictEqual(response.status,502);
+  assert.strictEqual((await response.json()).code,"story_invalid");
+  assert.strictEqual(calls,3);
 });

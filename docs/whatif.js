@@ -341,21 +341,32 @@
   function searchFunds(data, query, limit) {
     const q = String(query).trim().toLowerCase();
     if (!q) return [];
-    const parts = q.split(/\s+/).map((p) => ALIASES[p] || p);
-    const hayOf = (f) => (f.id + " " + (f.key || "") + " " + f.name + " " + (f.corp || "") + " " + (f.cls || "")).toLowerCase();
-    const order = (a, b) => (b.end - a.end) || ((b.assets || 0) - (a.assets || 0));
-    let hits = data.funds.filter((f) => { const hay = hayOf(f); return parts.every((p) => hay.includes(p)); });
-    if (!hits.length) {
-      // relaxed: rank by how many query words match, ignoring generic words when there are specific ones
-      const specific = parts.filter((p) => !GENERIC.includes(p));
-      const use = specific.length ? specific : parts;
-      const scored = data.funds
-        .map((f) => { const hay = hayOf(f); const words = hay.split(/[^\p{L}\p{N}]+/u); return { f, n: use.reduce((t, p) => t + (words.includes(p) ? 2 : hay.includes(p) ? 1 : 0), 0) }; })
-        .filter((x) => x.n > 0);
-      const best = scored.reduce((m, x) => Math.max(m, x.n), 0);
-      hits = scored.filter((x) => x.n === best).map((x) => x.f);
-    }
-    hits.sort(order);
+    const normalize = text => String(text || "").toLowerCase().replace(/(?<![\p{L}\p{N}])(?:איי?)[.\s]+בי[.\s]+איי?(?![\p{L}\p{N}])\.?/gu, "ibi");
+    const words = text => normalize(text).split(/[^\p{L}\p{N}:]+/u).filter(Boolean);
+    const parts = words(q).map(p => p === "ibi" ? "ibi" : ALIASES[p] || p);
+    const exact = data.funds.filter(f => String(f.key || "").toLowerCase() === q || String(f.name || "").trim().toLowerCase() === q);
+    if (exact.length) return exact.slice(0, limit || 30);
+    const companies = new Set(Object.values(ALIASES).map(normalize));
+    const companyTerms = parts.filter(p => companies.has(p));
+    const wantsInsurance = parts.some(p => ["ביטוח", "מנהלים", "פוליסה", "insurance", "managers"].includes(p));
+    const wantsPension = parts.some(p => ["פנסיה", "פנסיוני", "pension"].includes(p));
+    const wantsHishtalmut = parts.some(p => ["השתלמות", "hishtalmut"].includes(p));
+    const wantsGemel = parts.some(p => ["גמל", "gemel"].includes(p));
+    const descriptors = new Set(GENERIC.concat(["פנסיה", "פנסיוני", "pension", "hishtalmut"]));
+    const specific = parts.filter(p => !descriptors.has(p));
+    const hits = data.funds.filter(f => {
+      const src = f.src || (String(f.key).startsWith("i:") ? "insurance" : String(f.key).startsWith("p:") ? "pension" : "gemel");
+      if (wantsInsurance && src !== "insurance" || wantsPension && src !== "pension" || (wantsGemel || wantsHishtalmut) && src !== "gemel") return false;
+      const hay = normalize(f.id + " " + (f.key || "") + " " + f.name + " " + (f.corp || "") + " " + (f.cls || ""));
+      const companyWords = words((f.corp || "") + " " + f.name);
+      if (!companyTerms.every(p => companyWords.includes(p))) return false;
+      if (wantsHishtalmut && !words(f.name + " " + (f.cls || "")).includes("השתלמות")) return false;
+      // Product/company constraints never disappear during relaxed matching.
+      return specific.every(p => companyTerms.includes(p) || hay.includes(p));
+    });
+    // Recency is useful within a product, never evidence that a company-only query
+    // identifies that product. Resolution must separately require a unique match.
+    hits.sort((a,b) => (b.end-a.end) || ((b.assets || 0)-(a.assets || 0)));
     return hits.slice(0, limit || 30);
   }
 

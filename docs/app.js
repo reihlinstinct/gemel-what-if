@@ -75,7 +75,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       const depIn = card && card.querySelector(".pdepfee");
       if (fromUser && depIn && !depIn.dataset.manual && f && f.dfee !== null && f.dfee !== undefined) depIn.value = f.dfee;
     };
-    input.addEventListener("input", () => { show(); choose(true); });
+    input.addEventListener("input", () => { show(); if (select.options.length !== 1) select.selectedIndex = -1; choose(select.options.length === 1); });
     select.addEventListener("change", () => choose(true));
     el.setFund = (key) => {
       const f = funds.get(key);

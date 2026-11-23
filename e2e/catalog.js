@@ -30,6 +30,21 @@ async function verify(browser) {
     const page = await browser.newPage({viewport:{width:390,height:844}});
     await page.goto(base);await page.waitForSelector("#timeline .card");
     assert.equal(await page.locator("#end").inputValue(),"2026-09-01");
+    const picker=page.locator('#timeline .fundpick').first();
+    await picker.locator('input').fill('כלל');
+    assert.equal(await picker.getAttribute('data-fund'),'');
+    assert.equal(await picker.locator('select').inputValue(),'');
+    const choices=await picker.locator('option').allTextContents();
+    assert(choices.length>1);
+    assert(choices.every(text=>/(^|[^\p{L}])כלל([^\p{L}]|$)/u.test(text)));
+    if(process.env.E2E_SCREENSHOT_DIR) {
+      fs.mkdirSync(process.env.E2E_SCREENSHOT_DIR,{recursive:true});
+      await picker.screenshot({path:path.join(process.env.E2E_SCREENSHOT_DIR,'ambiguous-company-picker-390.png')});
+    }
+    await page.locator('#run').click();
+    assert((await page.locator('#error').innerText()).length>0);
+    await picker.locator('input').fill('p:2155');
+    assert.equal(await picker.getAttribute('data-fund'),'p:2155');
     const legacy={events:[{type:"start",date:"2026-09",fundKey:"g:103",amount:1000},{type:"monthly",from:"2026-09",amount:100}]};
     await page.locator("#import").setInputFiles({name:"legacy.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(legacy))});
     await page.waitForSelector('#timeline .fundpick[data-fund="g:103"]');
