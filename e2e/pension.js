@@ -36,6 +36,7 @@ async function verify(browser) {
  } finally { await page.close(); server.close(); }
  await require("./catalog.js").verify(browser);
  await require("./confirmation.js").verify(browser);
+ await require("./reconstruction.js").verify(browser);
 }
 module.exports = {verify};
 if(require.main===module) (async()=>{let browser;try {

@@ -97,7 +97,7 @@
     if (!story || !Array.isArray(story.events)) throw new Error("Invalid timeline events");
     return Object.assign({}, story, {events:story.events.map(e => {
       const copy = Object.assign({}, e);
-      if (["start", "transfer", "product", "track"].includes(copy.type)) copy.selectionReviewRequired = true;
+      if (["start", "transfer", "product", "track"].includes(copy.type)) { copy.aiGenerated = true; copy.selectionReviewRequired = true; }
       return copy;
     })});
   }

@@ -169,7 +169,7 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
       if (v) fill(card, v);
     };
     render(type, values);
-    if (values && values.selectionReviewRequired === true) {
+    if (values && (values.aiGenerated === true || values.selectionReviewRequired === true)) {
       const label = document.createElement("label");
       label.className = "warn selection-review";
       const checkbox = document.createElement("input");
@@ -217,7 +217,10 @@ const WORKER_URL = "https://gemel-what-if.reihlinstinct.workers.dev";
     const num = (s) => Number($(s, card).value) || 0;
     const e = { type };
     const review = $(".selection-review input", card);
-    if (review && !review.checked) e.selectionReviewRequired = true;
+    if (review) {
+      e.aiGenerated = true;
+      e.selectionReviewRequired = !review.checked;
+    }
     e.scope = $(".scope", card).value;
     if (type === "monthly") { e.from = $(".from", card).value; e.to = $(".to", card).value || undefined; e.amount = num(".amount"); }
     else { e.date = $(".date", card).value; }

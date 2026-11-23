@@ -188,7 +188,7 @@
 
   /** Run the whole timeline twice (actual / what-if scopes) and compare total profit. */
   function runTimeline(timeline, funds, latest) {
-    if ((timeline.events || []).some(e => e && e.selectionReviewRequired === true)) throw new Error("Confirm each AI event's date and track before calculating");
+    if ((timeline.events || []).some(e => e && (e.selectionReviewRequired === true || e.aiGenerated === true && e.selectionReviewRequired !== false))) throw new Error("Confirm each AI event's date and track before calculating");
     latest = defaultEnd(timeline, funds, latest);
     const actual = simulate(timelineToStory(timeline, "actual"), funds, latest);
     const whatIf = simulate(timelineToStory(timeline, "whatif"), funds, latest);

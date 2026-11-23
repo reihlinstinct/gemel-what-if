@@ -22,6 +22,15 @@ test('reversed AI assignments require per-event confirmation even when all keys 
  assert(P.requireSelectionReview(forged).events.every(e=>e.selectionReviewRequired===true));
  const onePending={...proposal,events:proposal.events.map((e,i)=>i?e:{...e,selectionReviewRequired:false})};
  assert.throws(()=>W.runTimeline(onePending,funds,data.latest),/Confirm each AI/);
- const confirmed={...proposal,events:proposal.events.map(e=>{const x={...e};delete x.selectionReviewRequired;return x;})};
+ const confirmed={...proposal,events:proposal.events.map(e=>{const x={...e};x.selectionReviewRequired=false;return x;})};
  assert.equal(W.runTimeline(confirmed,funds,data.latest).actual.final,W.runTimeline(reversed,funds,data.latest).actual.final);
+});
+
+test('AI origin survives confirmation and cannot lose its confirmation requirement through absent pending marker',()=>{
+ const raw={end:'2026-06',events:[{type:'start',date:'2026-01',fundKey:'p:2155',amount:1000}]};
+ const proposal=P.requireSelectionReview(raw);assert.equal(proposal.events[0].aiGenerated,true);
+ assert.throws(()=>W.runTimeline({...raw,events:[{...raw.events[0],aiGenerated:true}]},funds,data.latest),/Confirm each AI/);
+ const confirmed={...raw,events:[{...raw.events[0],aiGenerated:true,selectionReviewRequired:false}]};
+ assert(W.runTimeline(confirmed,funds,data.latest).actual.final>0);
+ assert.deepEqual(core.validateProposal(proposal).errors,[]);
 });

@@ -141,6 +141,13 @@
         "e2e",
         "e2e-webkit"
       ]
+    },
+    {
+      "pattern": "e2e/reconstruction.js",
+      "checks": [
+        "e2e",
+        "e2e-webkit"
+      ]
     }
   ]
 }

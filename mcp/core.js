@@ -53,7 +53,7 @@ function createCore(DATA) {
     });
     if (!errors.length) {
       try {
-        W.runTimeline(proposal ? { ...story, events: story.events.map(e => { const copy = { ...e }; delete copy.selectionReviewRequired; return copy; }) } : story, FUNDS, DATA.latest);
+        W.runTimeline(proposal ? { ...story, events: story.events.map(e => { const copy = { ...e }; delete copy.selectionReviewRequired; delete copy.aiGenerated; return copy; }) } : story, FUNDS, DATA.latest);
       } catch (err) {
         errors.push(String(err.message));
       }
