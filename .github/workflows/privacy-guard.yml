@@ -20,6 +20,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: reihlinstinct/repo-checks/actions/privacy@81f3dd292a8e7b7a5b2686f957dd7d6e2408b6f7 # reviewed public accessibility contact policy (#52)
+      - uses: reihlinstinct/repo-checks/actions/privacy@ff8c2514464e69cb3c08dd02a8469fd29c5f91e6 # reviewed public accessibility contact policy (#52)
         with:
           checkout-root: ${{ github.workspace }}
